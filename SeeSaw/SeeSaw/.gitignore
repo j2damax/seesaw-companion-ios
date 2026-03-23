@@ -1,0 +1,44 @@
+# Xcode
+*.xcuserstate
+*.xcscmblueprint
+*.xccheckout
+*.xcworkspace/xcshareddata/WorkspaceSettings.xcsettings
+
+# User-specific Xcode settings
+*.xcuserdatad/
+*.xcuserdata/
+
+# Build products
+/build/
+DerivedData/
+
+# Swift Package Manager
+/.build/
+/Packages/
+.swiftpm/
+
+# CocoaPods (if later added)
+Pods/
+
+# Carthage (if later added)
+Carthage/Build/
+
+# Fastlane
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots
+fastlane/test_output
+
+# Archives
+*.xcarchive
+
+# iOS device logs
+*.crash
+
+# macOS files
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# SwiftPM resolved (keep if you prefer locking dependencies)
+# Package.resolved
