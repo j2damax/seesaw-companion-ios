@@ -40,7 +40,8 @@ final class AuthViewModel {
             }
 
         case .failure(let error):
-            if (error as NSError).code != ASAuthorizationError.canceled.rawValue {
+            if let nsError = error as? NSError,
+               nsError.code != ASAuthorizationError.canceled.rawValue {
                 errorMessage = error.localizedDescription
             }
         }

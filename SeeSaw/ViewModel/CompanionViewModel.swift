@@ -99,7 +99,7 @@ final class CompanionViewModel {
         connectedDeviceName = nil
     }
 
-    func sendCaptureCommand() {
+    func captureScene() {
         Task {
             do {
                 try await accessoryManager.activeAccessory.sendCommand(BLEConstants.cmdCapture)

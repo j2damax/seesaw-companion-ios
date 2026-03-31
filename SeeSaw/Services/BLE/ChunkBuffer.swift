@@ -21,7 +21,14 @@ final class ChunkBuffer: @unchecked Sendable {
         expectedTotal = Int(chunk.total)
         buffer[Int(chunk.seqNum)] = chunk.payload
         guard buffer.count == expectedTotal, expectedTotal > 0 else { return nil }
-        return (0..<expectedTotal).compactMap { buffer[$0] }.reduce(Data(), +)
+        // Pre-allocate a single buffer and append in sequence to avoid O(n²) copies.
+        var result = Data()
+        result.reserveCapacity(buffer.values.reduce(0) { $0 + $1.count })
+        for index in 0..<expectedTotal {
+            guard let slice = buffer[index] else { return nil }
+            result.append(slice)
+        }
+        return result
     }
 
     func reset() {

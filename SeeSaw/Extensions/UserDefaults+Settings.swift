@@ -9,10 +9,9 @@ extension UserDefaults {
         get {
             let fallback = "https://your-cloud-run-url"
             let raw = string(forKey: "cloudAgentURL") ?? fallback
-            guard let url = URL(string: raw) else {
-                preconditionFailure("cloudAgentURL stored in UserDefaults is not a valid URL: \(raw)")
-            }
-            return url
+            if let url = URL(string: raw) { return url }
+            // Invalid stored value — silently fall back to default rather than crashing.
+            return URL(string: fallback)!
         }
         set { set(newValue.absoluteString, forKey: "cloudAgentURL") }
     }

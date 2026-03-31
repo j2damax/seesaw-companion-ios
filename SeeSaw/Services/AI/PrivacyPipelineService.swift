@@ -170,7 +170,7 @@ enum PipelineError: LocalizedError, Sendable {
 
     var errorDescription: String? {
         switch self {
-        case .invalidImageData: return "Could not decode image from AiSee."
+        case .invalidImageData: return "Could not decode captured image."
         case .modelLoadFailed:  return "YOLO model failed to load."
         }
     }

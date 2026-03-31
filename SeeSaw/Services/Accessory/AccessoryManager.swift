@@ -23,9 +23,12 @@ final class AccessoryManager {
         }
     }
 
-    // MARK: - Accessory registry (one instance per type)
+    // MARK: - Accessory instances (one per type)
 
-    private let registry: [WearableType: any WearableAccessory]
+    private let bleAccessory: BLEService
+    private let localDevice: LocalDeviceAccessory
+    private let metaGlass: ExternalSDKAccessory
+    private let mfiCamera: ExternalSDKAccessory
 
     // MARK: - Init
 
@@ -35,22 +38,24 @@ final class AccessoryManager {
         metaGlass: ExternalSDKAccessory,
         mfiCamera: ExternalSDKAccessory
     ) {
-        registry = [
-            .aiSeeBLE:     bleAccessory,
-            .iPhoneCamera: localDevice,
-            .metaGlass:    metaGlass,
-            .mfiCamera:    mfiCamera
-        ]
+        self.bleAccessory = bleAccessory
+        self.localDevice  = localDevice
+        self.metaGlass    = metaGlass
+        self.mfiCamera    = mfiCamera
         selectedType = UserDefaults.standard.selectedWearableType
     }
 
     // MARK: - Active accessory
 
+    /// Returns the concrete accessory for the current `selectedType`.
+    /// Exhaustive switch guarantees compile-time coverage of all `WearableType` cases.
     var activeAccessory: any WearableAccessory {
-        guard let accessory = registry[selectedType] else {
-            preconditionFailure("No accessory registered for \(selectedType)")
+        switch selectedType {
+        case .iPhoneCamera: return localDevice
+        case .aiSeeBLE:     return bleAccessory
+        case .metaGlass:    return metaGlass
+        case .mfiCamera:    return mfiCamera
         }
-        return accessory
     }
 
     // MARK: - Convenience
@@ -58,8 +63,9 @@ final class AccessoryManager {
     var availableTypes: [WearableType] { WearableType.allCases }
 
     func disconnectAll() async {
-        for accessory in registry.values {
-            await accessory.disconnect()
-        }
+        await bleAccessory.disconnect()
+        await localDevice.disconnect()
+        await metaGlass.disconnect()
+        await mfiCamera.disconnect()
     }
 }

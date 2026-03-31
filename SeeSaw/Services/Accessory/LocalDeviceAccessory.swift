@@ -66,9 +66,9 @@ final class LocalDeviceAccessory: NSObject, WearableAccessory {
         try await requestMicPermission()
         try setupCaptureSession()
         setupAudioPlayback()
-        // Note: startRunning() is synchronous and blocks briefly.
-        // Move to a dedicated serial queue in production.
-        captureSession?.startRunning()
+        // startRunning() is synchronous and blocks; run on a background thread.
+        let session = captureSession
+        await Task.detached { session?.startRunning() }.value
         statusYielder.yield(BLEConstants.statusReady)
         onConnected?()
     }

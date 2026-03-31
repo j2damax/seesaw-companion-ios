@@ -57,7 +57,7 @@ struct ContentView: View {
 
         case .connected:
             VStack(spacing: 12) {
-                Button("Capture Scene") { vm.sendCaptureCommand() }
+                Button("Capture Scene") { vm.captureScene() }
                     .buttonStyle(.borderedProminent)
                 Button("Disconnect") { vm.disconnect() }
                     .buttonStyle(.bordered)
