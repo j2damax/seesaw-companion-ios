@@ -48,12 +48,14 @@ final class BLEService: NSObject, WearableAccessory {
     // MARK: - Init
 
     override init() {
-        var imageYielder: AsyncStream<Data>.Continuation?
-        var statusYielder: AsyncStream<String>.Continuation?
-        imageDataStream = AsyncStream { imageYielder = $0 }
-        statusStream    = AsyncStream { statusYielder = $0 }
-        self.imageYielder  = imageYielder!
-        self.statusYielder = statusYielder!
+        // AsyncStream's closure runs synchronously, so continuations are
+        // guaranteed non-nil immediately after the AsyncStream initializer returns.
+        var imageCont: AsyncStream<Data>.Continuation!
+        var statusCont: AsyncStream<String>.Continuation!
+        imageDataStream = AsyncStream { imageCont = $0 }
+        statusStream    = AsyncStream { statusCont = $0 }
+        imageYielder  = imageCont
+        statusYielder = statusCont
         super.init()
         centralManager = CBCentralManager(delegate: self, queue: .main)
     }
@@ -175,8 +177,11 @@ extension BLEService: CBPeripheralDelegate {
                 statusCharacteristic = characteristic
                 peripheral.setNotifyValue(true, for: characteristic)
             case BLEConstants.mtuConfigUUID:
-                let mtuData = Data(repeating: 0, count: 512)
-                peripheral.writeValue(mtuData, for: characteristic, type: .withResponse)
+                    // Negotiate MTU: write 512 zero bytes to signal that the iPhone
+                    // can accept up to 512-byte ATT PDUs (508 bytes payload + 4 byte header).
+                    // AiSee reads this and adjusts its chunk size accordingly.
+                    let mtuData = Data(repeating: 0, count: 512)
+                    peripheral.writeValue(mtuData, for: characteristic, type: .withResponse)
             default:
                 break
             }
