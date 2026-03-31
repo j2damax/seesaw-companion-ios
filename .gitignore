@@ -42,3 +42,5 @@ fastlane/test_output
 
 # SwiftPM resolved (keep if you prefer locking dependencies)
 # Package.resolved
+
+!Technical Architecture Blueprint.md    
