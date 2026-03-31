@@ -9,9 +9,19 @@ import Foundation
 @MainActor
 final class AppDependencyContainer {
 
-    // MARK: - Services
+    // MARK: - Wearable accessories
 
     let bleService: BLEService
+    let localDeviceAccessory: LocalDeviceAccessory
+    let metaGlassAccessory: ExternalSDKAccessory
+    let mfiCameraAccessory: ExternalSDKAccessory
+
+    // MARK: - Accessory orchestration
+
+    let accessoryManager: AccessoryManager
+
+    // MARK: - Pipeline services
+
     let privacyPipelineService: PrivacyPipelineService
     let cloudAgentService: CloudAgentService
     let audioService: AudioService
@@ -20,7 +30,18 @@ final class AppDependencyContainer {
     // MARK: - Init
 
     init() {
-        bleService             = BLEService()
+        bleService           = BLEService()
+        localDeviceAccessory = LocalDeviceAccessory()
+        metaGlassAccessory   = ExternalSDKAccessory(wearableType: .metaGlass)
+        mfiCameraAccessory   = ExternalSDKAccessory(wearableType: .mfiCamera)
+
+        accessoryManager = AccessoryManager(
+            bleAccessory: bleService,
+            localDevice:  localDeviceAccessory,
+            metaGlass:    metaGlassAccessory,
+            mfiCamera:    mfiCameraAccessory
+        )
+
         privacyPipelineService = PrivacyPipelineService()
         cloudAgentService      = CloudAgentService(baseURL: UserDefaults.standard.cloudAgentURL)
         audioService           = AudioService()
@@ -31,10 +52,10 @@ final class AppDependencyContainer {
 
     func makeCompanionViewModel() -> CompanionViewModel {
         CompanionViewModel(
-            wearable: bleService,
-            privacyPipeline: privacyPipelineService,
-            cloudService: cloudAgentService,
-            audioService: audioService
+            accessoryManager: accessoryManager,
+            privacyPipeline:  privacyPipelineService,
+            cloudService:     cloudAgentService,
+            audioService:     audioService
         )
     }
 
@@ -42,3 +63,4 @@ final class AppDependencyContainer {
         AuthViewModel(authService: authService, coordinator: coordinator)
     }
 }
+

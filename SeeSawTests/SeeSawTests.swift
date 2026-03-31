@@ -20,10 +20,9 @@ struct TransferChunkTests {
     }
 
     @Test func headerParsing() async throws {
-        // Build a raw packet manually: seq=1, total=4, payload=[0xAB]
         var raw = Data()
-        raw.append(contentsOf: [0x00, 0x01])   // seq = 1
-        raw.append(contentsOf: [0x00, 0x04])   // total = 4
+        raw.append(contentsOf: [0x00, 0x01])
+        raw.append(contentsOf: [0x00, 0x04])
         raw.append(0xAB)
 
         let chunk = try #require(TransferChunk(from: raw))
@@ -33,7 +32,7 @@ struct TransferChunkTests {
     }
 
     @Test func rejectsTooShortPacket() async throws {
-        let raw = Data([0x00, 0x01, 0x00])   // only 3 bytes — invalid
+        let raw = Data([0x00, 0x01, 0x00])
         #expect(TransferChunk(from: raw) == nil)
     }
 }
@@ -136,5 +135,62 @@ struct SessionStateTests {
         #expect(SessionState.error("foo") == SessionState.error("foo"))
         #expect(SessionState.error("foo") != SessionState.error("bar"))
     }
+
+    @Test func scanningDisplayTitleIsGeneric() async throws {
+        // Must not mention "AiSee" so it works for all accessory types
+        #expect(!SessionState.scanning.displayTitle.contains("AiSee"))
+    }
 }
+
+// MARK: - WearableType display property tests
+
+struct WearableTypeTests {
+
+    @Test func allTypesHaveNonEmptyDisplayProperties() async throws {
+        for type in WearableType.allCases {
+            #expect(!type.rawValue.isEmpty,             "rawValue empty for \(type)")
+            #expect(!type.systemImage.isEmpty,          "systemImage empty for \(type)")
+            #expect(!type.connectActionLabel.isEmpty,   "connectActionLabel empty for \(type)")
+            #expect(!type.inputSourceDescription.isEmpty, "inputSourceDescription empty for \(type)")
+        }
+    }
+
+    @Test func bluetoothRequirementIsCorrect() async throws {
+        #expect(WearableType.aiSeeBLE.requiresBluetooth)
+        #expect(!WearableType.iPhoneCamera.requiresBluetooth)
+        #expect(!WearableType.metaGlass.requiresBluetooth)
+        #expect(!WearableType.mfiCamera.requiresBluetooth)
+    }
+
+    @Test func allCasesCount() async throws {
+        // Ensure no cases are accidentally removed
+        #expect(WearableType.allCases.count == 4)
+    }
+}
+
+// MARK: - UserDefaults selectedWearableType round-trip tests
+
+struct UserDefaultsWearableTypeTests {
+
+    @Test func roundTripAllTypes() async throws {
+        let key = "selectedWearableType"
+        let original = UserDefaults.standard.string(forKey: key)
+        defer { UserDefaults.standard.set(original, forKey: key) }
+
+        for type in WearableType.allCases {
+            UserDefaults.standard.selectedWearableType = type
+            #expect(UserDefaults.standard.selectedWearableType == type)
+        }
+    }
+
+    @Test func unknownRawValueFallsBackToDefault() async throws {
+        let key = "selectedWearableType"
+        let original = UserDefaults.standard.string(forKey: key)
+        defer { UserDefaults.standard.set(original, forKey: key) }
+
+        UserDefaults.standard.set("NonExistentType", forKey: key)
+        #expect(UserDefaults.standard.selectedWearableType == .iPhoneCamera)
+    }
+}
+
 

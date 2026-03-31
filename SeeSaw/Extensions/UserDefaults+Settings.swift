@@ -24,4 +24,12 @@ extension UserDefaults {
         }
         set { set(newValue, forKey: "childAge") }
     }
+
+    var selectedWearableType: WearableType {
+        get {
+            let raw = string(forKey: "selectedWearableType") ?? WearableType.iPhoneCamera.rawValue
+            return WearableType(rawValue: raw) ?? .iPhoneCamera
+        }
+        set { set(newValue.rawValue, forKey: "selectedWearableType") }
+    }
 }

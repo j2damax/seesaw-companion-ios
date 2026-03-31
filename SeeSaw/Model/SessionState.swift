@@ -17,7 +17,7 @@ enum SessionState: Equatable, Sendable {
     var displayTitle: String {
         switch self {
         case .idle:              return "Idle"
-        case .scanning:          return "Scanning for AiSee…"
+        case .scanning:          return "Connecting…"
         case .connected:         return "Connected"
         case .receivingImage:    return "Receiving image…"
         case .processingPrivacy: return "Processing on-device…"

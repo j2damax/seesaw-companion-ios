@@ -10,6 +10,7 @@ struct StatusView: View {
 
     let state: SessionState
     let deviceName: String?
+    var wearableType: WearableType? = nil
 
     // MARK: - Body
 
@@ -23,6 +24,11 @@ struct StatusView: View {
                 Text(name)
                     .font(.caption)
                     .foregroundStyle(.secondary)
+            }
+            if let type = wearableType, !state.isConnected, case .idle = state {
+                Label(type.rawValue, systemImage: type.systemImage)
+                    .font(.caption2)
+                    .foregroundStyle(.tertiary)
             }
         }
         .padding()
@@ -74,10 +80,12 @@ struct StatusView: View {
 
 #Preview {
     VStack(spacing: 24) {
-        StatusView(state: .idle, deviceName: nil)
+        StatusView(state: .idle, deviceName: nil, wearableType: .iPhoneCamera)
+        StatusView(state: .idle, deviceName: nil, wearableType: .aiSeeBLE)
         StatusView(state: .connected, deviceName: "AiSee")
-        StatusView(state: .processingPrivacy, deviceName: "AiSee")
+        StatusView(state: .processingPrivacy, deviceName: "iPhone Camera + Mic")
         StatusView(state: .error("Cloud timeout"), deviceName: nil)
     }
     .padding()
 }
+

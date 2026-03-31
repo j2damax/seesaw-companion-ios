@@ -2,7 +2,8 @@
 // SeeSaw — Tier 2 companion app
 //
 // Single ViewModel for PoC. Coordinates all services and drives the UI.
-// Observes the BLE wearable's AsyncStreams via background Tasks.
+// Uses AccessoryManager to resolve the active WearableAccessory at connect time,
+// so changing input source in Settings takes effect immediately on next connect.
 
 import Foundation
 
@@ -17,14 +18,17 @@ final class CompanionViewModel {
     var connectedDeviceName: String?
     var childAge: Int = UserDefaults.standard.childAge
 
-    // MARK: - Services
+    /// Exposes the currently selected type for the UI (connect button label, etc.)
+    var selectedWearableType: WearableType { accessoryManager.selectedType }
 
-    private let wearable: BLEService
+    // MARK: - Dependencies
+
+    private let accessoryManager: AccessoryManager
     private let privacyPipeline: PrivacyPipelineService
     private let cloudService: CloudAgentService
     private let audioService: AudioService
 
-    // MARK: - Stream observation tasks
+    // MARK: - Active stream tasks (cancelled on disconnect)
 
     private var imageStreamTask: Task<Void, Never>?
     private var statusStreamTask: Task<Void, Never>?
@@ -32,22 +36,46 @@ final class CompanionViewModel {
     // MARK: - Init
 
     init(
-        wearable: BLEService,
+        accessoryManager: AccessoryManager,
         privacyPipeline: PrivacyPipelineService,
         cloudService: CloudAgentService,
         audioService: AudioService
     ) {
-        self.wearable         = wearable
+        self.accessoryManager = accessoryManager
         self.privacyPipeline  = privacyPipeline
         self.cloudService     = cloudService
         self.audioService     = audioService
-        wireWearableCallbacks()
-        startStreamObservers()
     }
 
     // MARK: - Public actions
 
     func startScanning() {
+        let wearable = accessoryManager.activeAccessory
+
+        // Wire lifecycle callbacks onto the specific wearable instance being connected
+        wearable.onConnected    = { [weak self] in
+            self?.handleConnected(name: wearable.accessoryName)
+        }
+        wearable.onDisconnected = { [weak self] in
+            self?.handleDisconnected()
+        }
+
+        // Start observing this wearable's streams (cancel any previous observation)
+        imageStreamTask?.cancel()
+        statusStreamTask?.cancel()
+
+        imageStreamTask = Task { [weak self] in
+            for await imageData in wearable.imageDataStream {
+                await self?.runFullPipeline(jpegData: imageData)
+            }
+        }
+
+        statusStreamTask = Task { [weak self] in
+            for await status in wearable.statusStream {
+                await self?.handleStatus(status)
+            }
+        }
+
         sessionState = .scanning
         Task {
             do {
@@ -59,22 +87,22 @@ final class CompanionViewModel {
     }
 
     func stopScanning() {
-        Task { await wearable.stopDiscovery() }
+        Task { await accessoryManager.activeAccessory.stopDiscovery() }
+        cancelStreamTasks()
         sessionState = .idle
     }
 
     func disconnect() {
-        Task { await wearable.disconnect() }
+        Task { await accessoryManager.activeAccessory.disconnect() }
+        cancelStreamTasks()
         sessionState = .idle
         connectedDeviceName = nil
-        imageStreamTask?.cancel()
-        statusStreamTask?.cancel()
     }
 
     func sendCaptureCommand() {
         Task {
             do {
-                try await wearable.sendCommand(BLEConstants.cmdCapture)
+                try await accessoryManager.activeAccessory.sendCommand(BLEConstants.cmdCapture)
             } catch {
                 setError(error.localizedDescription)
             }
@@ -83,48 +111,18 @@ final class CompanionViewModel {
 
     func dismissError() {
         lastError = nil
-        if sessionState.isConnected {
-            sessionState = .connected
-        } else {
-            sessionState = .idle
-        }
+        sessionState = sessionState.isConnected ? .connected : .idle
     }
 
-    // MARK: - Private wiring
+    // MARK: - Private state handlers
 
-    private func wireWearableCallbacks() {
-        wearable.onConnected = { [weak self] in
-            self?.handleConnected()
-        }
-        wearable.onDisconnected = { [weak self] in
-            self?.handleDisconnected()
-        }
-    }
-
-    private func startStreamObservers() {
-        imageStreamTask = Task { [weak self] in
-            guard let self else { return }
-            for await imageData in wearable.imageDataStream {
-                await self.runFullPipeline(jpegData: imageData)
-            }
-        }
-
-        statusStreamTask = Task { [weak self] in
-            guard let self else { return }
-            for await status in wearable.statusStream {
-                await self.handleStatus(status)
-            }
-        }
-    }
-
-    // MARK: - State handlers
-
-    private func handleConnected() {
+    private func handleConnected(name: String) {
         sessionState = .connected
-        connectedDeviceName = "AiSee"
+        connectedDeviceName = name
     }
 
     private func handleDisconnected() {
+        cancelStreamTasks()
         sessionState = .idle
         connectedDeviceName = nil
     }
@@ -132,9 +130,11 @@ final class CompanionViewModel {
     private func handleStatus(_ status: String) {
         switch status {
         case BLEConstants.statusTimeout:
-            setError("AiSee timed out waiting for audio response.")
+            setError("Wearable timed out waiting for audio response.")
         case BLEConstants.statusError:
-            setError("AiSee reported an error.")
+            setError("Wearable reported an error.")
+        case "DISCONNECTED":
+            handleDisconnected()
         default:
             break
         }
@@ -154,7 +154,7 @@ final class CompanionViewModel {
             let audioData = try await audioService.generateAndEncodeAudio(from: story.storyText)
 
             sessionState = .sendingAudio
-            try await wearable.sendAudio(audioData)
+            try await accessoryManager.activeAccessory.sendAudio(audioData)
 
             sessionState = .connected
         } catch {
@@ -162,8 +162,18 @@ final class CompanionViewModel {
         }
     }
 
+    // MARK: - Helpers
+
+    private func cancelStreamTasks() {
+        imageStreamTask?.cancel()
+        statusStreamTask?.cancel()
+        imageStreamTask  = nil
+        statusStreamTask = nil
+    }
+
     private func setError(_ message: String) {
         lastError = message
         sessionState = .error(message)
     }
 }
+

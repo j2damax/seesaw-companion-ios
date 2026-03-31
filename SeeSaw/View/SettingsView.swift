@@ -1,15 +1,17 @@
 // SettingsView.swift
 // SeeSaw — Tier 2 companion app
 //
-// Parent-facing settings. Two settings for PoC:
-//   • Child age (used in ScenePayload)
-//   • Cloud agent URL (posted to for story generation)
+// Parent-facing settings:
+//   • Input Source  — selects which wearable / accessory to use
+//   • Child age     — used in ScenePayload
+//   • Cloud agent URL — endpoint for story generation
 
 import SwiftUI
 
 struct SettingsView: View {
 
     @Binding var childAge: Int
+    var accessoryManager: AccessoryManager
 
     @State private var cloudURLString: String = UserDefaults.standard.cloudAgentURL.absoluteString
     @Environment(\.dismiss) private var dismiss
@@ -19,6 +21,7 @@ struct SettingsView: View {
     var body: some View {
         NavigationStack {
             Form {
+                AccessoryPickerView(accessoryManager: accessoryManager)
                 childAgeSection
                 cloudSection
                 aboutSection
@@ -74,5 +77,7 @@ struct SettingsView: View {
 }
 
 #Preview {
-    SettingsView(childAge: .constant(5))
+    let container = AppDependencyContainer()
+    SettingsView(childAge: .constant(5), accessoryManager: container.accessoryManager)
 }
+

@@ -23,7 +23,8 @@ struct ContentView: View {
             VStack(spacing: 24) {
                 StatusView(
                     state: vm.sessionState,
-                    deviceName: vm.connectedDeviceName
+                    deviceName: vm.connectedDeviceName,
+                    wearableType: vm.selectedWearableType
                 )
 
                 controlButtons
@@ -46,11 +47,11 @@ struct ContentView: View {
     private var controlButtons: some View {
         switch vm.sessionState {
         case .idle:
-            Button("Connect to Wearable") { vm.startScanning() }
+            Button(vm.selectedWearableType.connectActionLabel) { vm.startScanning() }
                 .buttonStyle(.borderedProminent)
 
         case .scanning:
-            Button("Cancel Scan") { vm.stopScanning() }
+            Button("Cancel") { vm.stopScanning() }
                 .buttonStyle(.bordered)
                 .tint(.secondary)
 
@@ -89,7 +90,10 @@ struct ContentView: View {
     private var toolbarContent: some ToolbarContent {
         ToolbarItem(placement: .topBarTrailing) {
             NavigationLink {
-                SettingsView(childAge: $vm.childAge)
+                SettingsView(
+                    childAge: $vm.childAge,
+                    accessoryManager: coordinator.container.accessoryManager
+                )
             } label: {
                 Image(systemName: "gear")
             }
@@ -109,4 +113,5 @@ struct ContentView: View {
         coordinator: coordinator
     )
 }
+
 

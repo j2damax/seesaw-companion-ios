@@ -42,7 +42,7 @@ final class AppCoordinator {
     func signOut() {
         Task {
             await container.authService.signOut()
-            await container.bleService.disconnect()
+            await container.accessoryManager.disconnectAll()
         }
         currentRoute = .signIn
     }
