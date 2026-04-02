@@ -1,9 +1,9 @@
 // AppCoordinator.swift
 // SeeSaw — Tier 2 companion app
 //
-// Root coordinator. Manages top-level navigation between the sign-in flow
-// and the main companion screen. ViewModels receive this coordinator via
-// injection to trigger route changes without importing SwiftUI.
+// Root coordinator. Manages top-level navigation across all app screens:
+//   launch → terms → signIn → onboarding → home
+// On subsequent launches, navigation fast-paths based on persisted state.
 
 import Foundation
 
@@ -13,9 +13,12 @@ final class AppCoordinator {
 
     // MARK: - Routes
 
-    enum Route {
+    enum Route: Equatable {
+        case launch
+        case terms
         case signIn
-        case companion
+        case onboarding
+        case home
     }
 
     // MARK: - State
@@ -30,13 +33,41 @@ final class AppCoordinator {
 
     init(container: AppDependencyContainer) {
         self.container = container
-        currentRoute = .signIn
+        let isSignedIn = UserDefaults.standard.string(forKey: "auth.userID") != nil
+        let onboarded  = UserDefaults.standard.hasCompletedOnboarding
+        let termsOK    = UserDefaults.standard.hasAcceptedTerms
+
+        if isSignedIn && onboarded {
+            currentRoute = .home
+        } else if isSignedIn {
+            currentRoute = .onboarding
+        } else if termsOK {
+            currentRoute = .signIn
+        } else {
+            currentRoute = .launch
+        }
     }
 
     // MARK: - Navigation actions
 
+    func getStarted() {
+        currentRoute = .terms
+    }
+
+    func termsAccepted() {
+        currentRoute = .signIn
+    }
+
     func signInCompleted() {
-        currentRoute = .companion
+        if UserDefaults.standard.hasCompletedOnboarding {
+            currentRoute = .home
+        } else {
+            currentRoute = .onboarding
+        }
+    }
+
+    func onboardingCompleted() {
+        currentRoute = .home
     }
 
     func signOut() {
@@ -47,3 +78,4 @@ final class AppCoordinator {
         currentRoute = .signIn
     }
 }
+

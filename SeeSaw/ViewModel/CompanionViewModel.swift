@@ -5,6 +5,7 @@
 // Uses AccessoryManager to resolve the active WearableAccessory at connect time,
 // so changing input source in Settings takes effect immediately on next connect.
 
+import AVFoundation
 import Foundation
 
 @MainActor
@@ -17,9 +18,13 @@ final class CompanionViewModel {
     var lastError: String?
     var connectedDeviceName: String?
     var childAge: Int = UserDefaults.standard.childAge
+    var timeline: [TimelineEntry] = []
 
     /// Exposes the currently selected type for the UI (connect button label, etc.)
     var selectedWearableType: WearableType { accessoryManager.selectedType }
+
+    /// Live AVCaptureSession for the Camera tab preview (non-nil only when iPhone camera is active).
+    var cameraPreviewSession: AVCaptureSession? { accessoryManager.previewSession }
 
     // MARK: - Dependencies
 
@@ -155,6 +160,13 @@ final class CompanionViewModel {
 
             sessionState = .sendingAudio
             try await accessoryManager.activeAccessory.sendAudio(audioData)
+
+            // Record this interaction in the timeline (newest first)
+            let entry = TimelineEntry(
+                sceneObjects: payload.objects,
+                storySnippet: String(story.storyText.prefix(120))
+            )
+            timeline.insert(entry, at: 0)
 
             sessionState = .connected
         } catch {

@@ -50,6 +50,10 @@ final class AppDependencyContainer {
 
     // MARK: - Factory methods
 
+    func makeOnboardingViewModel(coordinator: AppCoordinator) -> OnboardingViewModel {
+        OnboardingViewModel(accessoryManager: accessoryManager, coordinator: coordinator)
+    }
+
     func makeCompanionViewModel() -> CompanionViewModel {
         CompanionViewModel(
             accessoryManager: accessoryManager,

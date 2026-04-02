@@ -5,16 +5,19 @@ import Foundation
 
 extension UserDefaults {
 
+    // MARK: - Cloud agent
+
     var cloudAgentURL: URL {
         get {
             let fallback = "https://your-cloud-run-url"
             let raw = string(forKey: "cloudAgentURL") ?? fallback
             if let url = URL(string: raw) { return url }
-            // Invalid stored value — silently fall back to default rather than crashing.
             return URL(string: fallback)!
         }
         set { set(newValue.absoluteString, forKey: "cloudAgentURL") }
     }
+
+    // MARK: - Child profile
 
     var childAge: Int {
         get {
@@ -24,6 +27,18 @@ extension UserDefaults {
         set { set(newValue, forKey: "childAge") }
     }
 
+    var childName: String {
+        get { string(forKey: "childName") ?? "" }
+        set { set(newValue, forKey: "childName") }
+    }
+
+    var childPreferences: [String] {
+        get { stringArray(forKey: "childPreferences") ?? [] }
+        set { set(newValue, forKey: "childPreferences") }
+    }
+
+    // MARK: - Accessory
+
     var selectedWearableType: WearableType {
         get {
             let raw = string(forKey: "selectedWearableType") ?? WearableType.iPhoneCamera.rawValue
@@ -31,4 +46,17 @@ extension UserDefaults {
         }
         set { set(newValue.rawValue, forKey: "selectedWearableType") }
     }
+
+    // MARK: - Onboarding / terms flow
+
+    var hasAcceptedTerms: Bool {
+        get { bool(forKey: "hasAcceptedTerms") }
+        set { set(newValue, forKey: "hasAcceptedTerms") }
+    }
+
+    var hasCompletedOnboarding: Bool {
+        get { bool(forKey: "hasCompletedOnboarding") }
+        set { set(newValue, forKey: "hasCompletedOnboarding") }
+    }
 }
+

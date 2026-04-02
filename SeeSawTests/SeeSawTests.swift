@@ -193,4 +193,66 @@ struct UserDefaultsWearableTypeTests {
     }
 }
 
+// MARK: - UserDefaults onboarding flags tests
 
+struct UserDefaultsOnboardingTests {
+
+    @Test func termsAndOnboardingFlagsRoundTrip() async throws {
+        let termsKey     = "hasAcceptedTerms"
+        let onboardKey   = "hasCompletedOnboarding"
+        let origTerms    = UserDefaults.standard.bool(forKey: termsKey)
+        let origOnboard  = UserDefaults.standard.bool(forKey: onboardKey)
+        defer {
+            UserDefaults.standard.set(origTerms,   forKey: termsKey)
+            UserDefaults.standard.set(origOnboard, forKey: onboardKey)
+        }
+
+        UserDefaults.standard.hasAcceptedTerms      = true
+        UserDefaults.standard.hasCompletedOnboarding = true
+        #expect(UserDefaults.standard.hasAcceptedTerms)
+        #expect(UserDefaults.standard.hasCompletedOnboarding)
+
+        UserDefaults.standard.hasAcceptedTerms      = false
+        UserDefaults.standard.hasCompletedOnboarding = false
+        #expect(!UserDefaults.standard.hasAcceptedTerms)
+        #expect(!UserDefaults.standard.hasCompletedOnboarding)
+    }
+}
+
+// MARK: - ChildProfile tests
+
+struct ChildProfileTests {
+
+    @Test func presetTopicsAreNonEmpty() async throws {
+        #expect(!ChildProfile.presetTopics.isEmpty)
+    }
+
+    @Test func presetTopicsAreUnique() async throws {
+        let unique = Set(ChildProfile.presetTopics)
+        #expect(unique.count == ChildProfile.presetTopics.count)
+    }
+}
+
+// MARK: - TimelineEntry tests
+
+struct TimelineEntryTests {
+
+    @Test func entryHasUniqueID() async throws {
+        let a = TimelineEntry(sceneObjects: ["cat"], storySnippet: "Once…")
+        let b = TimelineEntry(sceneObjects: ["cat"], storySnippet: "Once…")
+        #expect(a.id != b.id)
+    }
+
+    @Test func entryPreservesFields() async throws {
+        let objects  = ["dinosaur", "book"]
+        let snippet  = "A long time ago…"
+        let entry    = TimelineEntry(sceneObjects: objects, storySnippet: snippet)
+        #expect(entry.sceneObjects == objects)
+        #expect(entry.storySnippet == snippet)
+    }
+
+    @Test func nilSnippetIsAllowed() async throws {
+        let entry = TimelineEntry(sceneObjects: [], storySnippet: nil)
+        #expect(entry.storySnippet == nil)
+    }
+}

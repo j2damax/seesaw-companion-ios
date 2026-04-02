@@ -47,6 +47,11 @@ final class LocalDeviceAccessory: NSObject, WearableAccessory {
     private var audioEngine: AVAudioEngine?
     private var playerNode: AVAudioPlayerNode?
 
+    // MARK: - Camera preview (read-only, used by CameraPreviewView)
+
+    /// Returns the live AVCaptureSession when connected, nil otherwise.
+    var previewSession: AVCaptureSession? { captureSession }
+
     // MARK: - Init
 
     override init() {

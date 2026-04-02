@@ -58,6 +58,15 @@ final class AccessoryManager {
         }
     }
 
+    // MARK: - Camera preview passthrough
+
+    /// Returns an AVCaptureSession only when the active accessory is the local iPhone camera
+    /// and it is currently running. Used by `CameraPreviewView`.
+    var previewSession: AVCaptureSession? {
+        guard selectedType == .iPhoneCamera else { return nil }
+        return localDevice.previewSession
+    }
+
     // MARK: - Convenience
 
     var availableTypes: [WearableType] { WearableType.allCases }
