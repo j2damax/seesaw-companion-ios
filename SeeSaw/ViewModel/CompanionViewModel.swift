@@ -160,22 +160,16 @@ final class CompanionViewModel {
 
     private func runDetectionPreview(jpegData: Data) async {
         do {
-            #if DEBUG
-            PipelineLog.log("runDetectionPreview", "start, jpegBytes=\(jpegData.count)")
-            #endif
+            AppConfig.shared.log("runDetectionPreview: start, jpegBytes=\(jpegData.count)")
             sessionState = .processingPrivacy
             let (blurredData, detections) = try await privacyPipeline.runDebugDetection(jpegData: jpegData)
             capturedImageData  = blurredData
             sceneDetections    = detections
             isShowingScenePreview = true
-            #if DEBUG
-            PipelineLog.log("runDetectionPreview", "done, detectionCount=\(detections.count), blurredBytes=\(blurredData.count)")
-            #endif
+            AppConfig.shared.log("runDetectionPreview: done, detectionCount=\(detections.count), blurredBytes=\(blurredData.count)")
             sessionState = .connected
         } catch {
-            #if DEBUG
-            PipelineLog.log("runDetectionPreview", "error=\(error.localizedDescription)")
-            #endif
+            AppConfig.shared.log("runDetectionPreview: error=\(error.localizedDescription)", level: .error)
             setError(error.localizedDescription)
         }
     }

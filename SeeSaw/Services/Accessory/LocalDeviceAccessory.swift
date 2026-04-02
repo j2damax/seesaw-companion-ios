@@ -107,9 +107,7 @@ final class LocalDeviceAccessory: NSObject, WearableAccessory {
     func sendCommand(_ command: String) async throws {
         guard isConnected else { throw WearableError.notConnected }
         if command == BLEConstants.cmdCapture {
-            #if DEBUG
-            PipelineLog.log("sendCommand", "command=\(command)")
-            #endif
+            AppConfig.shared.log("sendCommand: command=\(command)")
             try captureOneFrame()
         }
     }
@@ -221,10 +219,8 @@ extension LocalDeviceAccessory: AVCapturePhotoCaptureDelegate {
                                  didFinishProcessingPhoto photo: AVCapturePhoto,
                                  error: Error?) {
         guard let data = photo.fileDataRepresentation() else { return }
-        #if DEBUG
         let orientation = photo.metadata[kCGImagePropertyOrientation as String] ?? "unknown"
-        PipelineLog.log("photoOutput", "capturedBytes=\(data.count), exifOrientation=\(orientation)")
-        #endif
+        AppConfig.shared.log("photoOutput: capturedBytes=\(data.count), exifOrientation=\(orientation)")
         // Hop to @MainActor to safely yield into the stream
         Task { @MainActor [weak self] in
             self?.imageYielder.yield(data)

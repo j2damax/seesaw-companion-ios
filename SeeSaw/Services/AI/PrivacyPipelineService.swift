@@ -32,9 +32,7 @@ actor PrivacyPipelineService {
 
     init() {
         objectDetectionModel = Self.loadObjectDetectionModel()
-        #if DEBUG
-        PipelineLog.log("init", "objectDetectionModel loaded=\(objectDetectionModel != nil)")
-        #endif
+        AppConfig.shared.log("init: objectDetectionModel loaded=\(objectDetectionModel != nil)")
     }
 
     // MARK: - Public entry point
@@ -44,9 +42,7 @@ actor PrivacyPipelineService {
             throw PipelineError.invalidImageData
         }
         let ciImage = rawImage.orientedToUp()
-        #if DEBUG
-        PipelineLog.log("Stage 0 – input", "imageSize=\(ciImage.extent.size), childAge=\(childAge)")
-        #endif
+        AppConfig.shared.log("Stage 0 – input: imageSize=\(ciImage.extent.size), childAge=\(childAge)")
 
         let blurredImage = try detectAndBlurFaces(in: ciImage)
 
@@ -56,9 +52,7 @@ actor PrivacyPipelineService {
 
         let (detectedObjects, sceneLabels, rawTranscript) = try await (objects, scene, transcript)
         let cleanTranscript = rawTranscript.map { scrubPII($0) }
-        #if DEBUG
-        PipelineLog.log("Stage 6 – output", "objects=\(detectedObjects), scene=\(sceneLabels), hasTranscript=\(cleanTranscript != nil)")
-        #endif
+        AppConfig.shared.log("Stage 6 – output: objects=\(detectedObjects), scene=\(sceneLabels), hasTranscript=\(cleanTranscript != nil)")
 
         return ScenePayload(
             objects: detectedObjects,
@@ -71,22 +65,16 @@ actor PrivacyPipelineService {
     // MARK: - Stage 1 + 2: Face detection & blur
 
     private func detectAndBlurFaces(in image: CIImage) throws -> CIImage {
-        #if DEBUG
-        PipelineLog.log("Stage 1 – face detection", "imageSize=\(image.extent.size)")
-        #endif
+        AppConfig.shared.log("Stage 1 – face detection: imageSize=\(image.extent.size)")
         let handler = VNImageRequestHandler(ciImage: image, options: [:])
         let request = VNDetectFaceRectanglesRequest()
         try handler.perform([request])
 
         guard let observations = request.results, !observations.isEmpty else {
-            #if DEBUG
-            PipelineLog.log("Stage 2 – face blur", "faceCount=0, skipping blur")
-            #endif
+            AppConfig.shared.log("Stage 2 – face blur: faceCount=0, skipping blur")
             return image
         }
-        #if DEBUG
-        PipelineLog.log("Stage 2 – face blur", "faceCount=\(observations.count), applying CIGaussianBlur sigma=30")
-        #endif
+        AppConfig.shared.log("Stage 2 – face blur: faceCount=\(observations.count), applying CIGaussianBlur sigma=30")
 
         var output = image
         let imageSize = image.extent.size
@@ -123,9 +111,7 @@ actor PrivacyPipelineService {
             throw PipelineError.invalidImageData
         }
         let ciImage = rawImage.orientedToUp()
-        #if DEBUG
-        PipelineLog.log("runDebugDetection – start", "inputSize=\(ciImage.extent.size), modelLoaded=\(objectDetectionModel != nil)")
-        #endif
+        AppConfig.shared.log("runDebugDetection – start: inputSize=\(ciImage.extent.size), modelLoaded=\(objectDetectionModel != nil)")
 
         let blurredImage = try detectAndBlurFaces(in: ciImage)
         let detections: [DetectionResult]
@@ -134,13 +120,9 @@ actor PrivacyPipelineService {
         } else {
             detections = []
         }
-        #if DEBUG
-        PipelineLog.log("runDebugDetection – detections", "count=\(detections.count), labels=\(detections.map { $0.label })")
-        #endif
+        AppConfig.shared.log("runDebugDetection – detections: count=\(detections.count), labels=\(detections.map { $0.label })")
         let blurredData = renderToJpeg(blurredImage) ?? jpegData
-        #if DEBUG
-        PipelineLog.log("runDebugDetection – done", "blurredDataBytes=\(blurredData.count)")
-        #endif
+        AppConfig.shared.log("runDebugDetection – done: blurredDataBytes=\(blurredData.count)")
         return (blurredData, detections)
     }
 
@@ -162,9 +144,7 @@ actor PrivacyPipelineService {
             .filter { $0.confidence >= Self.objectConfidenceThreshold }
             .compactMap { $0.labels.first?.identifier }
             ?? []
-        #if DEBUG
-        PipelineLog.log("Stage 3 – object detection", "labels=\(labels)")
-        #endif
+        AppConfig.shared.log("Stage 3 – object detection: labels=\(labels)")
         return labels
     }
 
@@ -182,9 +162,7 @@ actor PrivacyPipelineService {
                                        boundingBox: obs.boundingBox)
             }
             ?? []
-        #if DEBUG
-        PipelineLog.log("Stage 3 – object detection (boxes)", "count=\(results.count), items=\(results.map { "\($0.label)@\(Int($0.confidence * 100))%" })")
-        #endif
+        AppConfig.shared.log("Stage 3 – object detection (boxes): count=\(results.count), items=\(results.map { "\($0.label)@\(Int($0.confidence * 100))%" })")
         return results
     }
 
@@ -211,9 +189,7 @@ actor PrivacyPipelineService {
             .prefix(5)
             .map { $0.identifier }
             ?? []
-        #if DEBUG
-        PipelineLog.log("Stage 4 – scene classification", "labels=\(labels)")
-        #endif
+        AppConfig.shared.log("Stage 4 – scene classification: labels=\(labels)")
         return labels
     }
 
@@ -221,21 +197,15 @@ actor PrivacyPipelineService {
 
     private func recognizeSpeech() async -> String? {
         guard SFSpeechRecognizer.authorizationStatus() == .authorized else {
-            #if DEBUG
-            PipelineLog.log("Stage 5 – speech recognition", "skipped: not authorized")
-            #endif
+            AppConfig.shared.log("Stage 5 – speech recognition: skipped: not authorized")
             return nil
         }
         let recognizer = SFSpeechRecognizer(locale: Locale(identifier: "en-US"))
         guard recognizer?.supportsOnDeviceRecognition == true else {
-            #if DEBUG
-            PipelineLog.log("Stage 5 – speech recognition", "skipped: on-device not supported")
-            #endif
+            AppConfig.shared.log("Stage 5 – speech recognition: skipped: on-device not supported")
             return nil
         }
-        #if DEBUG
-        PipelineLog.log("Stage 5 – speech recognition", "completed: transcript=nil (stub)")
-        #endif
+        AppConfig.shared.log("Stage 5 – speech recognition: completed: transcript=nil (stub)")
         return nil
     }
 
