@@ -20,6 +20,11 @@ final class CompanionViewModel {
     var childAge: Int = UserDefaults.standard.childAge
     var timeline: [TimelineEntry] = []
 
+    /// Full-screen debug preview after "Capture Scene".
+    var isShowingScenePreview: Bool = false
+    var capturedImageData: Data?
+    var sceneDetections: [DetectionResult] = []
+
     /// Exposes the currently selected type for the UI (connect button label, etc.)
     var selectedWearableType: WearableType { accessoryManager.selectedType }
 
@@ -71,7 +76,7 @@ final class CompanionViewModel {
 
         imageStreamTask = Task { [weak self] in
             for await imageData in wearable.imageDataStream {
-                await self?.runFullPipeline(jpegData: imageData)
+                await self?.runDetectionPreview(jpegData: imageData)
             }
         }
 
@@ -119,6 +124,12 @@ final class CompanionViewModel {
         sessionState = sessionState.isConnected ? .connected : .idle
     }
 
+    func dismissScenePreview() {
+        isShowingScenePreview = false
+        capturedImageData = nil
+        sceneDetections = []
+    }
+
     // MARK: - Private state handlers
 
     private func handleConnected(name: String) {
@@ -145,7 +156,22 @@ final class CompanionViewModel {
         }
     }
 
-    // MARK: - Full pipeline
+    // MARK: - Detection preview pipeline (debug)
+
+    private func runDetectionPreview(jpegData: Data) async {
+        do {
+            sessionState = .processingPrivacy
+            let (blurredData, detections) = try await privacyPipeline.runDebugDetection(jpegData: jpegData)
+            capturedImageData  = blurredData
+            sceneDetections    = detections
+            isShowingScenePreview = true
+            sessionState = .connected
+        } catch {
+            setError(error.localizedDescription)
+        }
+    }
+
+    // MARK: - Full pipeline (cloud + audio)
 
     private func runFullPipeline(jpegData: Data) async {
         do {

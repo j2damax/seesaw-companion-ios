@@ -28,6 +28,7 @@ actor PrivacyPipelineService {
     // MARK: - CoreML model (optional — graceful fallback if absent)
 
     private var objectDetectionModel: VNCoreMLModel?
+    private let ciContext = CIContext()
 
     init() {
         objectDetectionModel = Self.loadObjectDetectionModel()
@@ -96,6 +97,23 @@ actor PrivacyPipelineService {
         )
     }
 
+    // MARK: - Debug detection (face-blurred image + bounding boxes for preview)
+
+    func runDebugDetection(jpegData: Data) async throws -> (blurredData: Data, detections: [DetectionResult]) {
+        guard let ciImage = CIImage(data: jpegData) else {
+            throw PipelineError.invalidImageData
+        }
+        let blurredImage = try detectAndBlurFaces(in: ciImage)
+        let detections: [DetectionResult]
+        if let model = objectDetectionModel {
+            detections = (try? detectObjectsWithBoxes(model: model, in: blurredImage)) ?? []
+        } else {
+            detections = []
+        }
+        let blurredData = renderToJpeg(blurredImage) ?? jpegData
+        return (blurredData, detections)
+    }
+
     // MARK: - Stage 3: Object detection
 
     private func detectObjects(in image: CIImage) async throws -> [String] {
@@ -107,13 +125,40 @@ actor PrivacyPipelineService {
 
     private func detectObjectsWithModel(_ model: VNCoreMLModel, in image: CIImage) throws -> [String] {
         let handler = VNImageRequestHandler(ciImage: image, options: [:])
-        let request = VNCoreMLRequest(model: model)
+        let request = configuredDetectionRequest(model: model)
         try handler.perform([request])
 
         return (request.results as? [VNRecognizedObjectObservation])?
             .filter { $0.confidence >= Self.objectConfidenceThreshold }
             .compactMap { $0.labels.first?.identifier }
             ?? []
+    }
+
+    private func detectObjectsWithBoxes(model: VNCoreMLModel, in image: CIImage) throws -> [DetectionResult] {
+        let handler = VNImageRequestHandler(ciImage: image, options: [:])
+        let request = configuredDetectionRequest(model: model)
+        try handler.perform([request])
+
+        return (request.results as? [VNRecognizedObjectObservation])?
+            .filter { $0.confidence >= Self.objectConfidenceThreshold }
+            .compactMap { obs -> DetectionResult? in
+                guard let top = obs.labels.first else { return nil }
+                return DetectionResult(label: top.identifier,
+                                       confidence: obs.confidence,
+                                       boundingBox: obs.boundingBox)
+            }
+            ?? []
+    }
+
+    private func configuredDetectionRequest(model: VNCoreMLModel) -> VNCoreMLRequest {
+        let request = VNCoreMLRequest(model: model)
+        request.imageCropAndScaleOption = .scaleFit
+        return request
+    }
+
+    private func renderToJpeg(_ image: CIImage) -> Data? {
+        ciContext.jpegRepresentation(of: image,
+                                     colorSpace: CGColorSpaceCreateDeviceRGB())
     }
 
     // MARK: - Stage 4: Scene classification
@@ -153,8 +198,8 @@ actor PrivacyPipelineService {
     // MARK: - Model loading
 
     private nonisolated static func loadObjectDetectionModel() -> VNCoreMLModel? {
-        guard let url = Bundle.main.url(forResource: "YOLO11n", withExtension: "mlmodelc")
-               ?? Bundle.main.url(forResource: "YOLO11n", withExtension: "mlpackage") else {
+        guard let url = Bundle.main.url(forResource: "seesaw-yolo11n", withExtension: "mlmodelc")
+               ?? Bundle.main.url(forResource: "seesaw-yolo11n", withExtension: "mlpackage") else {
             return nil
         }
         guard let mlModel = try? MLModel(contentsOf: url) else { return nil }

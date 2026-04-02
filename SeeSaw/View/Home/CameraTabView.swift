@@ -31,6 +31,15 @@ struct CameraTabView: View {
             .navigationTitle("Camera")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar { settingsToolbar }
+            .fullScreenCover(isPresented: $vm.isShowingScenePreview) {
+                if let imageData = vm.capturedImageData {
+                    ScenePreviewView(
+                        imageData: imageData,
+                        detections: vm.sceneDetections,
+                        onDismiss: { vm.dismissScenePreview() }
+                    )
+                }
+            }
         }
     }
 
