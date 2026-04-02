@@ -19,7 +19,7 @@ actor AuthenticationService {
     // MARK: - Init
 
     init() {
-        currentSession = loadPersistedSession()
+        currentSession = Self.loadPersistedSession()
     }
 
     // MARK: - Apple Sign-In
@@ -59,7 +59,7 @@ actor AuthenticationService {
 
     // MARK: - Persistence (simple UserDefaults for PoC)
 
-    private func loadPersistedSession() -> UserSession? {
+    private nonisolated static func loadPersistedSession() -> UserSession? {
         guard let userID = UserDefaults.standard.string(forKey: "auth.userID"),
               let providerRaw = UserDefaults.standard.string(forKey: "auth.provider"),
               let provider = AuthProvider(rawValue: providerRaw) else {
@@ -86,13 +86,10 @@ actor AuthenticationService {
 
     private func formatName(_ components: PersonNameComponents?) -> String? {
         guard let components else { return nil }
-        return [components.givenName, components.familyName]
+        let joined = [components.givenName, components.familyName]
             .compactMap { $0 }
             .joined(separator: " ")
-            .nilIfEmpty
+        return joined.isEmpty ? nil : joined
     }
 }
 
-private extension String {
-    var nilIfEmpty: String? { isEmpty ? nil : self }
-}

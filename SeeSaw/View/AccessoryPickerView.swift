@@ -19,7 +19,7 @@ struct AccessoryPickerView: View {
                     HStack(spacing: 14) {
                         Image(systemName: type.systemImage)
                             .frame(width: 28)
-                            .foregroundStyle(accessoryManager.selectedType == type ? .tint : .secondary)
+                            .foregroundStyle(accessoryManager.selectedType == type ? AnyShapeStyle(.tint) : AnyShapeStyle(.secondary))
 
                         VStack(alignment: .leading, spacing: 2) {
                             Text(type.rawValue)

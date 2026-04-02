@@ -30,7 +30,7 @@ actor PrivacyPipelineService {
     private var objectDetectionModel: VNCoreMLModel?
 
     init() {
-        objectDetectionModel = loadObjectDetectionModel()
+        objectDetectionModel = Self.loadObjectDetectionModel()
     }
 
     // MARK: - Public entry point
@@ -123,7 +123,7 @@ actor PrivacyPipelineService {
         let request = VNClassifyImageRequest()
         try handler.perform([request])
 
-        return (request.results as? [VNClassificationObservation])?
+        return (request.results)?
             .filter { $0.confidence >= Self.sceneConfidenceThreshold }
             .prefix(5)
             .map { $0.identifier }
@@ -152,7 +152,7 @@ actor PrivacyPipelineService {
 
     // MARK: - Model loading
 
-    private func loadObjectDetectionModel() -> VNCoreMLModel? {
+    private nonisolated static func loadObjectDetectionModel() -> VNCoreMLModel? {
         guard let url = Bundle.main.url(forResource: "YOLO11n", withExtension: "mlmodelc")
                ?? Bundle.main.url(forResource: "YOLO11n", withExtension: "mlpackage") else {
             return nil
@@ -175,3 +175,4 @@ enum PipelineError: LocalizedError, Sendable {
         }
     }
 }
+

@@ -9,6 +9,7 @@
 // the change takes effect on the next `startDiscovery()` call.
 
 import Foundation
+import AVFoundation
 
 @MainActor
 @Observable

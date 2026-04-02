@@ -17,16 +17,15 @@ actor AudioService {
 
     // MARK: - TTS synthesis
 
+    @MainActor
     private func synthesizeWithAVSpeech(_ text: String) async throws -> Data {
-        let utterance           = AVSpeechUtterance(string: text)
-        utterance.voice         = AVSpeechSynthesisVoice(language: "en-GB")
-        utterance.rate          = AVSpeechUtteranceDefaultSpeechRate * 0.85
-        utterance.pitchMultiplier = 1.1
-
         return try await withCheckedThrowingContinuation { continuation in
             let accumulator = AudioAccumulator()
+            let utterance = AVSpeechUtterance(string: text)
+            utterance.voice = AVSpeechSynthesisVoice(language: "en-GB")
+            utterance.rate = AVSpeechUtteranceDefaultSpeechRate * 0.85
+            utterance.pitchMultiplier = 1.1
             let synthesizer = AVSpeechSynthesizer()
-
             synthesizer.write(utterance) { buffer in
                 guard let pcm = buffer as? AVAudioPCMBuffer else { return }
                 if pcm.frameLength == 0 {

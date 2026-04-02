@@ -40,10 +40,12 @@ final class AuthViewModel {
             }
 
         case .failure(let error):
-            if let nsError = error as? NSError,
-               nsError.code != ASAuthorizationError.canceled.rawValue {
-                errorMessage = error.localizedDescription
+            let nsError = error as NSError
+            // Ignore user-canceled errors from Apple Sign-In
+            if nsError.domain == ASAuthorizationError.errorDomain && nsError.code == ASAuthorizationError.canceled.rawValue {
+                return
             }
+            errorMessage = nsError.localizedDescription
         }
     }
 
@@ -57,3 +59,4 @@ final class AuthViewModel {
         errorMessage = nil
     }
 }
+

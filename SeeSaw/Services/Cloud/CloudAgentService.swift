@@ -33,7 +33,8 @@ actor CloudAgentService {
         var request  = URLRequest(url: endpoint)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.httpBody = try JSONEncoder().encode(payload)
+        let body: Data = try await MainActor.run { try JSONEncoder().encode(payload) }
+        request.httpBody = body
 
         let (data, response) = try await session.data(for: request)
 
@@ -44,7 +45,7 @@ actor CloudAgentService {
             throw CloudError.unexpectedStatusCode(httpResponse.statusCode)
         }
 
-        return try JSONDecoder().decode(StoryResponse.self, from: data)
+        return try await MainActor.run { try JSONDecoder().decode(StoryResponse.self, from: data) }
     }
 }
 
@@ -63,3 +64,4 @@ enum CloudError: LocalizedError, Sendable {
         }
     }
 }
+

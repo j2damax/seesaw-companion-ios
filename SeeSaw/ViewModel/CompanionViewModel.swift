@@ -77,7 +77,7 @@ final class CompanionViewModel {
 
         statusStreamTask = Task { [weak self] in
             for await status in wearable.statusStream {
-                await self?.handleStatus(status)
+                self?.handleStatus(status)
             }
         }
 
