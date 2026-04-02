@@ -164,7 +164,7 @@ actor PrivacyPipelineService {
         try handler.perform([request])
 
         let results = parseDetections(from: request, includeBoxes: true)
-        AppConfig.shared.log("Stage 3 – object detection (boxes): count=\(results.count), items=\(results.map { \"\($0.label)@\(Int($0.confidence * 100))%\" })")
+        AppConfig.shared.log("Stage 3 – object detection (boxes): count=\(results.count), items=\(results.map { "\($0.label)@\(Int($0.confidence * 100))%" })")
         return results
     }
 
