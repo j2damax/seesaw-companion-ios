@@ -25,8 +25,12 @@ struct CameraPreviewView: UIViewRepresentable {
         override class var layerClass: AnyClass { AVCaptureVideoPreviewLayer.self }
 
         var previewLayer: AVCaptureVideoPreviewLayer {
-            // Safe: layerClass guarantees this cast succeeds.
-            layer as! AVCaptureVideoPreviewLayer // swiftlint:disable:this force_cast
+            guard let layer = layer as? AVCaptureVideoPreviewLayer else {
+                // layerClass guarantees this type — if it ever fails, surface loudly in debug.
+                assertionFailure("Expected AVCaptureVideoPreviewLayer as backing layer")
+                return AVCaptureVideoPreviewLayer()
+            }
+            return layer
         }
 
         func setSession(_ session: AVCaptureSession?) {

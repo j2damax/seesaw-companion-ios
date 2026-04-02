@@ -49,9 +49,9 @@ final class OnboardingViewModel {
     let accessoryManager: AccessoryManager
     private let coordinator: AppCoordinator
 
-    // MARK: - Accessory types shown in onboarding (subset of all types)
+    // MARK: - Accessory types shown in onboarding (derived from WearableType.isShownInOnboarding)
 
-    let onboardingAccessoryTypes: [WearableType] = [.iPhoneCamera, .aiSeeBLE, .metaGlass]
+    let onboardingAccessoryTypes: [WearableType] = WearableType.allCases.filter { $0.isShownInOnboarding }
 
     // MARK: - Init
 

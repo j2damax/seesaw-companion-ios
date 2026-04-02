@@ -162,6 +162,14 @@ struct WearableTypeTests {
         #expect(!WearableType.mfiCamera.requiresBluetooth)
     }
 
+    @Test func onboardingFilterExcludesMFiCamera() async throws {
+        let onboarding = WearableType.allCases.filter { $0.isShownInOnboarding }
+        #expect(!onboarding.contains(.mfiCamera))
+        #expect(onboarding.contains(.iPhoneCamera))
+        #expect(onboarding.contains(.aiSeeBLE))
+        #expect(onboarding.contains(.metaGlass))
+    }
+
     @Test func allCasesCount() async throws {
         // Ensure no cases are accidentally removed
         #expect(WearableType.allCases.count == 4)

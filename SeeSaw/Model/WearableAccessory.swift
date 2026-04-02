@@ -99,6 +99,15 @@ enum WearableType: String, CaseIterable, Sendable {
         }
     }
 
+    /// Whether this accessory type is shown in the onboarding wizard.
+    /// Returns false for .mfiCamera (requires physical MFi hardware — not shown to new users).
+    var isShownInOnboarding: Bool {
+        switch self {
+        case .iPhoneCamera, .aiSeeBLE, .metaGlass: return true
+        case .mfiCamera: return false
+        }
+    }
+
     var requiresBluetooth: Bool {
         switch self {
         case .aiSeeBLE: return true

@@ -16,14 +16,16 @@ struct CameraTabView: View {
 
     var body: some View {
         NavigationStack {
-            VStack(spacing: 0) {
-                previewArea
-                controlsArea
-                    .padding(20)
-                if let error = vm.lastError {
-                    errorBanner(error)
-                        .padding(.horizontal, 20)
-                        .padding(.bottom, 8)
+            GeometryReader { geo in
+                VStack(spacing: 0) {
+                    previewArea(height: geo.size.height * 0.52)
+                    controlsArea
+                        .padding(20)
+                    if let error = vm.lastError {
+                        errorBanner(error)
+                            .padding(.horizontal, 20)
+                            .padding(.bottom, 8)
+                    }
                 }
             }
             .navigationTitle("Camera")
@@ -34,7 +36,7 @@ struct CameraTabView: View {
 
     // MARK: - Camera preview
 
-    private var previewArea: some View {
+    private func previewArea(height: CGFloat) -> some View {
         ZStack {
             if let session = vm.cameraPreviewSession {
                 CameraPreviewView(session: session)
@@ -56,7 +58,7 @@ struct CameraTabView: View {
                 .padding(12)
             }
         }
-        .frame(maxHeight: UIScreen.main.bounds.height * 0.52)
+        .frame(height: height)
     }
 
     private var cameraPlaceholder: some View {
