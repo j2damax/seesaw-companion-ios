@@ -25,6 +25,18 @@ actor PrivacyPipelineService {
     private static let objectConfidenceThreshold: Float = 0.4
     private static let sceneConfidenceThreshold: Float  = 0.3
 
+    // MARK: - YOLO class labels (must match seesaw-yolo11n.mlpackage training config)
+
+    private static let classLabels: [String] = [
+        "bed", "sofa", "chair", "table", "lamp", "tv", "laptop", "wardrobe",
+        "window", "door", "potted_plant", "photo_frame", "teddy_bear", "book",
+        "sports_ball", "backpack", "bottle", "cup", "building_blocks", "dinosaur_toy",
+        "stuffed_animal", "picture_book", "crayon", "toy_car", "puzzle_piece", "carpet",
+        "chimney", "clock", "crib", "cupboard", "curtains", "faucet", "floor_decor",
+        "glass", "pillows", "pots", "rugs", "shelf", "stairs", "storage", "whiteboard",
+        "toy_airplane", "toy_fire_truck", "toy_jeep"
+    ]
+
     // MARK: - CoreML model (optional — graceful fallback if absent)
 
     private var objectDetectionModel: VNCoreMLModel?
@@ -140,10 +152,8 @@ actor PrivacyPipelineService {
         let request = configuredDetectionRequest(model: model)
         try handler.perform([request])
 
-        let labels = (request.results as? [VNRecognizedObjectObservation])?
-            .filter { $0.confidence >= Self.objectConfidenceThreshold }
-            .compactMap { $0.labels.first?.identifier }
-            ?? []
+        let detections = parseDetections(from: request, includeBoxes: false)
+        let labels = detections.map { $0.label }
         AppConfig.shared.log("Stage 3 – object detection: labels=\(labels)")
         return labels
     }
@@ -153,16 +163,60 @@ actor PrivacyPipelineService {
         let request = configuredDetectionRequest(model: model)
         try handler.perform([request])
 
-        let results = (request.results as? [VNRecognizedObjectObservation])?
-            .filter { $0.confidence >= Self.objectConfidenceThreshold }
-            .compactMap { obs -> DetectionResult? in
-                guard let top = obs.labels.first else { return nil }
-                return DetectionResult(label: top.identifier,
-                                       confidence: obs.confidence,
-                                       boundingBox: obs.boundingBox)
+        let results = parseDetections(from: request, includeBoxes: true)
+        AppConfig.shared.log("Stage 3 – object detection (boxes): count=\(results.count), items=\(results.map { \"\($0.label)@\(Int($0.confidence * 100))%\" })")
+        return results
+    }
+
+    /// Parses `VNCoreMLFeatureValueObservation` results produced by the YOLO11n NMS model.
+    /// The model outputs two MultiArray features:
+    ///   - "confidence"  [N, 44] — per-box class scores (post-NMS)
+    ///   - "coordinates" [N, 4]  — per-box [x_center, y_center, width, height] normalised (top-left origin)
+    /// Vision does not automatically map these to `VNRecognizedObjectObservation`; they must be read directly.
+    private func parseDetections(from request: VNCoreMLRequest, includeBoxes: Bool) -> [DetectionResult] {
+        guard let observations = request.results as? [VNCoreMLFeatureValueObservation],
+              let confidenceArray  = observations.first(where: { $0.featureName == "confidence"  })?.featureValue.multiArrayValue,
+              let coordinatesArray = observations.first(where: { $0.featureName == "coordinates" })?.featureValue.multiArrayValue,
+              confidenceArray.shape.count == 2,
+              coordinatesArray.shape.count == 2 else {
+            AppConfig.shared.log("Stage 3 – object detection: unexpected result type or missing features", level: .warning)
+            return []
+        }
+
+        let numBoxes   = confidenceArray.shape[0].intValue
+        let numClasses = confidenceArray.shape[1].intValue
+        var results: [DetectionResult] = []
+
+        for boxIdx in 0..<numBoxes {
+            var maxConf: Float = 0
+            var maxClass = 0
+            for clsIdx in 0..<numClasses {
+                let conf = confidenceArray[[boxIdx, clsIdx] as [NSNumber]].floatValue
+                if conf > maxConf { maxConf = conf; maxClass = clsIdx }
             }
-            ?? []
-        AppConfig.shared.log("Stage 3 – object detection (boxes): count=\(results.count), items=\(results.map { "\($0.label)@\(Int($0.confidence * 100))%" })")
+            guard maxConf >= Self.objectConfidenceThreshold,
+                  maxClass < Self.classLabels.count else { continue }
+
+            let boundingBox: CGRect
+            if includeBoxes {
+                let xCenter = coordinatesArray[[boxIdx, 0] as [NSNumber]].floatValue
+                let yCenter = coordinatesArray[[boxIdx, 1] as [NSNumber]].floatValue
+                let width   = coordinatesArray[[boxIdx, 2] as [NSNumber]].floatValue
+                let height  = coordinatesArray[[boxIdx, 3] as [NSNumber]].floatValue
+                // YOLO outputs [xc, yc, w, h] with top-left origin (0,0 = top-left corner).
+                // Vision expects [x, y, w, h] with bottom-left origin (0,0 = bottom-left corner).
+                // Convert: x = xc - w/2  (left edge),  y = 1 - yc - h/2  (flip + move to bottom edge)
+                boundingBox = CGRect(x: CGFloat(xCenter - width / 2),
+                                     y: CGFloat(1 - yCenter - height / 2),
+                                     width: CGFloat(width),
+                                     height: CGFloat(height))
+            } else {
+                boundingBox = .zero
+            }
+            results.append(DetectionResult(label: Self.classLabels[maxClass],
+                                            confidence: maxConf,
+                                            boundingBox: boundingBox))
+        }
         return results
     }
 
