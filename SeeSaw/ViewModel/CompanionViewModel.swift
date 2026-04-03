@@ -7,6 +7,7 @@
 
 import AVFoundation
 import Foundation
+import UIKit
 
 @MainActor
 @Observable
@@ -161,8 +162,30 @@ final class CompanionViewModel {
     private func runDetectionPreview(jpegData: Data) async {
         do {
             AppConfig.shared.log("runDetectionPreview: start, jpegBytes=\(jpegData.count)")
+
+            let dataToUse: Data
+            if AppConfig.shared.useTestImageForPreview {
+                if let testImage = UIImage(named: "test1") {
+                    if let data = testImage.pngData() {
+                        AppConfig.shared.log("runDetectionPreview: using test image 'test1' for preview")
+                        dataToUse = data
+                    } else if let data = testImage.jpegData(compressionQuality: 1.0) {
+                        AppConfig.shared.log("runDetectionPreview: using test image 'test1' (jpeg) for preview")
+                        dataToUse = data
+                    } else {
+                        AppConfig.shared.log("runDetectionPreview: warning - test image 'test1' found but failed to extract image data, using original jpegData", level: .warning)
+                        dataToUse = jpegData
+                    }
+                } else {
+                    AppConfig.shared.log("runDetectionPreview: warning - test image asset 'test1' not found, using original jpegData", level: .warning)
+                    dataToUse = jpegData
+                }
+            } else {
+                dataToUse = jpegData
+            }
+
             sessionState = .processingPrivacy
-            let (blurredData, detections) = try await privacyPipeline.runDebugDetection(jpegData: jpegData)
+            let (blurredData, detections) = try await privacyPipeline.runDebugDetection(jpegData: dataToUse)
             capturedImageData  = blurredData
             sceneDetections    = detections
             isShowingScenePreview = true

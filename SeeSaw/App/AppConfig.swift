@@ -19,13 +19,18 @@ struct AppConfig: Sendable {
     /// Set to true automatically in Debug builds; always false in Release.
     let enableLogging: Bool
 
+    /// When true, use the asset image named "test1" for the preview/detection pipeline instead of camera capture (test mode).
+    let useTestImageForPreview: Bool
+
     // MARK: - Init
 
     private init() {
         #if DEBUG
         enableLogging = true
+        useTestImageForPreview = false // Change to false to use real camera
         #else
         enableLogging = false
+        useTestImageForPreview = false
         #endif
     }
 }

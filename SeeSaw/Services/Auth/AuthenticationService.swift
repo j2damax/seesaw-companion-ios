@@ -1,12 +1,12 @@
 // AuthenticationService.swift
 // SeeSaw — Tier 2 companion app
 //
-// Handles Sign In with Apple using the native AuthenticationServices framework.
-// The parent authenticates once; the session is persisted in the Keychain via
-// ASAuthorizationAppleIDProvider credential state checks.
+// Handles Sign In with Apple and Google Sign-In via Firebase Authentication.
 
 import AuthenticationServices
+import FirebaseAuth
 import Foundation
+import GoogleSignIn
 
 actor AuthenticationService {
 
@@ -39,9 +39,59 @@ actor AuthenticationService {
         persistSession(session)
     }
 
+    // MARK: - Google Sign-In
+
+    /// Presents the Google Sign-In flow, exchanges the Google credential for a
+    /// Firebase Auth credential, and creates a local session on success.
+    func signInWithGoogle() async throws {
+        guard let windowScene = await MainActor.run(body: {
+            UIApplication.shared.connectedScenes
+                .compactMap { $0 as? UIWindowScene }
+                .first
+        }) else {
+            throw AuthError.missingPresentingWindow
+        }
+
+        let rootVC: UIViewController = try await MainActor.run {
+            guard let vc = windowScene.windows.first(where: \.isKeyWindow)?.rootViewController else {
+                throw AuthError.missingPresentingWindow
+            }
+            return vc
+        }
+
+        let result = try await GIDSignIn.sharedInstance.signIn(withPresenting: rootVC)
+        let user = result.user
+
+        guard let idToken = user.idToken?.tokenString else {
+            throw AuthError.missingGoogleIDToken
+        }
+
+        let credential = GoogleAuthProvider.credential(
+            withIDToken: idToken,
+            accessToken: user.accessToken.tokenString
+        )
+
+        let authResult = try await Auth.auth().signIn(with: credential)
+        let firebaseUser = authResult.user
+
+        let session = UserSession(
+            userID: firebaseUser.uid,
+            fullName: firebaseUser.displayName,
+            email: firebaseUser.email,
+            provider: .google
+        )
+        currentSession = session
+        persistSession(session)
+    }
+
     // MARK: - Sign-out
 
     func signOut() {
+        // Sign out from Firebase
+        try? Auth.auth().signOut()
+        // Disconnect Google Sign-In
+        GIDSignIn.sharedInstance.signOut()
+
         currentSession = nil
         clearPersistedSession()
     }
@@ -92,4 +142,20 @@ actor AuthenticationService {
         return joined.isEmpty ? nil : joined
     }
 }
+
+// MARK: - Errors
+enum AuthError: LocalizedError {
+    case missingPresentingWindow
+    case missingGoogleIDToken
+
+    var errorDescription: String? {
+        switch self {
+        case .missingPresentingWindow:
+            "Unable to find a window to present Google Sign-In."
+        case .missingGoogleIDToken:
+            "Google Sign-In did not return an ID token."
+        }
+    }
+}
+
 

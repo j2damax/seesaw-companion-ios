@@ -4,10 +4,15 @@
 // @main entry point. Bootstraps the DI container and root coordinator,
 // then renders the appropriate root view based on app state.
 
+import FirebaseCore
 import SwiftUI
 
 @main
 struct SeeSawApp: App {
+
+    init() {
+        FirebaseApp.configure()
+    }
 
     var body: some Scene {
         WindowGroup {

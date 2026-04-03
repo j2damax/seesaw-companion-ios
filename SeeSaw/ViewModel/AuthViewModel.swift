@@ -49,10 +49,26 @@ final class AuthViewModel {
         }
     }
 
-    // MARK: - Google Sign-In (stub — requires Google SDK in production)
+    // MARK: - Google Sign-In
 
     func handleGoogleSignIn() {
-        errorMessage = "Google Sign-In requires the Google Identity SDK. Coming soon."
+        isLoading = true
+        errorMessage = nil
+        Task {
+            do {
+                try await authService.signInWithGoogle()
+                isLoading = false
+                coordinator.signInCompleted()
+            } catch {
+                isLoading = false
+                // Ignore user-canceled errors from Google Sign-In
+                let nsError = error as NSError
+                if nsError.domain == "com.google.GIDSignIn" && nsError.code == -5 {
+                    return
+                }
+                errorMessage = error.localizedDescription
+            }
+        }
     }
 
     func clearError() {
