@@ -45,7 +45,11 @@ actor PrivacyPipelineService {
     private let ciContext = CIContext()
 
     init() {
-        objectDetectionModel = Self.loadObjectDetectionModel()
+        let (model, loadWarning) = Self.loadObjectDetectionModel()
+        objectDetectionModel = model
+        if let warning = loadWarning {
+            AppConfig.shared.log("init: \(warning)", level: .error)
+        }
         AppConfig.shared.log("init: objectDetectionModel loaded=\(objectDetectionModel != nil)")
     }
 
@@ -304,13 +308,36 @@ actor PrivacyPipelineService {
 
     // MARK: - Model loading
 
-    private nonisolated static func loadObjectDetectionModel() -> VNCoreMLModel? {
+    /// Loads and validates the YOLO object-detection model.
+    /// Returns `(nil, warningMessage)` when the model cannot be used so the
+    /// caller can surface a clear diagnostic immediately at startup.
+    private nonisolated static func loadObjectDetectionModel() -> (VNCoreMLModel?, String?) {
         guard let url = Bundle.main.url(forResource: "seesaw-yolo11n", withExtension: "mlmodelc")
                ?? Bundle.main.url(forResource: "seesaw-yolo11n", withExtension: "mlpackage") else {
-            return nil
+            return (nil, "loadObjectDetectionModel: model file not found in bundle")
         }
-        guard let mlModel = try? MLModel(contentsOf: url) else { return nil }
-        return try? VNCoreMLModel(for: mlModel)
+        guard let mlModel = try? MLModel(contentsOf: url) else {
+            return (nil, "loadObjectDetectionModel: MLModel init failed")
+        }
+
+        // Validate that the confidence output dimension matches classLabels.count.
+        // A mismatch means the NMS pipeline inside the mlpackage was exported against a
+        // different class count than the detection head — a common Ultralytics export bug.
+        // Fix: re-export with matching weights: model.export(format='coreml', nms=True, imgsz=640)
+        if let confDesc = mlModel.modelDescription.outputDescriptionsByName["confidence"],
+           let shape = confDesc.multiArrayConstraint?.shape,
+           shape.count >= 2 {
+            let modelClassCount = shape[1].intValue
+            if modelClassCount != classLabels.count {
+                let msg = "loadObjectDetectionModel: class count mismatch – model outputs \(modelClassCount) classes, expected \(classLabels.count). Re-export seesaw-yolo11n.mlpackage using the 44-class best.pt: model.export(format='coreml', nms=True, imgsz=640)"
+                return (nil, msg)
+            }
+        }
+
+        guard let visionModel = try? VNCoreMLModel(for: mlModel) else {
+            return (nil, "loadObjectDetectionModel: VNCoreMLModel init failed")
+        }
+        return (visionModel, nil)
     }
 }
 
