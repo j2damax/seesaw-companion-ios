@@ -1,66 +1,117 @@
+// ContentView.swift
+// SeeSaw — Tier 2 companion app
 //
-//  ContentView.swift
-//  SeeSaw
-//
-//  Created by Jayampathy Balasuriya on 2026-03-23.
-//
+// Root view for the main companion screen (post sign-in).
+// Displays session status and connection controls for the parent.
 
 import SwiftUI
-import SwiftData
 
 struct ContentView: View {
-    @Environment(\.modelContext) private var modelContext
-    @Query private var items: [Item]
+
+    @State private var vm: CompanionViewModel
+    private let coordinator: AppCoordinator
+
+    init(viewModel: CompanionViewModel, coordinator: AppCoordinator) {
+        _vm = State(initialValue: viewModel)
+        self.coordinator = coordinator
+    }
+
+    // MARK: - Body
 
     var body: some View {
-        NavigationSplitView {
-            List {
-                ForEach(items) { item in
-                    NavigationLink {
-                        Text("Item at \(item.timestamp, format: Date.FormatStyle(date: .numeric, time: .standard))")
-                    } label: {
-                        Text(item.timestamp, format: Date.FormatStyle(date: .numeric, time: .standard))
-                    }
+        NavigationStack {
+            VStack(spacing: 24) {
+                StatusView(
+                    state: vm.sessionState,
+                    deviceName: vm.connectedDeviceName,
+                    wearableType: vm.selectedWearableType
+                )
+
+                controlButtons
+
+                if let error = vm.lastError {
+                    errorBanner(error)
                 }
-                .onDelete(perform: deleteItems)
+
+                Spacer()
             }
-#if os(macOS)
-            .navigationSplitViewColumnWidth(min: 180, ideal: 200)
-#endif
-            .toolbar {
-#if os(iOS)
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    EditButton()
-                }
-#endif
-                ToolbarItem {
-                    Button(action: addItem) {
-                        Label("Add Item", systemImage: "plus")
-                    }
-                }
-            }
-        } detail: {
-            Text("Select an item")
+            .padding()
+            .navigationTitle("SeeSaw")
+            .toolbar { toolbarContent }
         }
     }
 
-    private func addItem() {
-        withAnimation {
-            let newItem = Item(timestamp: Date())
-            modelContext.insert(newItem)
+    // MARK: - Control buttons
+
+    @ViewBuilder
+    private var controlButtons: some View {
+        switch vm.sessionState {
+        case .idle:
+            Button(vm.selectedWearableType.connectActionLabel) { vm.startScanning() }
+                .buttonStyle(.borderedProminent)
+
+        case .scanning:
+            Button("Cancel") { vm.stopScanning() }
+                .buttonStyle(.bordered)
+                .tint(.secondary)
+
+        case .connected:
+            VStack(spacing: 12) {
+                Button("Capture Scene") { vm.captureScene() }
+                    .buttonStyle(.borderedProminent)
+                Button("Disconnect") { vm.disconnect() }
+                    .buttonStyle(.bordered)
+                    .tint(.secondary)
+            }
+
+        case .error:
+            Button("Dismiss") { vm.dismissError() }
+                .buttonStyle(.bordered)
+                .tint(.red)
+
+        default:
+            EmptyView()
         }
     }
 
-    private func deleteItems(offsets: IndexSet) {
-        withAnimation {
-            for index in offsets {
-                modelContext.delete(items[index])
+    // MARK: - Error banner
+
+    private func errorBanner(_ message: String) -> some View {
+        Text(message)
+            .font(.caption)
+            .foregroundStyle(.red)
+            .multilineTextAlignment(.center)
+            .padding(.horizontal)
+    }
+
+    // MARK: - Toolbar
+
+    @ToolbarContentBuilder
+    private var toolbarContent: some ToolbarContent {
+        ToolbarItem(placement: .topBarTrailing) {
+            NavigationLink {
+                SettingsView(
+                    childAge: $vm.childAge,
+                    accessoryManager: coordinator.container.accessoryManager
+                )
+            } label: {
+                Image(systemName: "gear")
             }
+        }
+        ToolbarItem(placement: .topBarLeading) {
+            Button("Sign Out") { coordinator.signOut() }
+                .font(.caption)
         }
     }
 }
 
 #Preview {
-    ContentView()
-        .modelContainer(for: Item.self, inMemory: true)
+    let container = AppDependencyContainer()
+    let coordinator = AppCoordinator(container: container)
+    ContentView(
+        viewModel: container.makeCompanionViewModel(),
+        coordinator: coordinator
+    )
 }
+
+

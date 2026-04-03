@@ -1,32 +1,58 @@
+// SeeSawApp.swift
+// SeeSaw — Tier 2 companion app
 //
-//  SeeSawApp.swift
-//  SeeSaw
-//
-//  Created by Jayampathy Balasuriya on 2026-03-23.
-//
+// @main entry point. Bootstraps the DI container and root coordinator,
+// then renders the appropriate root view based on app state.
 
+import FirebaseCore
 import SwiftUI
-import SwiftData
 
 @main
 struct SeeSawApp: App {
-    var sharedModelContainer: ModelContainer = {
-        let schema = Schema([
-            Item.self,
-        ])
-        let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
 
-        do {
-            return try ModelContainer(for: schema, configurations: [modelConfiguration])
-        } catch {
-            fatalError("Could not create ModelContainer: \(error)")
-        }
-    }()
+    init() {
+        FirebaseApp.configure()
+    }
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            AppRootView()
         }
-        .modelContainer(sharedModelContainer)
     }
 }
+
+// MARK: - Root View
+
+/// Hosts the coordinator as @State so it is created on the @MainActor
+/// thread guaranteed by SwiftUI's view rendering.
+@MainActor
+struct AppRootView: View {
+
+    @State private var coordinator: AppCoordinator = {
+        let container = AppDependencyContainer()
+        return AppCoordinator(container: container)
+    }()
+
+    var body: some View {
+        coordinatedView
+            .animation(.easeInOut(duration: 0.25), value: coordinator.currentRoute == .home)
+    }
+
+    @ViewBuilder
+    private var coordinatedView: some View {
+        switch coordinator.currentRoute {
+        case .launch:
+            LaunchScreenView(coordinator: coordinator)
+        case .terms:
+            TermsView(coordinator: coordinator)
+        case .signIn:
+            SignInView(coordinator: coordinator)
+        case .onboarding:
+            OnboardingView(coordinator: coordinator)
+        case .home:
+            HomeView(coordinator: coordinator)
+        }
+    }
+}
+
+
