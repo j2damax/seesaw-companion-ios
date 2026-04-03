@@ -5,7 +5,7 @@
 // Stages:
 //   1. Face detection (VNDetectFaceRectanglesRequest)
 //   2. Face blur (CIGaussianBlur, sigma ≥ 30)
-//   3. Object detection (VNCoreMLRequest / YOLO11n, confidence ≥ 0.4)
+//   3. Object detection (VNCoreMLRequest / YOLO11n, confidence ≥ 0.25)
 //   4. Scene classification (VNClassifyImageRequest, confidence ≥ 0.3)
 //   5. On-device speech recognition (SFSpeechRecognizer, on-device only)
 //   6. PII scrub
@@ -22,7 +22,9 @@ actor PrivacyPipelineService {
 
     // MARK: - Thresholds
 
-    private static let objectConfidenceThreshold: Float = 0.4
+    // 0.25 matches the YOLO11n training configuration (seesaw_children.yaml) and the
+    // default confidenceThreshold embedded in seesaw-yolo11n.mlpackage.
+    private static let objectConfidenceThreshold: Float = 0.25
     private static let sceneConfidenceThreshold: Float  = 0.3
 
     // MARK: - YOLO class labels (must match seesaw-yolo11n.mlpackage training config)
@@ -128,7 +130,12 @@ actor PrivacyPipelineService {
         let blurredImage = try detectAndBlurFaces(in: ciImage)
         let detections: [DetectionResult]
         if let model = objectDetectionModel {
-            detections = (try? detectObjectsWithBoxes(model: model, in: blurredImage)) ?? []
+            do {
+                detections = try detectObjectsWithBoxes(model: model, in: blurredImage)
+            } catch {
+                AppConfig.shared.log("runDebugDetection – detection error: \(error)", level: .error)
+                detections = []
+            }
         } else {
             detections = []
         }
@@ -168,18 +175,39 @@ actor PrivacyPipelineService {
         return results
     }
 
-    /// Parses `VNCoreMLFeatureValueObservation` results produced by the YOLO11n NMS model.
-    /// The model outputs two MultiArray features:
-    ///   - "confidence"  [N, 44] — per-box class scores (post-NMS)
-    ///   - "coordinates" [N, 4]  — per-box [x_center, y_center, width, height] normalised (top-left origin)
-    /// Vision does not automatically map these to `VNRecognizedObjectObservation`; they must be read directly.
+    /// Parses detection results from a VNCoreMLRequest.
+    /// Handles two observation types that Vision may produce for NMS YOLO models:
+    ///   A. `VNRecognizedObjectObservation` — Vision auto-maps confidence/coordinates outputs
+    ///      when it recognises the NMS output pattern.  boundingBox is already in Vision
+    ///      normalised space (bottom-left origin, 0–1).
+    ///   B. `VNCoreMLFeatureValueObservation` — raw multi-array fallback when Vision does not
+    ///      auto-convert.  The model outputs two MultiArray features:
+    ///        - "confidence"  [N, 44] — per-box class scores (post-NMS)
+    ///        - "coordinates" [N, 4]  — per-box [x_center, y_center, width, height] normalised
+    ///          (top-left origin).  Must be converted to Vision space for display.
     private func parseDetections(from request: VNCoreMLRequest, includeBoxes: Bool) -> [DetectionResult] {
+        // Case A — Vision automatically converted NMS outputs to recognized-object observations.
+        if let recognized = request.results as? [VNRecognizedObjectObservation] {
+            let results = recognized.compactMap { obs -> DetectionResult? in
+                guard let top = obs.labels.first,
+                      top.confidence >= Self.objectConfidenceThreshold else { return nil }
+                return DetectionResult(
+                    label: top.identifier,
+                    confidence: top.confidence,
+                    boundingBox: includeBoxes ? obs.boundingBox : .zero
+                )
+            }
+            AppConfig.shared.log("Stage 3 – object detection (recognized): count=\(results.count), items=\(results.map { "\($0.label)@\(Int($0.confidence * 100))%" })")
+            return results
+        }
+
+        // Case B — Raw feature-value multi-arrays.
         guard let observations = request.results as? [VNCoreMLFeatureValueObservation],
               let confidenceArray  = observations.first(where: { $0.featureName == "confidence"  })?.featureValue.multiArrayValue,
               let coordinatesArray = observations.first(where: { $0.featureName == "coordinates" })?.featureValue.multiArrayValue,
               confidenceArray.shape.count == 2,
               coordinatesArray.shape.count == 2 else {
-            AppConfig.shared.log("Stage 3 – object detection: unexpected result type or missing features", level: .warning)
+            AppConfig.shared.log("Stage 3 – object detection: unexpected result type '\(type(of: request.results))' or missing features", level: .warning)
             return []
         }
 
