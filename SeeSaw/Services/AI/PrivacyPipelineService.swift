@@ -311,6 +311,11 @@ actor PrivacyPipelineService {
     /// Loads and validates the YOLO object-detection model.
     /// Returns `(nil, warningMessage)` when the model cannot be used so the
     /// caller can surface a clear diagnostic immediately at startup.
+    ///
+    /// A probe inference on a 1×1 black image is used to detect NMS pipeline mismatches
+    /// (e.g. backbone outputs 80 COCO classes but NMS expects 44 custom classes).
+    /// Swift's `MLModel` API only exposes the pipeline's outer output shapes — which are
+    /// empty/dynamic for NMS models — so static descriptor checks cannot catch this bug.
     private nonisolated static func loadObjectDetectionModel() -> (VNCoreMLModel?, String?) {
         guard let url = Bundle.main.url(forResource: "seesaw-yolo11n", withExtension: "mlmodelc")
                ?? Bundle.main.url(forResource: "seesaw-yolo11n", withExtension: "mlpackage") else {
@@ -319,25 +324,36 @@ actor PrivacyPipelineService {
         guard let mlModel = try? MLModel(contentsOf: url) else {
             return (nil, "loadObjectDetectionModel: MLModel init failed")
         }
-
-        // Validate that the confidence output dimension matches classLabels.count.
-        // A mismatch means the NMS pipeline inside the mlpackage was exported against a
-        // different class count than the detection head — a common Ultralytics export bug.
-        // Fix: re-export with matching weights: model.export(format='coreml', nms=True, imgsz=640)
-        if let confDesc = mlModel.modelDescription.outputDescriptionsByName["confidence"],
-           let shape = confDesc.multiArrayConstraint?.shape,
-           shape.count >= 2 {
-            let modelClassCount = shape[1].intValue
-            if modelClassCount != classLabels.count {
-                let msg = "loadObjectDetectionModel: class count mismatch – model outputs \(modelClassCount) classes, expected \(classLabels.count). Re-export seesaw-yolo11n.mlpackage using the 44-class best.pt: model.export(format='coreml', nms=True, imgsz=640)"
-                return (nil, msg)
-            }
-        }
-
         guard let visionModel = try? VNCoreMLModel(for: mlModel) else {
             return (nil, "loadObjectDetectionModel: VNCoreMLModel init failed")
         }
+
+        // Probe: run a 1×1 inference to validate the full pipeline at load time.
+        // This catches NMS class-count mismatches that are invisible from MLModel.modelDescription
+        // because the pipeline's outer output shapes are empty (dynamic). The error only surfaces
+        // when CoreML tries to connect model 0's output to model 1's NMS during evaluation.
+        // Fix for the known mismatch: re-export from the 44-class best.pt:
+        //   model.export(format='coreml', nms=True, imgsz=640)
+        if let probeError = probeModelPipeline(visionModel) {
+            let msg = "loadObjectDetectionModel: pipeline validation failed – \(probeError.localizedDescription). Re-export seesaw-yolo11n.mlpackage using the 44-class best.pt: model.export(format='coreml', nms=True, imgsz=640)"
+            return (nil, msg)
+        }
+
         return (visionModel, nil)
+    }
+
+    /// Runs a synchronous 1×1 probe inference to validate the CoreML pipeline.
+    /// Returns the error if the pipeline fails, or `nil` if it succeeds.
+    private nonisolated static func probeModelPipeline(_ visionModel: VNCoreMLModel) -> Error? {
+        let blackPixel = CIImage(color: CIColor.black).cropped(to: CGRect(x: 0, y: 0, width: 1, height: 1))
+        let handler = VNImageRequestHandler(ciImage: blackPixel, options: [:])
+        let request = VNCoreMLRequest(model: visionModel)
+        do {
+            try handler.perform([request])
+            return nil
+        } catch {
+            return error
+        }
     }
 }
 
