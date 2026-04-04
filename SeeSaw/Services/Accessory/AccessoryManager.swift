@@ -21,7 +21,7 @@ final class AccessoryManager {
         didSet {
             guard selectedType != oldValue else { return }
             UserDefaults.standard.selectedWearableType = selectedType
-            AppConfig.shared.log("selectedType changed: \(oldValue.displayName) → \(selectedType.displayName)")
+            AppConfig.shared.log("selectedType changed: \(oldValue.rawValue) → \(selectedType.rawValue)")
         }
     }
 
