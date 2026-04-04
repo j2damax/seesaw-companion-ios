@@ -2,10 +2,6 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>NSMicrophoneUsageDescription</key>
-	<string>SeeSaw needs microphone access to capture audio for the announcement feature.</string>
-	<key>NSSpeechRecognitionUsageDescription</key>
-	<string>SeeSaw uses on-device speech recognition to transcribe audio. No audio data is sent to the cloud.</string>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
