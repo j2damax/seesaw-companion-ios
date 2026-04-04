@@ -47,10 +47,10 @@ Apple's on-device model is a ~3B parameter language model running entirely on th
 ### The New Pipeline (Single iPhone, No Cloud Required)
 
 ```
-AiSee Headset (Tier 1)
-    │ BLE: JPEG chunks + PCM audio
+AiSee Headset/iPhone itself from Tier 2/Meta Glass (Tier 1)
+    │ Image + Audio
     ▼
-iPhone Companion App (Tier 2 — now does everything)
+iPhone Companion App (Tier 2 )
     │
     ├─ Stage 1: VNDetectFaceRectanglesRequest → face bounding boxes
     ├─ Stage 2: CIGaussianBlur → anonymised frame (faces removed)
@@ -63,7 +63,7 @@ iPhone Companion App (Tier 2 — now does everything)
     │           Input: SceneContext + child age + preferences + conversation history
     │           Output: @Generable StoryBeat { storyText, question, isEnding, theme }
     │
-    ├─ Stage 7: AVSpeechSynthesizer → speaks storyText to AiSee via BLE audio
+    ├─ Stage 7: AVSpeechSynthesizer → speaks storyText to AiSee via BLE audio/iPhone/Meta Glass
     ├─ Stage 8: AVSpeechSynthesizer → speaks question
     ├─ Stage 9: SFSpeechRecognizer → captures child's answer
     └─ Loop back to Stage 6 with answer as continuation context

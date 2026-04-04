@@ -478,13 +478,19 @@ Phases 1–3 and 5 can be developed in parallel. Phase 6 depends on Phases 1–5
 ## Open Questions
 
 1. **Test image:** Does the existing `test1` asset contain a human face? If not, what face image should be used for the privacy assertion test?
+Answer: faces folder in assest contains, multiple images for human faces, use as required
 
 2. **ScenePayload extension:** Should `session_id`, `query`, `timestamp` be added to `ScenePayload` directly (breaking the 4-field privacy boundary) or kept in a separate `StoryRequest` wrapper?
+Answer: Add the ScenePayload directly
 
-3. **PII scrub aggressiveness:** Conservative (only explicit "My name is X" patterns) or aggressive (any capitalised non-common-noun)?
+3. **PII scrub aggressiveness:** Conservative (only explicit "My name is X" patterns) or aggressive (any capitalised non-common-noun)? 
+Answer; only explicit "My name is X" patterns
 
 4. **XCTest vs Swift Testing:** Task 2 specifies XCTest; existing tests use Swift Testing. Confirm XCTest is preferred for the privacy tests (both frameworks coexist).
+Answer: priority for Swift, if needed use both
 
 5. **CSV export UI:** Should a button be added to SettingsView, or is programmatic-only access (via tests/debugger) sufficient?
+Answer: programitic only access via AppConfig
 
 6. **Signpost hooks:** Add `os_signpost` for Instruments visibility in addition to the programmatic `CFAbsoluteTimeGetCurrent()` timing?
+Answer: Choose as required
