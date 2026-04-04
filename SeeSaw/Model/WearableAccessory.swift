@@ -56,6 +56,34 @@ protocol WearableAccessory: AnyObject {
 
     /// Send a control command string (see BLEConstants.cmd* values).
     func sendCommand(_ command: String) async throws
+
+    // MARK: Audio capture (optional — not all accessories support mic input)
+
+    /// Yields captured PCM audio data from the accessory's microphone.
+    var audioDataStream: AsyncStream<Data> { get }
+
+    /// Start capturing audio from the accessory's microphone.
+    func startAudioCapture() async throws
+
+    /// Stop capturing audio from the accessory's microphone.
+    func stopAudioCapture() async throws
+}
+
+// MARK: - Default implementations for audio capture
+
+extension WearableAccessory {
+
+    var audioDataStream: AsyncStream<Data> {
+        AsyncStream { $0.finish() }
+    }
+
+    func startAudioCapture() async throws {
+        throw WearableError.deviceUnavailable("Audio capture not supported for \(accessoryName)")
+    }
+
+    func stopAudioCapture() async throws {
+        throw WearableError.deviceUnavailable("Audio capture not supported for \(accessoryName)")
+    }
 }
 
 // MARK: - Wearable type catalogue

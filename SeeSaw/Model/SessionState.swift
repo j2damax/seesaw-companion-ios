@@ -10,6 +10,8 @@ enum SessionState: Equatable, Sendable {
     case requestingStory
     case encodingAudio
     case sendingAudio
+    case recordingAudio
+    case transcribingAudio
     case error(String)
 
     // MARK: - Display
@@ -24,6 +26,8 @@ enum SessionState: Equatable, Sendable {
         case .requestingStory:   return "Requesting story…"
         case .encodingAudio:     return "Encoding audio…"
         case .sendingAudio:      return "Sending audio…"
+        case .recordingAudio:    return "Recording…"
+        case .transcribingAudio: return "Transcribing…"
         case .error(let msg):    return "Error: \(msg)"
         }
     }
@@ -38,7 +42,8 @@ enum SessionState: Equatable, Sendable {
     var isConnected: Bool {
         switch self {
         case .connected, .receivingImage, .processingPrivacy,
-             .requestingStory, .encodingAudio, .sendingAudio:
+             .requestingStory, .encodingAudio, .sendingAudio,
+             .recordingAudio, .transcribingAudio:
             return true
         default:
             return false

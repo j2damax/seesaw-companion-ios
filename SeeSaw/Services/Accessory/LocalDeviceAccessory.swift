@@ -40,6 +40,13 @@ final class LocalDeviceAccessory: NSObject, WearableAccessory {
     private let imageYielder: AsyncStream<Data>.Continuation
     private let statusYielder: AsyncStream<String>.Continuation
 
+    // MARK: - Audio capture
+
+    private(set) var audioDataStream: AsyncStream<Data>
+    private var audioDataYielder: AsyncStream<Data>.Continuation?
+    private var audioCaptureService: AudioCaptureService?
+    private var audioCaptureStreamTask: Task<Void, Never>?
+
     // MARK: - AVFoundation
 
     private var captureSession: AVCaptureSession?
@@ -61,6 +68,7 @@ final class LocalDeviceAccessory: NSObject, WearableAccessory {
         statusStream    = AsyncStream { statusCont = $0 }
         imageYielder  = imageCont
         statusYielder = statusCont
+        audioDataStream = AsyncStream { $0.finish() }
         super.init()
     }
 
@@ -90,6 +98,14 @@ final class LocalDeviceAccessory: NSObject, WearableAccessory {
         audioEngine?.stop()
         audioEngine = nil
         playerNode  = nil
+        audioCaptureStreamTask?.cancel()
+        audioCaptureStreamTask = nil
+        if let service = audioCaptureService {
+            _ = await service.stopCapture()
+            audioCaptureService = nil
+        }
+        audioDataYielder?.finish()
+        audioDataYielder = nil
         statusYielder.yield("DISCONNECTED")
         onDisconnected?()
     }
@@ -110,6 +126,32 @@ final class LocalDeviceAccessory: NSObject, WearableAccessory {
             AppConfig.shared.log("sendCommand: command=\(command)")
             try captureOneFrame()
         }
+    }
+
+    // MARK: - Audio capture
+
+    func startAudioCapture() async throws {
+        guard isConnected else { throw WearableError.notConnected }
+
+        let service = AudioCaptureService()
+        try await service.requestMicPermission()
+        try await service.startCapture()
+        audioCaptureService = service
+
+        AppConfig.shared.log("startAudioCapture: microphone capture started")
+    }
+
+    func stopAudioCapture() async throws {
+        audioCaptureStreamTask?.cancel()
+        audioCaptureStreamTask = nil
+        guard let service = audioCaptureService else {
+            throw AudioCaptureError.notCapturing
+        }
+        _ = await service.stopCapture()
+        audioCaptureService = nil
+        audioDataYielder?.finish()
+        audioDataYielder = nil
+        AppConfig.shared.log("stopAudioCapture: microphone capture stopped")
     }
 
     // MARK: - Permission helpers

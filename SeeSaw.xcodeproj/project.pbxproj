@@ -455,7 +455,8 @@
 				INFOPLIST_KEY_CFBundleDisplayName = SeeSaw;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 				INFOPLIST_KEY_NSCameraUsageDescription = "SeeSaw uses your camera to describe what is in front of you";
-				INFOPLIST_KEY_NSMicrophoneUsageDescription = "SeeSaw uses the microphone to hear your questions";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "SeeSaw needs microphone access to capture audio for the announcement feature. No audio data is sent to the cloud.";
+				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "SeeSaw uses on-device speech recognition to transcribe audio. No audio data is sent to the cloud.";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
@@ -506,7 +507,8 @@
 				INFOPLIST_KEY_CFBundleDisplayName = SeeSaw;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 				INFOPLIST_KEY_NSCameraUsageDescription = "SeeSaw uses your camera to describe what is in front of you";
-				INFOPLIST_KEY_NSMicrophoneUsageDescription = "SeeSaw uses the microphone to hear your questions";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "SeeSaw needs microphone access to capture audio for the announcement feature. No audio data is sent to the cloud.";
+				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "SeeSaw uses on-device speech recognition to transcribe audio. No audio data is sent to the cloud.";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
