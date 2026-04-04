@@ -93,7 +93,10 @@ struct ScenePayloadTests {
             objects: ["dinosaur", "book"],
             scene: ["bedroom", "indoor"],
             transcript: "let's go on an adventure",
-            childAge: 5
+            childAge: 5,
+            sessionId: "test-session-id",
+            query: "tell me a story",
+            timestamp: "2026-04-04T09:00:00Z"
         )
 
         let data = try JSONEncoder().encode(payload)
@@ -103,13 +106,20 @@ struct ScenePayloadTests {
         #expect(decoded.scene == payload.scene)
         #expect(decoded.transcript == payload.transcript)
         #expect(decoded.childAge == payload.childAge)
+        #expect(decoded.sessionId == payload.sessionId)
+        #expect(decoded.query == payload.query)
+        #expect(decoded.timestamp == payload.timestamp)
     }
 
     @Test func nilTranscriptEncodes() async throws {
-        let payload = ScenePayload(objects: [], scene: [], transcript: nil, childAge: 7)
+        let payload = ScenePayload(
+            objects: [], scene: [], transcript: nil, childAge: 7,
+            sessionId: "s", query: nil, timestamp: "2026-04-04T09:00:00Z"
+        )
         let data    = try JSONEncoder().encode(payload)
         let decoded = try JSONDecoder().decode(ScenePayload.self, from: data)
         #expect(decoded.transcript == nil)
+        #expect(decoded.query == nil)
     }
 }
 
