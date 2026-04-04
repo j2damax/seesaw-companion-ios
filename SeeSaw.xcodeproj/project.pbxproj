@@ -36,6 +36,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		DA5A56A82F811A5C00E022D9 /* SeeSaw.xctestplan */ = {isa = PBXFileReference; lastKnownFileType = text; path = SeeSaw.xctestplan; sourceTree = "<group>"; };
 		DA8147B72F7113A3005672D3 /* SeeSaw.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SeeSaw.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		DA8147C62F7113A4005672D3 /* SeeSawTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SeeSawTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		DA8147D02F7113A4005672D3 /* SeeSawUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SeeSawUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -109,6 +110,7 @@
 		DA8147AE2F7113A3005672D3 = {
 			isa = PBXGroup;
 			children = (
+				DA5A56A82F811A5C00E022D9 /* SeeSaw.xctestplan */,
 				DA8147B92F7113A3005672D3 /* SeeSaw */,
 				DA8147C92F7113A4005672D3 /* SeeSawTests */,
 				DA8147D32F7113A4005672D3 /* SeeSawUITests */,

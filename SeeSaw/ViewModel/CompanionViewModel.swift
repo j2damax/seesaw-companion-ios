@@ -46,6 +46,7 @@ final class CompanionViewModel {
     private let audioService: AudioService
     private let audioCaptureService: AudioCaptureService
     private let speechRecognitionService: SpeechRecognitionService
+    let metricsStore: PrivacyMetricsStore
 
     // MARK: - Active stream tasks (cancelled on disconnect)
 
@@ -61,7 +62,8 @@ final class CompanionViewModel {
         cloudService: CloudAgentService,
         audioService: AudioService,
         audioCaptureService: AudioCaptureService,
-        speechRecognitionService: SpeechRecognitionService
+        speechRecognitionService: SpeechRecognitionService,
+        metricsStore: PrivacyMetricsStore
     ) {
         self.accessoryManager = accessoryManager
         self.privacyPipeline  = privacyPipeline
@@ -69,6 +71,7 @@ final class CompanionViewModel {
         self.audioService     = audioService
         self.audioCaptureService = audioCaptureService
         self.speechRecognitionService = speechRecognitionService
+        self.metricsStore = metricsStore
     }
 
     // MARK: - Public actions
@@ -248,7 +251,8 @@ final class CompanionViewModel {
             }
 
             sessionState = .processingPrivacy
-            let (blurredData, detections) = try await privacyPipeline.runDebugDetection(jpegData: dataToUse)
+            let (blurredData, detections, metrics) = try await privacyPipeline.runDebugDetection(jpegData: dataToUse)
+            await metricsStore.record(metrics)
             capturedImageData  = blurredData
             sceneDetections    = detections
             isShowingScenePreview = true
@@ -263,28 +267,36 @@ final class CompanionViewModel {
     // MARK: - Full pipeline (cloud + audio)
 
     private func runFullPipeline(jpegData: Data) async {
+        AppConfig.shared.log("runFullPipeline: start, jpegBytes=\(jpegData.count), childAge=\(childAge)")
         do {
             sessionState = .processingPrivacy
-            let payload = try await privacyPipeline.process(jpegData: jpegData, childAge: childAge)
+            let result = try await privacyPipeline.process(jpegData: jpegData, childAge: childAge)
+            await metricsStore.record(result.metrics)
+            AppConfig.shared.log("runFullPipeline: privacy pipeline done, objects=\(result.payload.objects), scene=\(result.payload.scene), latency=\(Int(result.metrics.pipelineLatencyMs))ms")
 
             sessionState = .requestingStory
-            let story = try await cloudService.requestStory(payload: payload)
+            let story = try await cloudService.requestStory(payload: result.payload)
+            AppConfig.shared.log("runFullPipeline: story received, textLength=\(story.storyText.count)")
 
             sessionState = .encodingAudio
             let audioData = try await audioService.generateAndEncodeAudio(from: story.storyText)
+            AppConfig.shared.log("runFullPipeline: audio encoded, pcmBytes=\(audioData.count)")
 
             sessionState = .sendingAudio
             try await accessoryManager.activeAccessory.sendAudio(audioData)
+            AppConfig.shared.log("runFullPipeline: audio sent to accessory")
 
             // Record this interaction in the timeline (newest first)
             let entry = TimelineEntry(
-                sceneObjects: payload.objects,
+                sceneObjects: result.payload.objects,
                 storySnippet: String(story.storyText.prefix(120))
             )
             timeline.insert(entry, at: 0)
 
             sessionState = .connected
+            AppConfig.shared.log("runFullPipeline: complete, timelineEntries=\(timeline.count)")
         } catch {
+            AppConfig.shared.log("runFullPipeline: error=\(error.localizedDescription)", level: .error)
             setError(error.localizedDescription)
         }
     }
@@ -301,6 +313,7 @@ final class CompanionViewModel {
     }
 
     private func setError(_ message: String) {
+        AppConfig.shared.log("setError: \(message)", level: .error)
         lastError = message
         sessionState = .error(message)
     }

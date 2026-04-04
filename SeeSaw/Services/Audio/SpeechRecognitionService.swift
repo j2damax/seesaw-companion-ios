@@ -193,12 +193,7 @@ actor SpeechRecognitionService {
 extension SpeechRecognitionService {
 
     static func scrubPII(_ text: String) -> String {
-        var result = text
-        result = result.replacingOccurrences(
-            of: #"\b\d{7,}\b"#, with: "[REDACTED]", options: .regularExpression)
-        result = result.replacingOccurrences(
-            of: #"\S+@\S+\.\S+"#, with: "[REDACTED]", options: .regularExpression)
-        return result
+        PIIScrubber.scrub(text).scrubbed
     }
 }
 

@@ -145,7 +145,8 @@ struct CameraTabView: View {
             NavigationLink {
                 SettingsView(
                     childAge: $vm.childAge,
-                    accessoryManager: coordinator.container.accessoryManager
+                    accessoryManager: coordinator.container.accessoryManager,
+                    metricsStore: coordinator.container.privacyMetricsStore
                 )
             } label: {
                 Image(systemName: "gear")

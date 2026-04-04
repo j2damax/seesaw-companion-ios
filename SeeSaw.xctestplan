@@ -1,0 +1,38 @@
+{
+  "configurations" : [
+    {
+      "id" : "10765990-4C7E-4042-971C-F0DAA3B73882",
+      "name" : "Test Scheme Action",
+      "options" : {
+
+      }
+    }
+  ],
+  "defaultOptions" : {
+    "performanceAntipatternCheckerEnabled" : true,
+    "targetForVariableExpansion" : {
+      "containerPath" : "container:SeeSaw.xcodeproj",
+      "identifier" : "DA8147B62F7113A3005672D3",
+      "name" : "SeeSaw"
+    }
+  },
+  "testTargets" : [
+    {
+      "parallelizable" : true,
+      "target" : {
+        "containerPath" : "container:SeeSaw.xcodeproj",
+        "identifier" : "DA8147C52F7113A4005672D3",
+        "name" : "SeeSawTests"
+      }
+    },
+    {
+      "parallelizable" : true,
+      "target" : {
+        "containerPath" : "container:SeeSaw.xcodeproj",
+        "identifier" : "DA8147CF2F7113A4005672D3",
+        "name" : "SeeSawUITests"
+      }
+    }
+  ],
+  "version" : 1
+}
