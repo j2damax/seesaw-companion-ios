@@ -59,24 +59,6 @@ private final class AudioAccumulator: @unchecked Sendable {
     }
 }
 
-// MARK: - AVAudioPCMBuffer → Data
-
-private extension AVAudioPCMBuffer {
-    func toPCMData() -> Data? {
-        guard let channelData = floatChannelData else { return nil }
-        let frameCount   = Int(frameLength)
-        let channelCount = Int(format.channelCount)
-        var result = Data(capacity: frameCount * channelCount * MemoryLayout<Float>.size)
-        for frame in 0..<frameCount {
-            for channel in 0..<channelCount {
-                var sample = channelData[channel][frame]
-                withUnsafeBytes(of: &sample) { result.append(contentsOf: $0) }
-            }
-        }
-        return result
-    }
-}
-
 // MARK: - Errors
 
 enum AudioError: LocalizedError, Sendable {

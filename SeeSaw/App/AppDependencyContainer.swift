@@ -25,6 +25,8 @@ final class AppDependencyContainer {
     let privacyPipelineService: PrivacyPipelineService
     let cloudAgentService: CloudAgentService
     let audioService: AudioService
+    let audioCaptureService: AudioCaptureService
+    let speechRecognitionService: SpeechRecognitionService
     let authService: AuthenticationService
 
     // MARK: - Init
@@ -42,10 +44,12 @@ final class AppDependencyContainer {
             mfiCamera:    mfiCameraAccessory
         )
 
-        privacyPipelineService = PrivacyPipelineService()
-        cloudAgentService      = CloudAgentService(baseURL: UserDefaults.standard.cloudAgentURL)
-        audioService           = AudioService()
-        authService            = AuthenticationService()
+        audioCaptureService      = AudioCaptureService()
+        speechRecognitionService = SpeechRecognitionService()
+        privacyPipelineService   = PrivacyPipelineService(speechService: speechRecognitionService)
+        cloudAgentService        = CloudAgentService(baseURL: UserDefaults.standard.cloudAgentURL)
+        audioService             = AudioService()
+        authService              = AuthenticationService()
     }
 
     // MARK: - Factory methods
@@ -59,7 +63,9 @@ final class AppDependencyContainer {
             accessoryManager: accessoryManager,
             privacyPipeline:  privacyPipelineService,
             cloudService:     cloudAgentService,
-            audioService:     audioService
+            audioService:     audioService,
+            audioCaptureService: audioCaptureService,
+            speechRecognitionService: speechRecognitionService
         )
     }
 

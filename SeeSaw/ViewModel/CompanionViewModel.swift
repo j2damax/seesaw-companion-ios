@@ -26,6 +26,12 @@ final class CompanionViewModel {
     var capturedImageData: Data?
     var sceneDetections: [DetectionResult] = []
 
+    /// Live/final transcript from speech recognition.
+    var currentTranscript: String?
+
+    /// Whether audio is currently being recorded.
+    var isRecording: Bool { sessionState == .recordingAudio }
+
     /// Exposes the currently selected type for the UI (connect button label, etc.)
     var selectedWearableType: WearableType { accessoryManager.selectedType }
 
@@ -38,11 +44,14 @@ final class CompanionViewModel {
     private let privacyPipeline: PrivacyPipelineService
     private let cloudService: CloudAgentService
     private let audioService: AudioService
+    private let audioCaptureService: AudioCaptureService
+    private let speechRecognitionService: SpeechRecognitionService
 
     // MARK: - Active stream tasks (cancelled on disconnect)
 
     private var imageStreamTask: Task<Void, Never>?
     private var statusStreamTask: Task<Void, Never>?
+    private var transcriptionStreamTask: Task<Void, Never>?
 
     // MARK: - Init
 
@@ -50,12 +59,16 @@ final class CompanionViewModel {
         accessoryManager: AccessoryManager,
         privacyPipeline: PrivacyPipelineService,
         cloudService: CloudAgentService,
-        audioService: AudioService
+        audioService: AudioService,
+        audioCaptureService: AudioCaptureService,
+        speechRecognitionService: SpeechRecognitionService
     ) {
         self.accessoryManager = accessoryManager
         self.privacyPipeline  = privacyPipeline
         self.cloudService     = cloudService
         self.audioService     = audioService
+        self.audioCaptureService = audioCaptureService
+        self.speechRecognitionService = speechRecognitionService
     }
 
     // MARK: - Public actions
@@ -129,6 +142,49 @@ final class CompanionViewModel {
         isShowingScenePreview = false
         capturedImageData = nil
         sceneDetections = []
+    }
+
+    // MARK: - Audio recording & transcription
+
+    func startRecording() {
+        guard sessionState.isConnected else {
+            setError("Cannot record: no device connected.")
+            return
+        }
+        sessionState = .recordingAudio
+        currentTranscript = nil
+        Task {
+            do {
+                try await audioCaptureService.startCapture()
+                let bufferStream = await audioCaptureService.audioBufferStream
+                let transcriptionStream = try await speechRecognitionService.startLiveTranscription(
+                    audioStream: bufferStream
+                )
+                transcriptionStreamTask = Task { [weak self] in
+                    for await result in transcriptionStream {
+                        self?.currentTranscript = SpeechRecognitionService.scrubPII(result.text)
+                    }
+                }
+                AppConfig.shared.log("startRecording: capture and live transcription started")
+            } catch {
+                setError(error.localizedDescription)
+            }
+        }
+    }
+
+    func stopRecording() {
+        guard isRecording else { return }
+        Task {
+            transcriptionStreamTask?.cancel()
+            transcriptionStreamTask = nil
+            let audioData = await audioCaptureService.stopCapture()
+            let finalTranscript = await speechRecognitionService.stopTranscription()
+            if let transcript = finalTranscript {
+                currentTranscript = SpeechRecognitionService.scrubPII(transcript)
+            }
+            sessionState = .connected
+            AppConfig.shared.log("stopRecording: audioBytes=\(audioData.count), transcript=\(currentTranscript ?? "nil")")
+        }
     }
 
     // MARK: - Private state handlers
@@ -231,8 +287,10 @@ final class CompanionViewModel {
     private func cancelStreamTasks() {
         imageStreamTask?.cancel()
         statusStreamTask?.cancel()
+        transcriptionStreamTask?.cancel()
         imageStreamTask  = nil
         statusStreamTask = nil
+        transcriptionStreamTask = nil
     }
 
     private func setError(_ message: String) {

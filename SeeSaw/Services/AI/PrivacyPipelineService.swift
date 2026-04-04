@@ -43,10 +43,12 @@ actor PrivacyPipelineService {
 
     private var objectDetectionModel: VNCoreMLModel?
     private let ciContext = CIContext()
+    private let speechService: SpeechRecognitionService
 
-    init() {
+    init(speechService: SpeechRecognitionService = SpeechRecognitionService()) {
         let (model, loadWarning) = Self.loadObjectDetectionModel()
         objectDetectionModel = model
+        self.speechService = speechService
         if let warning = loadWarning {
             AppConfig.shared.log("init: \(warning)", level: .error)
         }
@@ -55,7 +57,7 @@ actor PrivacyPipelineService {
 
     // MARK: - Public entry point
 
-    func process(jpegData: Data, childAge: Int) async throws -> ScenePayload {
+    func process(jpegData: Data, childAge: Int, audioData: Data? = nil) async throws -> ScenePayload {
         guard let rawImage = CIImage(data: jpegData) else {
             throw PipelineError.invalidImageData
         }
@@ -66,7 +68,7 @@ actor PrivacyPipelineService {
 
         async let objects = detectObjects(in: blurredImage)
         async let scene   = classifyScene(in: blurredImage)
-        async let transcript = recognizeSpeech()
+        async let transcript = recognizeSpeech(audioData: audioData)
 
         let (detectedObjects, sceneLabels, rawTranscript) = try await (objects, scene, transcript)
         let cleanTranscript = rawTranscript.map { scrubPII($0) }
@@ -281,7 +283,7 @@ actor PrivacyPipelineService {
 
     // MARK: - Stage 5: On-device speech recognition
 
-    private func recognizeSpeech() async -> String? {
+    private func recognizeSpeech(audioData: Data?) async -> String? {
         guard SFSpeechRecognizer.authorizationStatus() == .authorized else {
             AppConfig.shared.log("Stage 5 – speech recognition: skipped: not authorized")
             return nil
@@ -291,8 +293,18 @@ actor PrivacyPipelineService {
             AppConfig.shared.log("Stage 5 – speech recognition: skipped: on-device not supported")
             return nil
         }
-        AppConfig.shared.log("Stage 5 – speech recognition: completed: transcript=nil (stub)")
-        return nil
+        guard let audioData, !audioData.isEmpty else {
+            AppConfig.shared.log("Stage 5 – speech recognition: skipped: no audio data provided")
+            return nil
+        }
+        do {
+            let transcript = try await speechService.transcribeAudioData(audioData)
+            AppConfig.shared.log("Stage 5 – speech recognition: completed: transcript=\(transcript ?? "nil")")
+            return transcript
+        } catch {
+            AppConfig.shared.log("Stage 5 – speech recognition: error: \(error.localizedDescription)", level: .error)
+            return nil
+        }
     }
 
     // MARK: - Stage 6: PII scrub
