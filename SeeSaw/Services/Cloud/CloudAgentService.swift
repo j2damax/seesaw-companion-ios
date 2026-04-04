@@ -35,16 +35,20 @@ actor CloudAgentService {
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         let body: Data = try await MainActor.run { try JSONEncoder().encode(payload) }
         request.httpBody = body
+        AppConfig.shared.log("requestStory: POST \(endpoint), bodyBytes=\(body.count), objects=\(payload.objects), scene=\(payload.scene)")
 
         let (data, response) = try await session.data(for: request)
 
         guard let httpResponse = response as? HTTPURLResponse else {
+            AppConfig.shared.log("requestStory: invalid response type", level: .error)
             throw CloudError.invalidResponse
         }
         guard httpResponse.statusCode == 200 else {
+            AppConfig.shared.log("requestStory: HTTP \(httpResponse.statusCode)", level: .error)
             throw CloudError.unexpectedStatusCode(httpResponse.statusCode)
         }
 
+        AppConfig.shared.log("requestStory: HTTP 200, responseBytes=\(data.count)")
         return try await MainActor.run { try JSONDecoder().decode(StoryResponse.self, from: data) }
     }
 }

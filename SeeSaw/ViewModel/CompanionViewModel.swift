@@ -267,19 +267,24 @@ final class CompanionViewModel {
     // MARK: - Full pipeline (cloud + audio)
 
     private func runFullPipeline(jpegData: Data) async {
+        AppConfig.shared.log("runFullPipeline: start, jpegBytes=\(jpegData.count), childAge=\(childAge)")
         do {
             sessionState = .processingPrivacy
             let result = try await privacyPipeline.process(jpegData: jpegData, childAge: childAge)
             await metricsStore.record(result.metrics)
+            AppConfig.shared.log("runFullPipeline: privacy pipeline done, objects=\(result.payload.objects), scene=\(result.payload.scene), latency=\(Int(result.metrics.pipelineLatencyMs))ms")
 
             sessionState = .requestingStory
             let story = try await cloudService.requestStory(payload: result.payload)
+            AppConfig.shared.log("runFullPipeline: story received, textLength=\(story.storyText.count)")
 
             sessionState = .encodingAudio
             let audioData = try await audioService.generateAndEncodeAudio(from: story.storyText)
+            AppConfig.shared.log("runFullPipeline: audio encoded, pcmBytes=\(audioData.count)")
 
             sessionState = .sendingAudio
             try await accessoryManager.activeAccessory.sendAudio(audioData)
+            AppConfig.shared.log("runFullPipeline: audio sent to accessory")
 
             // Record this interaction in the timeline (newest first)
             let entry = TimelineEntry(
@@ -289,7 +294,9 @@ final class CompanionViewModel {
             timeline.insert(entry, at: 0)
 
             sessionState = .connected
+            AppConfig.shared.log("runFullPipeline: complete, timelineEntries=\(timeline.count)")
         } catch {
+            AppConfig.shared.log("runFullPipeline: error=\(error.localizedDescription)", level: .error)
             setError(error.localizedDescription)
         }
     }
@@ -306,6 +313,7 @@ final class CompanionViewModel {
     }
 
     private func setError(_ message: String) {
+        AppConfig.shared.log("setError: \(message)", level: .error)
         lastError = message
         sessionState = .error(message)
     }

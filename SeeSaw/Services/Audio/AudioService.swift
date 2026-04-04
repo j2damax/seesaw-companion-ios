@@ -12,7 +12,10 @@ actor AudioService {
     // MARK: - Public
 
     func generateAndEncodeAudio(from text: String) async throws -> Data {
-        return try await synthesizeWithAVSpeech(text)
+        AppConfig.shared.log("generateAndEncodeAudio: start, textLength=\(text.count)")
+        let data = try await synthesizeWithAVSpeech(text)
+        AppConfig.shared.log("generateAndEncodeAudio: done, pcmBytes=\(data.count)")
+        return data
     }
 
     // MARK: - TTS synthesis

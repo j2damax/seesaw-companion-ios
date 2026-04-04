@@ -28,6 +28,7 @@ enum PIIScrubber {
             )
         }
 
+        AppConfig.shared.log("scrub: inputLength=\(text.count), tokensRedacted=\(count)")
         return (result, count)
     }
 
