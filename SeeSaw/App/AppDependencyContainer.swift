@@ -29,6 +29,10 @@ final class AppDependencyContainer {
     let speechRecognitionService: SpeechRecognitionService
     let authService: AuthenticationService
 
+    // MARK: - Privacy metrics
+
+    let privacyMetricsStore: PrivacyMetricsStore
+
     // MARK: - Init
 
     init() {
@@ -50,6 +54,7 @@ final class AppDependencyContainer {
         cloudAgentService        = CloudAgentService(baseURL: UserDefaults.standard.cloudAgentURL)
         audioService             = AudioService()
         authService              = AuthenticationService()
+        privacyMetricsStore      = PrivacyMetricsStore()
     }
 
     // MARK: - Factory methods
@@ -65,7 +70,8 @@ final class AppDependencyContainer {
             cloudService:     cloudAgentService,
             audioService:     audioService,
             audioCaptureService: audioCaptureService,
-            speechRecognitionService: speechRecognitionService
+            speechRecognitionService: speechRecognitionService,
+            metricsStore: privacyMetricsStore
         )
     }
 

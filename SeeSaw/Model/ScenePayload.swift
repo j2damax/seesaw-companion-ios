@@ -9,4 +9,7 @@ struct ScenePayload: Codable, Sendable {
     let scene: [String]
     let transcript: String?
     let childAge: Int
+    let sessionId: String
+    let query: String?
+    let timestamp: String
 }
