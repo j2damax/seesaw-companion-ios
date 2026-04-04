@@ -5,6 +5,7 @@
 // then renders the appropriate root view based on app state.
 
 import FirebaseCore
+import GoogleSignIn
 import SwiftUI
 
 @main
@@ -17,6 +18,9 @@ struct SeeSawApp: App {
     var body: some Scene {
         WindowGroup {
             AppRootView()
+                .onOpenURL { url in
+                    GIDSignIn.sharedInstance.handle(url)
+                }
         }
     }
 }

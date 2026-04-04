@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		DA5A53DD2F80E90A00E022D9 /* FirebaseCrashlytics in Frameworks */ = {isa = PBXBuildFile; productRef = DA5A53DC2F80E90A00E022D9 /* FirebaseCrashlytics */; };
 		DAAB2A3E2F7F8CA500EF685F /* FirebaseAI in Frameworks */ = {isa = PBXBuildFile; productRef = DAAB2A3D2F7F8CA500EF685F /* FirebaseAI */; };
 		DAAB2A402F7F8CA500EF685F /* FirebaseAILogic in Frameworks */ = {isa = PBXBuildFile; productRef = DAAB2A3F2F7F8CA500EF685F /* FirebaseAILogic */; };
 		DAAB2A422F7F8CA500EF685F /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = DAAB2A412F7F8CA500EF685F /* FirebaseAnalytics */; };
@@ -82,6 +83,7 @@
 				DAAB2A3E2F7F8CA500EF685F /* FirebaseAI in Frameworks */,
 				DAAB2A422F7F8CA500EF685F /* FirebaseAnalytics in Frameworks */,
 				DAAB2A442F7F8CA500EF685F /* FirebaseAnalyticsCore in Frameworks */,
+				DA5A53DD2F80E90A00E022D9 /* FirebaseCrashlytics in Frameworks */,
 				DAAB2A492F7F8CD900EF685F /* GoogleSignIn in Frameworks */,
 				DAAB2A542F7F928500EF685F /* FirebaseAuth in Frameworks */,
 			);
@@ -142,6 +144,7 @@
 				DA8147B32F7113A3005672D3 /* Sources */,
 				DA8147B42F7113A3005672D3 /* Frameworks */,
 				DA8147B52F7113A3005672D3 /* Resources */,
+				DA5A561B2F80E91B00E022D9 /* Firebase Crashlytics dSYM Upload */,
 			);
 			buildRules = (
 			);
@@ -160,6 +163,7 @@
 				DAAB2A482F7F8CD900EF685F /* GoogleSignIn */,
 				DAAB2A4A2F7F8CD900EF685F /* GoogleSignInSwift */,
 				DAAB2A532F7F928500EF685F /* FirebaseAuth */,
+				DA5A53DC2F80E90A00E022D9 /* FirebaseCrashlytics */,
 			);
 			productName = SeeSaw;
 			productReference = DA8147B72F7113A3005672D3 /* SeeSaw.app */;
@@ -282,6 +286,32 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		DA5A561B2F80E91B00E022D9 /* Firebase Crashlytics dSYM Upload */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"${DWARF_DSYM_FOLDER_PATH}/${DWARF_DSYM_FILE_NAME}",
+				"${DWARF_DSYM_FOLDER_PATH}/${DWARF_DSYM_FILE_NAME}/Contents/Resources/DWARF/${PRODUCT_NAME}",
+				"${DWARF_DSYM_FOLDER_PATH}/${DWARF_DSYM_FILE_NAME}/Contents/Info.plist",
+				"$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/GoogleService-Info.plist",
+				"$(TARGET_BUILD_DIR)/$(EXECUTABLE_PATH)",
+			);
+			name = "Firebase Crashlytics dSYM Upload";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${BUILD_DIR%/Build/*}/SourcePackages/checkouts/firebase-ios-sdk/Crashlytics/run\"\n";
+		};
+/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		DA8147B32F7113A3005672D3 /* Sources */ = {
@@ -704,6 +734,11 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		DA5A53DC2F80E90A00E022D9 /* FirebaseCrashlytics */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = DAAB2A3C2F7F8CA500EF685F /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseCrashlytics;
+		};
 		DAAB2A3D2F7F8CA500EF685F /* FirebaseAI */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = DAAB2A3C2F7F8CA500EF685F /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;

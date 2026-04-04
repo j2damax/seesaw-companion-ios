@@ -84,26 +84,29 @@ final class CompanionViewModel {
             self?.handleDisconnected()
         }
 
-        // Start observing this wearable's streams (cancel any previous observation)
+        // Cancel any previous stream observations
         imageStreamTask?.cancel()
         statusStreamTask?.cancel()
-
-        imageStreamTask = Task { [weak self] in
-            for await imageData in wearable.imageDataStream {
-                await self?.runDetectionPreview(jpegData: imageData)
-            }
-        }
-
-        statusStreamTask = Task { [weak self] in
-            for await status in wearable.statusStream {
-                self?.handleStatus(status)
-            }
-        }
 
         sessionState = .scanning
         Task {
             do {
+                // startDiscovery() resets the accessory's AsyncStreams, so we must
+                // subscribe *after* this call to get the fresh stream instances.
                 try await wearable.startDiscovery()
+
+                // Now observe the newly-created streams for this connection session.
+                imageStreamTask = Task { [weak self] in
+                    for await imageData in wearable.imageDataStream {
+                        await self?.runDetectionPreview(jpegData: imageData)
+                    }
+                }
+
+                statusStreamTask = Task { [weak self] in
+                    for await status in wearable.statusStream {
+                        self?.handleStatus(status)
+                    }
+                }
             } catch {
                 setError(error.localizedDescription)
             }

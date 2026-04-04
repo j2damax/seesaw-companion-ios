@@ -33,12 +33,17 @@ final class LocalDeviceAccessory: NSObject, WearableAccessory {
     var onDisconnected: (() -> Void)?
 
     // MARK: - Streams
+    //
+    // AsyncStream is single-consumer: once a `for await` loop finishes or is
+    // cancelled, a new iterator on the same stream instance will not receive
+    // subsequent values.  To support disconnect → reconnect cycles we recreate
+    // the stream/continuation pair each time `startDiscovery()` is called.
 
-    let imageDataStream: AsyncStream<Data>
-    let statusStream: AsyncStream<String>
+    private(set) var imageDataStream: AsyncStream<Data>
+    private(set) var statusStream: AsyncStream<String>
 
-    private let imageYielder: AsyncStream<Data>.Continuation
-    private let statusYielder: AsyncStream<String>.Continuation
+    private var imageYielder: AsyncStream<Data>.Continuation?
+    private var statusYielder: AsyncStream<String>.Continuation?
 
     // MARK: - Audio capture
 
@@ -62,19 +67,27 @@ final class LocalDeviceAccessory: NSObject, WearableAccessory {
     // MARK: - Init
 
     override init() {
+        imageDataStream = AsyncStream { $0.finish() }
+        statusStream    = AsyncStream { $0.finish() }
+        audioDataStream = AsyncStream { $0.finish() }
+        super.init()
+    }
+
+    /// Creates fresh AsyncStream/continuation pairs so a new `for await` consumer
+    /// receives all values yielded during this connection session.
+    private func resetStreams() {
         var imageCont: AsyncStream<Data>.Continuation!
         var statusCont: AsyncStream<String>.Continuation!
         imageDataStream = AsyncStream { imageCont = $0 }
         statusStream    = AsyncStream { statusCont = $0 }
         imageYielder  = imageCont
         statusYielder = statusCont
-        audioDataStream = AsyncStream { $0.finish() }
-        super.init()
     }
 
     // MARK: - WearableAccessory: Lifecycle
 
     func startDiscovery() async throws {
+        resetStreams()
         try await requestCameraPermission()
         try await requestMicPermission()
         try setupCaptureSession()
@@ -83,7 +96,7 @@ final class LocalDeviceAccessory: NSObject, WearableAccessory {
         // so the main actor is free while the session starts up.
         let session = captureSession
         Task.detached { session?.startRunning() }
-        statusYielder.yield(BLEConstants.statusReady)
+        statusYielder?.yield(BLEConstants.statusReady)
         onConnected?()
     }
 
@@ -106,7 +119,11 @@ final class LocalDeviceAccessory: NSObject, WearableAccessory {
         }
         audioDataYielder?.finish()
         audioDataYielder = nil
-        statusYielder.yield("DISCONNECTED")
+        statusYielder?.yield("DISCONNECTED")
+        imageYielder?.finish()
+        imageYielder = nil
+        statusYielder?.finish()
+        statusYielder = nil
         onDisconnected?()
     }
 
@@ -265,7 +282,7 @@ extension LocalDeviceAccessory: AVCapturePhotoCaptureDelegate {
         AppConfig.shared.log("photoOutput: capturedBytes=\(data.count), exifOrientation=\(orientation)")
         // Hop to @MainActor to safely yield into the stream
         Task { @MainActor [weak self] in
-            self?.imageYielder.yield(data)
+            self?.imageYielder?.yield(data)
         }
     }
 }

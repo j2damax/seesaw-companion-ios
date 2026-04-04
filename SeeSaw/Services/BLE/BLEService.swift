@@ -21,11 +21,11 @@ final class BLEService: NSObject, WearableAccessory {
 
     // MARK: - Streams
 
-    let imageDataStream: AsyncStream<Data>
-    let statusStream: AsyncStream<String>
+    private(set) var imageDataStream: AsyncStream<Data>
+    private(set) var statusStream: AsyncStream<String>
 
-    private let imageYielder: AsyncStream<Data>.Continuation
-    private let statusYielder: AsyncStream<String>.Continuation
+    private var imageYielder: AsyncStream<Data>.Continuation?
+    private var statusYielder: AsyncStream<String>.Continuation?
 
     // MARK: - CoreBluetooth
 
@@ -48,21 +48,27 @@ final class BLEService: NSObject, WearableAccessory {
     // MARK: - Init
 
     override init() {
-        // AsyncStream's closure runs synchronously, so continuations are
-        // guaranteed non-nil immediately after the AsyncStream initializer returns.
+        imageDataStream = AsyncStream { $0.finish() }
+        statusStream    = AsyncStream { $0.finish() }
+        super.init()
+        centralManager = CBCentralManager(delegate: self, queue: .main)
+    }
+
+    /// Creates fresh AsyncStream/continuation pairs so a new `for await` consumer
+    /// receives all values yielded during this connection session.
+    private func resetStreams() {
         var imageCont: AsyncStream<Data>.Continuation!
         var statusCont: AsyncStream<String>.Continuation!
         imageDataStream = AsyncStream { imageCont = $0 }
         statusStream    = AsyncStream { statusCont = $0 }
         imageYielder  = imageCont
         statusYielder = statusCont
-        super.init()
-        centralManager = CBCentralManager(delegate: self, queue: .main)
     }
 
     // MARK: - WearableAccessory conformance
 
     func startDiscovery() async throws {
+        resetStreams()
         guard let cm = centralManager, cm.state == .poweredOn else {
             throw WearableError.bluetoothUnavailable
         }
@@ -78,6 +84,10 @@ final class BLEService: NSObject, WearableAccessory {
             centralManager?.cancelPeripheralConnection(peripheral)
         }
         centralManager?.stopScan()
+        imageYielder?.finish()
+        imageYielder = nil
+        statusYielder?.finish()
+        statusYielder = nil
     }
 
     func sendAudio(_ data: Data) async throws {
@@ -199,7 +209,7 @@ extension BLEService: CBPeripheralDelegate {
             handleImageChunk(chunk)
         case BLEConstants.statusTXUUID:
             let status = String(data: data, encoding: .utf8) ?? ""
-            statusYielder.yield(status)
+            statusYielder?.yield(status)
         default:
             break
         }
@@ -210,7 +220,7 @@ extension BLEService: CBPeripheralDelegate {
     private func handleImageChunk(_ chunk: TransferChunk) {
         if let fullImageData = chunkBuffer.add(chunk) {
             chunkBuffer.reset()
-            imageYielder.yield(fullImageData)
+            imageYielder?.yield(fullImageData)
         }
     }
 }

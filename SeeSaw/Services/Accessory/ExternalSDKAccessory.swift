@@ -29,16 +29,21 @@ final class ExternalSDKAccessory: WearableAccessory {
 
     // MARK: - Streams
 
-    let imageDataStream: AsyncStream<Data>
-    let statusStream: AsyncStream<String>
+    private(set) var imageDataStream: AsyncStream<Data>
+    private(set) var statusStream: AsyncStream<String>
 
-    private let imageYielder: AsyncStream<Data>.Continuation
-    private let statusYielder: AsyncStream<String>.Continuation
+    private var imageYielder: AsyncStream<Data>.Continuation?
+    private var statusYielder: AsyncStream<String>.Continuation?
 
     // MARK: - Init
 
     init(wearableType: WearableType) {
         self.wearableType = wearableType
+        imageDataStream = AsyncStream { $0.finish() }
+        statusStream    = AsyncStream { $0.finish() }
+    }
+
+    private func resetStreams() {
         var imageCont: AsyncStream<Data>.Continuation!
         var statusCont: AsyncStream<String>.Continuation!
         imageDataStream = AsyncStream { imageCont = $0 }
@@ -58,7 +63,11 @@ final class ExternalSDKAccessory: WearableAccessory {
     func disconnect() async {
         guard isConnected else { return }
         isConnected = false
-        statusYielder.yield("DISCONNECTED")
+        statusYielder?.yield("DISCONNECTED")
+        imageYielder?.finish()
+        imageYielder = nil
+        statusYielder?.finish()
+        statusYielder = nil
         onDisconnected?()
     }
 

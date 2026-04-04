@@ -44,22 +44,7 @@ actor AuthenticationService {
     /// Presents the Google Sign-In flow, exchanges the Google credential for a
     /// Firebase Auth credential, and creates a local session on success.
     func signInWithGoogle() async throws {
-        guard let windowScene = await MainActor.run(body: {
-            UIApplication.shared.connectedScenes
-                .compactMap { $0 as? UIWindowScene }
-                .first
-        }) else {
-            throw AuthError.missingPresentingWindow
-        }
-
-        let rootVC: UIViewController = try await MainActor.run {
-            guard let vc = windowScene.windows.first(where: \.isKeyWindow)?.rootViewController else {
-                throw AuthError.missingPresentingWindow
-            }
-            return vc
-        }
-
-        let result = try await GIDSignIn.sharedInstance.signIn(withPresenting: rootVC)
+        let result = try await signInWithGoogleOnMainActor()
         let user = result.user
 
         guard let idToken = user.idToken?.tokenString else {
@@ -94,6 +79,20 @@ actor AuthenticationService {
 
         currentSession = nil
         clearPersistedSession()
+    }
+
+    // MARK: - Google Sign-In (main thread)
+
+    @MainActor
+    private func signInWithGoogleOnMainActor() async throws -> GIDSignInResult {
+        guard let windowScene = UIApplication.shared.connectedScenes
+            .compactMap({ $0 as? UIWindowScene })
+            .first,
+              let rootVC = windowScene.windows.first(where: \.isKeyWindow)?.rootViewController
+        else {
+            throw AuthError.missingPresentingWindow
+        }
+        return try await GIDSignIn.sharedInstance.signIn(withPresenting: rootVC)
     }
 
     // MARK: - Credential state check
