@@ -162,7 +162,11 @@ final class CompanionViewModel {
                 )
                 transcriptionStreamTask = Task { [weak self] in
                     for await result in transcriptionStream {
-                        self?.currentTranscript = SpeechRecognitionService.scrubPII(result.text)
+                        let scrubbed = SpeechRecognitionService.scrubPII(result.text)
+                        self?.currentTranscript = scrubbed
+                        if result.isFinal {
+                            AppConfig.shared.log("startRecording: final transcript received, confidence=\(result.confidence)")
+                        }
                     }
                 }
                 AppConfig.shared.log("startRecording: capture and live transcription started")

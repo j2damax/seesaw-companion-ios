@@ -45,7 +45,7 @@ actor PrivacyPipelineService {
     private let ciContext = CIContext()
     private let speechService: SpeechRecognitionService
 
-    init(speechService: SpeechRecognitionService = SpeechRecognitionService()) {
+    init(speechService: SpeechRecognitionService) {
         let (model, loadWarning) = Self.loadObjectDetectionModel()
         objectDetectionModel = model
         self.speechService = speechService

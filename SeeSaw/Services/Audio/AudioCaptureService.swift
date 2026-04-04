@@ -23,6 +23,7 @@ actor AudioCaptureService {
     private var audioEngine: AVAudioEngine?
     private var accumulatedData = Data()
     private var bufferContinuation: AsyncStream<AVAudioPCMBuffer>.Continuation?
+    private var appendTasks: [Task<Void, Never>] = []
 
     // MARK: - Public stream
 
@@ -58,7 +59,8 @@ actor AudioCaptureService {
             guard let self else { return }
             continuation.yield(buffer)
             if let pcmData = buffer.toPCMData() {
-                Task { await self.appendData(pcmData) }
+                let task = Task { await self.appendData(pcmData) }
+                Task { await self.trackAppendTask(task) }
             }
         }
 
@@ -82,6 +84,9 @@ actor AudioCaptureService {
         _audioBufferStream = nil
 
         isCapturing = false
+
+        for task in appendTasks { await task.value }
+        appendTasks.removeAll()
 
         let result = accumulatedData
         accumulatedData = Data()
@@ -107,7 +112,12 @@ actor AudioCaptureService {
     // MARK: - Private helpers
 
     private func appendData(_ data: Data) {
+        guard isCapturing else { return }
         accumulatedData.append(data)
+    }
+
+    private func trackAppendTask(_ task: Task<Void, Never>) {
+        appendTasks.append(task)
     }
 
     private func configureAudioSession() async throws {
@@ -121,16 +131,15 @@ actor AudioCaptureService {
     }
 
     private static func recordingFormat(for inputNode: AVAudioInputNode) -> AVAudioFormat {
-        let nativeFormat = inputNode.outputFormat(forBus: 0)
-        if let converted = AVAudioFormat(
+        if let desired = AVAudioFormat(
             commonFormat: .pcmFormatFloat32,
             sampleRate: sampleRate,
             channels: channels,
             interleaved: false
-        ), nativeFormat.sampleRate == sampleRate && nativeFormat.channelCount == channels {
-            return converted
+        ) {
+            return desired
         }
-        return nativeFormat
+        return inputNode.outputFormat(forBus: 0)
     }
 }
 

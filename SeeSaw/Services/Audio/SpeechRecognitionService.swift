@@ -22,6 +22,7 @@ actor SpeechRecognitionService {
     private var recognitionRequest: SFSpeechAudioBufferRecognitionRequest?
     private var lastTranscript: String?
     private var streamTask: Task<Void, Never>?
+    private var transcriptUpdateTask: Task<Void, Never>?
 
     // MARK: - Authorization
 
@@ -64,7 +65,8 @@ actor SpeechRecognitionService {
                     confidence: confidence
                 )
                 resultContinuation.yield(transcription)
-                Task { await self?.updateLastTranscript(text) }
+                let updateTask = Task { await self?.updateLastTranscript(text) }
+                Task { await self?.trackTranscriptUpdateTask(updateTask) }
                 if isFinal {
                     resultContinuation.finish()
                 }
@@ -75,9 +77,10 @@ actor SpeechRecognitionService {
             }
         }
 
+        let capturedRequest = request
         streamTask = Task { [weak self] in
             for await buffer in audioStream {
-                request.append(buffer)
+                capturedRequest.append(buffer)
             }
             await self?.endRequest()
         }
@@ -170,6 +173,8 @@ actor SpeechRecognitionService {
     }
 
     private func stopCurrentTask() {
+        transcriptUpdateTask?.cancel()
+        transcriptUpdateTask = nil
         streamTask?.cancel()
         streamTask = nil
         recognitionTask?.cancel()
@@ -184,6 +189,10 @@ actor SpeechRecognitionService {
 
     private func updateLastTranscript(_ text: String) {
         lastTranscript = text
+    }
+
+    private func trackTranscriptUpdateTask(_ task: Task<Void, Never>) {
+        transcriptUpdateTask = task
     }
 }
 

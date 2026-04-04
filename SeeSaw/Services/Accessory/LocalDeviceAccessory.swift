@@ -138,19 +138,6 @@ final class LocalDeviceAccessory: NSObject, WearableAccessory {
         try await service.startCapture()
         audioCaptureService = service
 
-        var cont: AsyncStream<Data>.Continuation!
-        audioDataStream = AsyncStream { cont = $0 }
-        audioDataYielder = cont
-
-        let bufferStream = await service.audioBufferStream
-        audioCaptureStreamTask = Task { [weak self] in
-            for await buffer in bufferStream {
-                if let data = buffer.toPCMData() {
-                    self?.audioDataYielder?.yield(data)
-                }
-            }
-        }
-
         AppConfig.shared.log("startAudioCapture: microphone capture started")
     }
 
