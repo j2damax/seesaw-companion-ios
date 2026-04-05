@@ -1,0 +1,729 @@
+# `seesaw-companion-ios` — Technical Architecture Blueprint
+> **Purpose**: Authoritative technical blueprint for the `seesaw-companion-ios` iOS application. Designed for Swift 6+, iOS 26+, minimum viable scope for PoC. Uses MVVM + Clean Architecture with an AppCoordinator navigation layer. This document is the iOS counterpart to `seesaw-native` and must be read alongside the `seesaw-native` blueprint for the full picture.
+
+***
+## 0. System Role
+`seesaw-companion-ios` is **Tier 2** in the SeeSaw three-tier architecture. It runs on an iPhone and acts as the intelligence bridge between the AiSee headset (Tier 1, BLE) and the cloud story agent (Tier 3, HTTPS).
+
+```
+AiSee Headset (seesaw-native)
+        │  BLE GATT
+        ▼
+  iPhone (seesaw-companion-ios)   ◀── This app
+        │  HTTPS/REST
+        ▼
+  Cloud Agent (seesaw-cloud-agent)
+```
+
+**What this app does in one interaction cycle:**
+1. Receives scene input from the active wearable (JPEG over BLE from AiSee, or photo from iPhone camera)
+2. Reassembles/captures the image and runs the on-device privacy pipeline (Vision + CoreML)
+3. Builds a JSON payload of anonymous scene labels — no raw image, no faces, no voice biometrics
+4. POSTs the JSON to the cloud agent and receives a story back
+5. Converts the story to audio (AVSpeechSynthesizer) and sends it to the wearable output
+6. Encodes audio as PCM, sends it back to the AiSee headset over BLE or plays via iPhone speaker
+
+The app runs **silently in the background** for BLE mode. There is a parent-facing UI for status, camera preview, settings, and session timeline.
+
+***
+## 1. Project Identity & Build Configuration
+### Xcode Project Settings
+| Field | Value |
+|-------|-------|
+| **Bundle ID** | `com.seesaw.companion.ios` |
+| **Xcode Target** | `SeeSaw` |
+| **Language** | Swift 6.0+ |
+| **Minimum Deployment** | iOS 26.0 |
+| **Supported Devices** | iPhone only (`TARGETED_DEVICE_FAMILY = 1`) |
+| **Swift Concurrency** | Strict (`SWIFT_STRICT_CONCURRENCY = complete`) |
+| **Interface** | SwiftUI |
+| **Orientation** | Portrait only |
+| **Background Modes** | `bluetooth-central`, `audio` |
+
+### Required Capabilities (`Info.plist`)
+```xml
+<key>NSBluetoothAlwaysUsageDescription</key>
+<string>SeeSaw uses Bluetooth to connect to the AiSee headset.</string>
+
+<key>NSBluetoothPeripheralUsageDescription</key>
+<string>SeeSaw uses Bluetooth to communicate with the AiSee headset.</string>
+
+<key>NSSpeechRecognitionUsageDescription</key>
+<string>SeeSaw uses on-device speech recognition to understand what the child says.</string>
+
+<key>NSMicrophoneUsageDescription</key>
+<string>SeeSaw uses the microphone for on-device speech recognition only.</string>
+
+<key>NSCameraUsageDescription</key>
+<string>SeeSaw uses the camera to capture the child's environment for story generation.</string>
+
+<key>UIBackgroundModes</key>
+<array>
+    <string>bluetooth-central</string>
+    <string>audio</string>
+</array>
+```
+
+### Dependencies
+| Framework / Package | Purpose |
+|---------------------|---------|
+| `CoreBluetooth` | BLE GATT client (central role) |
+| `Vision` | Face detection + scene classification |
+| `CoreML` | YOLO11n object detection |
+| `CoreImage` | Face blur (Gaussian) |
+| `Speech` | On-device speech-to-text (`SFSpeechRecognizer`) |
+| `AVFoundation` | Audio capture, playback, TTS |
+| `AVSpeechSynthesis` | On-device TTS |
+| `Foundation` (`URLSession`) | HTTPS calls to cloud agent |
+| `SwiftUI` | Parent-facing UI |
+| `FirebaseCore` / `FirebaseCrashlytics` | Crash reporting (configured at startup) |
+| `FirebaseAuth` | Firebase authentication backend |
+| `GoogleSignIn` | Google Sign-In OAuth flow |
+| `AuthenticationServices` | Sign In with Apple |
+| `os` (`OSLog`, `OSSignpost`) | Structured logging + Instruments integration |
+
+***
+## 2. Architecture Pattern: MVVM + Clean + Coordinator
+
+```
+┌──────────────────────────────────────────────┐
+│           Navigation Layer                   │
+│   AppCoordinator  (route state machine)      │
+│   AppDependencyContainer  (DI / factories)   │
+└────────────────────┬─────────────────────────┘
+                     │ creates / routes to
+┌────────────────────▼─────────────────────────┐
+│            Presentation Layer                │
+│   SwiftUI Views  +  ViewModels               │
+│   (CompanionViewModel, AuthViewModel,        │
+│    OnboardingViewModel)                      │
+└────────────────────┬─────────────────────────┘
+                     │ calls / observes
+┌────────────────────▼─────────────────────────┐
+│             Service Layer                    │
+│   AccessoryManager  BLEService               │
+│   LocalDeviceAccessory  ExternalSDKAccessory │
+│   PrivacyPipelineService  PIIScrubber        │
+│   CloudAgentService  AudioService            │
+│   AudioCaptureService  SpeechRecognitionSvc  │
+│   AuthenticationService  PrivacyMetricsStore │
+└────────────────────┬─────────────────────────┘
+                     │ uses
+┌────────────────────▼─────────────────────────┐
+│              Model Layer                     │
+│   Pure Swift structs / enums (Sendable)      │
+│   No UIKit, no framework imports             │
+└──────────────────────────────────────────────┘
+```
+
+**Rules:**
+- ViewModels are `@Observable` (Swift 5.9+ macro)
+- Services are injected via `AppDependencyContainer` factory methods
+- All async work uses Swift structured concurrency (`async/await`, `Task`, `AsyncStream`)
+- Services are `actor` or `@MainActor final class` — no Combine, no RxSwift
+
+***
+## 3. App Navigation Flow
+
+`AppCoordinator` is an `@Observable @MainActor` class that owns the root navigation state machine. It is bootstrapped in `AppRootView` as `@State` and drives the root `switch` in SwiftUI.
+
+```swift
+enum Route: Equatable {
+    case launch      // LaunchScreenView — first-ever open
+    case terms       // TermsView — EULA acceptance
+    case signIn      // SignInView — Apple / Google auth
+    case onboarding  // OnboardingView — 3-step wizard (accessory → child prefs → success)
+    case home        // HomeView — 3-tab main screen
+}
+```
+
+**Fast-path logic on subsequent launches:**
+```
+isSignedIn && onboarded  →  .home
+isSignedIn               →  .onboarding
+termsAccepted            →  .signIn
+otherwise                →  .launch
+```
+
+**Coordinator actions:**
+| Action | Next Route |
+|--------|-----------|
+| `getStarted()` | `.terms` |
+| `termsAccepted()` | `.signIn` |
+| `signInCompleted()` | `.onboarding` or `.home` |
+| `onboardingCompleted()` | `.home` |
+| `signOut()` | `.signIn` |
+
+***
+## 4. Project Structure
+```
+seesaw-companion-ios/
+└── SeeSaw/
+    │
+    ├── SeeSawApp.swift                     ← @main entry point (Firebase.configure, GIDSignIn handler)
+    │
+    ├── App/
+    │   ├── AppCoordinator.swift            ★ Route state machine
+    │   ├── AppDependencyContainer.swift    ★ DI container — constructs all singletons
+    │   ├── AppConfig.swift                 ← Feature flags (enableLogging, useTestImageForPreview)
+    │   └── AppConfig+Logging.swift         ← log() helper (Debug only)
+    │
+    ├── Model/                              ← Pure Swift structs/enums, Sendable, zero framework imports
+    │   ├── SessionState.swift              ★ Enum: idle/scanning/connected/…/recordingAudio/error
+    │   ├── ScenePayload.swift              ★ Codable: objects[], scene[], transcript?, childAge, sessionId, query, timestamp
+    │   ├── StoryResponse.swift             ← Codable: storyText, audioURL?
+    │   ├── BLEConstants.swift              ★ UUIDs + command/status string constants
+    │   ├── TransferChunk.swift             ← Struct: seqNum, total, payload: Data
+    │   ├── WearableAccessory.swift         ★ Protocol + WearableType enum + WearableError
+    │   ├── ChildProfile.swift              ← name, age, preferences[], presetTopics[]
+    │   ├── UserSession.swift               ← userID, fullName?, email?, provider (apple/google)
+    │   ├── DetectionResult.swift           ← label, confidence, boundingBox
+    │   ├── PipelineResult.swift            ← payload: ScenePayload, metrics: PrivacyMetricsEvent
+    │   ├── PrivacyMetricsEvent.swift       ← per-run audit record (latencies + face/token counts)
+    │   ├── TranscriptionResult.swift       ← text, isFinal, confidence
+    │   └── TimelineEntry.swift             ← sceneObjects[], storySnippet, timestamp
+    │
+    ├── Services/
+    │   ├── BLE/
+    │   │   ├── BLEService.swift            ★ CBCentralManager — WearableAccessory conformor
+    │   │   └── ChunkBuffer.swift           ← Reassemble ordered chunks by seqNum
+    │   ├── Accessory/
+    │   │   ├── AccessoryManager.swift      ★ Owns one WearableAccessory per type; exposes activeAccessory
+    │   │   ├── LocalDeviceAccessory.swift  ★ iPhone camera + mic + speaker (WearableAccessory)
+    │   │   └── ExternalSDKAccessory.swift  ← Meta Glass / MFi Camera stubs (WearableAccessory)
+    │   ├── Auth/
+    │   │   └── AuthenticationService.swift ★ Sign In with Apple + Google via Firebase Auth
+    │   ├── AI/
+    │   │   ├── PrivacyPipelineService.swift ★ Vision + CoreML + Speech pipeline (actor)
+    │   │   ├── PIIScrubber.swift           ★ Regex-based PII redaction (7 patterns)
+    │   │   └── PrivacyMetricsStore.swift   ★ In-memory audit log + CSV export
+    │   ├── Cloud/
+    │   │   └── CloudAgentService.swift     ★ URLSession POST to seesaw-cloud-agent
+    │   └── Audio/
+    │       ├── AudioService.swift          ★ AVSpeechSynthesizer → PCM Data
+    │       ├── AudioCaptureService.swift   ★ AVAudioEngine mic capture → AsyncStream<AVAudioPCMBuffer>
+    │       └── SpeechRecognitionService.swift ★ SFSpeechRecognizer (live + one-shot, on-device only)
+    │
+    ├── ViewModel/
+    │   ├── CompanionViewModel.swift        ★ Main ViewModel — coordinates AccessoryManager + pipeline
+    │   ├── AuthViewModel.swift             ← Drives SignInView, calls AuthenticationService
+    │   └── OnboardingViewModel.swift       ← 3-step onboarding wizard state
+    │
+    ├── View/
+    │   ├── ContentView.swift               ← Thin root view (delegates to AppRootView)
+    │   ├── StatusView.swift                ← SessionState badge (used inside CameraTabView)
+    │   ├── SettingsView.swift              ← Child age, cloud URL, privacy metrics
+    │   ├── SignInView.swift                ← Apple + Google sign-in buttons
+    │   ├── AccessoryPickerView.swift       ← Wearable type selection (reused in settings)
+    │   ├── Home/
+    │   │   ├── HomeView.swift              ★ 3-tab root (Camera | Timeline | Settings)
+    │   │   ├── CameraTabView.swift         ★ Live preview + connect + capture controls
+    │   │   ├── TimelineTabView.swift       ← Session history list
+    │   │   ├── SettingsTabView.swift       ← Accessory + child prefs + sign-out
+    │   │   └── ScenePreviewView.swift      ← Full-screen blurred image + detection boxes overlay
+    │   ├── Onboarding/
+    │   │   ├── LaunchScreenView.swift      ← First-launch welcome (Get Started)
+    │   │   ├── TermsView.swift             ← EULA accept / decline
+    │   │   └── OnboardingView.swift        ★ 3-step wizard: accessory → child prefs → success
+    │   └── Shared/
+    │       └── CameraPreviewView.swift     ← AVCaptureSession live preview (UIViewRepresentable)
+    │
+    └── Extensions/
+        └── UserDefaults+Settings.swift     ← Type-safe keys: childAge, cloudAgentURL, selectedWearableType, etc.
+```
+
+> ★ = Critical file.
+
+***
+## 5. BLE Constants (`BLEConstants.swift`)
+**Must be byte-for-byte identical to `seesaw-native` `Constants.kt`:**
+
+```swift
+import CoreBluetooth
+
+enum BLEConstants {
+    static let serviceUUID        = CBUUID(string: "A1B2C3D4-E5F6-7890-ABCD-EF1234567890")
+    static let imageDataTXUUID    = CBUUID(string: "A1B2C3D4-E5F6-7890-ABCD-EF1234567891")
+    static let audioDataRXUUID    = CBUUID(string: "A1B2C3D4-E5F6-7890-ABCD-EF1234567892")
+    static let commandRXUUID      = CBUUID(string: "A1B2C3D4-E5F6-7890-ABCD-EF1234567893")
+    static let statusTXUUID       = CBUUID(string: "A1B2C3D4-E5F6-7890-ABCD-EF1234567894")
+    static let mtuConfigUUID      = CBUUID(string: "A1B2C3D4-E5F6-7890-ABCD-EF1234567895")
+
+    // Commands sent TO AiSee via COMMAND_RX
+    static let cmdCapture         = "CAPTURE"
+    static let cmdStop            = "STOP"
+    static let cmdReset           = "RESET"
+
+    // Status received FROM AiSee via STATUS_TX
+    static let statusReady        = "READY"
+    static let statusCapturing    = "CAPTURING"
+    static let statusImgDone      = "IMG_DONE"
+    static let statusAudioDone    = "AUDIO_DONE"
+    static let statusBusy         = "BUSY"
+    static let statusError        = "ERROR"
+    static let statusTimeout      = "TIMEOUT"
+}
+```
+
+***
+## 6. Session State Machine
+```swift
+enum SessionState: Equatable, Sendable {
+    case idle               // No wearable connected
+    case scanning           // startDiscovery() in progress
+    case connected          // Wearable connected, ready
+    case receivingImage     // Receiving JPEG chunks (BLE mode only)
+    case processingPrivacy  // On-device privacy pipeline running
+    case requestingStory    // POST to cloud agent in progress
+    case encodingAudio      // TTS synthesis running
+    case sendingAudio       // Writing audio to wearable
+    case recordingAudio     // Mic capture + live transcription active
+    case transcribingAudio  // Final transcription pass running
+    case error(String)      // Error with description
+}
+```
+
+`isConnected` returns `true` for all states except `.idle`, `.scanning`, and `.error`.
+
+***
+## 7. Wearable Accessory Abstraction
+
+The `WearableAccessory` protocol decouples `CompanionViewModel` from any specific hardware. All conformors expose identical `AsyncStream`-based I/O and lifecycle methods.
+
+```swift
+@MainActor
+protocol WearableAccessory: AnyObject {
+    var accessoryName: String { get }
+    var wearableType: WearableType { get }
+    var isConnected: Bool { get }
+
+    var onConnected: (() -> Void)? { get set }
+    var onDisconnected: (() -> Void)? { get set }
+
+    var imageDataStream: AsyncStream<Data> { get }   // JPEG frames
+    var statusStream: AsyncStream<String> { get }    // status strings
+    var audioDataStream: AsyncStream<Data> { get }   // PCM from accessory mic
+
+    func startDiscovery() async throws
+    func stopDiscovery() async
+    func disconnect() async
+
+    func sendAudio(_ data: Data) async throws        // PCM → accessory output
+    func sendCommand(_ command: String) async throws // BLEConstants.cmd* values
+    func startAudioCapture() async throws
+    func stopAudioCapture() async throws
+}
+```
+
+### Wearable types
+| `WearableType` | Conformor | Status |
+|----------------|-----------|--------|
+| `.iPhoneCamera` | `LocalDeviceAccessory` | Implemented |
+| `.aiSeeBLE` | `BLEService` | Implemented |
+| `.metaGlass` | `ExternalSDKAccessory` | Stub (SDK not integrated) |
+| `.mfiCamera` | `ExternalSDKAccessory` | Stub (hardware not available) |
+
+`AccessoryManager` persists the selection in `UserDefaults` and exposes `activeAccessory` via an exhaustive switch. Switching type takes effect on the next `startDiscovery()` call.
+
+### `LocalDeviceAccessory`
+Uses the iPhone's own hardware as a zero-external-hardware wearable:
+- **Input**: `AVCaptureSession` (back camera, `.medium` preset, `AVCapturePhotoOutput`)
+- **Mic**: `AudioCaptureService` tap via `AVAudioEngine`
+- **Output**: `AVAudioEngine` + `AVAudioPlayerNode` (PCM Float32, 22050 Hz, mono)
+- On `sendCommand("CAPTURE")`: fires `AVCapturePhotoOutput.capturePhoto` → JPEG yielded to `imageDataStream`
+- On `sendAudio(data)`: schedules PCM `AVAudioPCMBuffer` on `playerNode`
+
+***
+## 8. BLE Service (`BLEService.swift`)
+The app runs as **GATT Central** (client). Conforms to `WearableAccessory`. Scans for peripherals advertising `BLEConstants.serviceUUID`.
+
+### Connection flow
+```
+startDiscovery()
+  → scanForPeripherals(withServices: [serviceUUID])
+     │
+     ▼ didDiscover peripheral (name: "SEESAW_*")
+  → centralManager.connect(peripheral)
+     │
+     ▼ didConnect
+  → peripheral.discoverServices([serviceUUID])
+     │
+     ▼ didDiscoverServices → discoverCharacteristics
+     │
+     ▼ didDiscoverCharacteristics
+  → setNotifyValue(true, for: imageDataTX)
+  → setNotifyValue(true, for: statusTX)
+  → write(512B to mtuConfig)    // MTU negotiation
+  → yield statusStream: "READY"
+  → call onConnected()
+```
+
+### Chunk protocol
+Each BLE packet has a 4-byte header:
+```
+[UInt16 seqNum][UInt16 total][payload bytes]
+```
+`ChunkBuffer` reassembles out-of-order packets using a `[Int: Data]` dictionary keyed by seqNum. When `buffer.count == total`, the reassembled `Data` is yielded to `imageDataStream`.
+
+### Audio send pacing
+Audio chunks are written to `AUDIO_DATA_RX` with `writeValue(.withoutResponse)`, with a 20 ms `Task.sleep` between writes to avoid BLE buffer overflow on AiSee.
+
+***
+## 9. Authentication Layer (`AuthenticationService.swift`)
+
+`AuthenticationService` is an `actor` that handles both Sign In with Apple and Google Sign-In via Firebase Authentication.
+
+```swift
+actor AuthenticationService {
+    private(set) var currentSession: UserSession?
+    var isSignedIn: Bool { currentSession != nil }
+
+    func signInWithApple(credential: ASAuthorizationAppleIDCredential)
+    func signInWithGoogle() async throws          // Firebase credential exchange
+    func signOut()                                // Firebase + GIDSignIn + UserDefaults clear
+    func validateAppleCredential(userID: String) async -> Bool
+}
+```
+
+**Session persistence**: `UserSession` fields (`userID`, `provider`, `fullName`, `email`) are stored in `UserDefaults` for PoC. `AuthProvider` is `.apple` or `.google`.
+
+**`AuthViewModel`** drives `SignInView`. It presents the Apple `ASAuthorizationController` and calls `AuthenticationService.signInWithGoogle()`, then calls `coordinator.signInCompleted()` on success.
+
+***
+## 10. Privacy Pipeline Service (`PrivacyPipelineService.swift`)
+Core research contribution of Tier 2. All raw sensor data is processed on-device. **Nothing raw leaves this function.**
+
+`PrivacyPipelineService` is an `actor` with `os_signpost` instrumentation on every stage for Instruments profiling.
+
+### Two entry points
+| Method | Use |
+|--------|-----|
+| `process(jpegData:childAge:audioData:)` | Full pipeline → `PipelineResult` (payload + metrics) |
+| `runDebugDetection(jpegData:)` | Face blur + object detection with bounding boxes → `(Data, [DetectionResult], PrivacyMetricsEvent)` |
+
+### Pipeline stages
+```
+Stage 1+2: Face Detection + Blur         (VNDetectFaceRectanglesRequest + CIGaussianBlur σ=30)
+Stage 3:   Object Detection              (VNCoreMLRequest / seesaw-yolo11n, conf ≥ 0.25)
+Stage 4:   Scene Classification          (VNClassifyImageRequest, conf ≥ 0.3, top 3)
+Stage 5:   On-device Speech Recognition  (SFSpeechRecognitionService, on-device only)
+Stage 6:   PII Scrub                     (PIIScrubber, 7 regex patterns)
+```
+
+Stages 3, 4, and 5 run **concurrently** using `async let`.
+
+### YOLO class labels
+The pipeline embeds all 44 class labels (matching `seesaw_children.yaml`) for `VNCoreMLFeatureValueObservation` fallback parsing. Vision auto-converts NMS outputs to `VNRecognizedObjectObservation` when it recognises the output pattern; the raw multi-array path is the fallback.
+
+### Model validation at load time
+A **probe inference** on a 1×1 black image is run during `init` to detect NMS class-count pipeline mismatches early. The model gracefully falls back to scene-classification-only if the probe fails.
+
+### `ScenePayload` — what gets sent to cloud
+```swift
+struct ScenePayload: Codable, Sendable {
+    let objects: [String]     // e.g. ["dinosaur_toy", "book", "cup"]
+    let scene: [String]       // e.g. ["bedroom", "indoor"]
+    let transcript: String?   // PII-scrubbed child utterance
+    let childAge: Int         // from parent settings
+    let sessionId: String     // UUID per pipeline run
+    let query: String?        // same as transcript (future: explicit query field)
+    let timestamp: String     // ISO8601
+    // Raw image: NEVER included
+    // Face data: NEVER included
+    // Voice audio: NEVER included
+}
+```
+
+### `PIIScrubber`
+Standalone `enum` with 7 compiled regex patterns (single compile at first call):
+1. Email addresses
+2. "My name is X" / "I'm called X" / "I am X"
+3. Phone numbers (US/UK)
+4. UK postcodes
+5. US ZIP codes
+6. Street addresses
+7. Long digit sequences (7+ digits)
+
+Returns `(scrubbed: String, tokensRedacted: Int)`. Used by both `PrivacyPipelineService` and `SpeechRecognitionService`.
+
+***
+## 11. Cloud Agent Service (`CloudAgentService.swift`)
+Minimal `URLSession`-based HTTPS client. `actor` isolation. `baseURL` is mutable via `updateBaseURL(_:)` (called when user changes the URL in Settings).
+
+```
+POST <baseURL>/story
+Content-Type: application/json
+Body: ScenePayload (JSON)
+Timeout: 15 seconds
+
+Response 200: StoryResponse { storyText: String, audioURL: String? }
+```
+
+***
+## 12. Audio Services
+
+### `AudioService.swift`
+Converts story text → PCM audio using `AVSpeechSynthesizer.write(_:toBufferCallback:)`.
+
+- Voice: `en-GB`, rate: 85% of default, pitchMultiplier: 1.1
+- Returns accumulated PCM Float32 Data (ready for `sendAudio` to wearable)
+- Thread-safe `AudioAccumulator` (NSLock) collects frames from the `write` callback
+- **Note:** AAC encoding is a future milestone; current output is raw PCM
+
+### `AudioCaptureService.swift`
+Captures iPhone mic via `AVAudioEngine` input tap.
+
+- Format: PCM Float32, 16 kHz, mono
+- Yields `AVAudioPCMBuffer` in real time via `AsyncStream<AVAudioPCMBuffer>`
+- Accumulates all PCM frames in memory; returns `Data` on `stopCapture()`
+- `PRIVACY CONTRACT`: captured audio is never written to disk
+
+### `SpeechRecognitionService.swift`
+On-device STT via `SFSpeechRecognizer`. `requiresOnDeviceRecognition = true` enforced on every request.
+
+Two modes:
+- **Live transcription**: `startLiveTranscription(audioStream:)` → `AsyncStream<TranscriptionResult>` (with partial results)
+- **One-shot**: `transcribeAudioData(_:)` → `String?` (for post-capture batch transcription)
+
+`scrubPII(_:)` static method delegates to `PIIScrubber` — the single PII scrubbing entry point.
+
+***
+## 13. ViewModel (`CompanionViewModel.swift`)
+Single `@MainActor @Observable` ViewModel for PoC. Owns three `Task` handles for stream observation that are cancelled on disconnect.
+
+### Observable state exposed to SwiftUI
+| Property | Type | Purpose |
+|----------|------|---------|
+| `sessionState` | `SessionState` | Drives all UI control states |
+| `lastError` | `String?` | Shown in error banner |
+| `connectedDeviceName` | `String?` | Device name badge |
+| `childAge` | `Int` | Used in `ScenePayload` |
+| `timeline` | `[TimelineEntry]` | Session history (newest first) |
+| `isShowingScenePreview` | `Bool` | Triggers full-screen debug overlay |
+| `capturedImageData` | `Data?` | Face-blurred JPEG for preview |
+| `sceneDetections` | `[DetectionResult]` | Bounding boxes for preview |
+| `currentTranscript` | `String?` | Live / final PII-scrubbed transcript |
+| `cameraPreviewSession` | `AVCaptureSession?` | Live camera (non-nil for `.iPhoneCamera` only) |
+
+### Key methods
+| Method | Action |
+|--------|--------|
+| `startScanning()` | Wires lifecycle callbacks, calls `accessory.startDiscovery()`, subscribes to image + status streams |
+| `captureScene()` | Sends `BLEConstants.cmdCapture` to active accessory |
+| `startRecording()` | Starts `AudioCaptureService` + live transcription stream |
+| `stopRecording()` | Stops capture, calls `speechRecognitionService.stopTranscription()` |
+| `runDetectionPreview(jpegData:)` | Calls `privacyPipeline.runDebugDetection` → sets preview state |
+| `runFullPipeline(jpegData:)` | Full privacy → cloud → audio → send pipeline |
+
+**Stream observation pattern**: `imageStreamTask` and `statusStreamTask` are `Task<Void, Never>` instances that loop over `AsyncStream` values from the active wearable. Streams are reset by the wearable on each `startDiscovery()` call; new tasks are created after `startDiscovery()` returns.
+
+***
+## 14. SwiftUI Views
+
+### App navigation flow
+```
+LaunchScreenView → TermsView → SignInView → OnboardingView → HomeView
+```
+
+### `HomeView` (3-tab)
+| Tab | View | Content |
+|-----|------|---------|
+| Camera | `CameraTabView` | Live `AVCaptureSession` preview (iPhone camera), status badge, Connect/Capture/Disconnect buttons, error banner, full-screen `ScenePreviewView` sheet |
+| Timeline | `TimelineTabView` | `List` of `TimelineEntry` — scene objects + story snippet per session |
+| Settings | `SettingsTabView` | Accessory picker, child profile, privacy metrics summary, sign out |
+
+### `OnboardingView` (3-step wizard)
+- **Step 0 — Accessory Setup**: Card picker for `WearableType` + live connect attempt
+- **Step 1 — Child Preferences**: Name `TextField`, age `Stepper`, topic chips grid (`ChildProfile.presetTopics`)
+- **Step 2 — Success**: Welcome confirmation → `coordinator.onboardingCompleted()`
+
+### `ScenePreviewView`
+Full-screen cover over `CameraTabView`. Displays the face-blurred JPEG with `DetectionResult` bounding box overlays (label + confidence). Dismiss button calls `vm.dismissScenePreview()`.
+
+### `CameraPreviewView`
+`UIViewRepresentable` wrapping `AVCaptureVideoPreviewLayer`. Non-nil only when `selectedType == .iPhoneCamera`.
+
+***
+## 15. Privacy Metrics (`PrivacyMetricsStore`)
+
+`PrivacyMetricsStore` is an `actor` that accumulates `PrivacyMetricsEvent` records in memory and provides dissertation-ready evidence.
+
+### `PrivacyMetricsEvent` fields
+| Field | Description |
+|-------|-------------|
+| `facesDetected` / `facesBlurred` | Proof faces are always blurred |
+| `objectsDetected` | Object count per run |
+| `tokensScrubbedFromTranscript` | PII tokens redacted |
+| `rawDataTransmitted` | Always `false` — privacy invariant |
+| `pipelineLatencyMs` | Total on-device time |
+| `faceDetectMs`, `blurMs`, `yoloMs`, `sceneClassifyMs`, `sttMs`, `piiScrubMs` | Per-stage breakdown |
+| `timestamp` | `CFAbsoluteTime` of pipeline start |
+
+### Queries
+- `averageLatency()` — mean pipeline latency
+- `privacySanitisationRate()` — fraction of runs where `rawDataTransmitted == false` (target: 1.0)
+- `totalFacesDetected()` / `totalFacesBlurred()` — cumulative counts
+- `exportCSV()` — 13-column CSV string for dissertation appendix
+
+***
+## 16. Complete Interaction Flow
+
+```
+[User taps "Capture Scene" in CameraTabView]
+        │
+        ▼
+CompanionViewModel.captureScene()
+  → accessoryManager.activeAccessory.sendCommand("CAPTURE")
+        │
+        ▼ (iPhone camera path)
+LocalDeviceAccessory.captureOneFrame()
+  → AVCapturePhotoOutput.capturePhoto(with:delegate:)
+  → delegate.photoOutput(_:didFinishProcessingPhoto:)
+  → imageYielder.yield(jpegData)
+        │
+        ▼ (BLE path)
+BLEService sends "CAPTURE" command to AiSee
+  → AiSee captures image, sends chunked JPEG via IMAGE_DATA_TX NOTIFY
+  → BLEService.peripheral(_:didUpdateValueFor:) parses chunks
+  → ChunkBuffer.add(chunk) → when complete: imageYielder.yield(reassembledData)
+        │
+        ▼
+imageStreamTask receives jpegData
+  → CompanionViewModel.runDetectionPreview(jpegData:)
+        │
+        ▼
+PrivacyPipelineService.runDebugDetection(jpegData:)
+  → Stage 1+2: VNDetectFaceRectanglesRequest → CIGaussianBlur(σ=30) per face
+  → Stage 3:   VNCoreMLRequest (YOLO11n) → [DetectionResult] with bounding boxes
+  → returns (blurredJPEG, detections, metrics)
+        │
+        ▼
+CompanionViewModel:
+  capturedImageData = blurredJPEG
+  sceneDetections   = detections
+  isShowingScenePreview = true
+  metricsStore.record(metrics)
+        │
+        ▼
+[Full pipeline: when story is requested]
+PrivacyPipelineService.process(jpegData:childAge:audioData:)
+  async let objects    = detectObjects(in: blurredImage)       // YOLO11n
+  async let scene      = classifyScene(in: blurredImage)       // VNClassifyImageRequest
+  async let transcript = recognizeSpeech(audioData: audioData) // SFSpeechRecognizer (on-device)
+  → PIIScrubber.scrub(transcript)
+  → ScenePayload { objects, scene, transcript, childAge, sessionId, query, timestamp }
+  → PipelineResult { payload, metrics }
+        │
+        ▼
+CloudAgentService.requestStory(payload:)
+  → POST <cloudAgentURL>/story { objects, scene, transcript, childAge, … }
+  → StoryResponse { storyText }
+        │
+        ▼
+AudioService.generateAndEncodeAudio(from: storyText)
+  → AVSpeechSynthesizer.write(utterance) { buffer → accumulate PCM }
+  → returns PCM Float32 Data (~22050 Hz, mono)
+        │
+        ▼
+accessoryManager.activeAccessory.sendAudio(pcmData)
+  iPhone path:  AVAudioPlayerNode.scheduleBuffer → built-in speaker
+  BLE path:     write 508-byte chunks to AUDIO_DATA_RX (20ms pacing)
+        │
+        ▼
+timeline.insert(TimelineEntry(sceneObjects:, storySnippet:), at: 0)
+sessionState = .connected
+```
+
+***
+## 17. Performance Targets
+| Stage | Target Latency | Apple Hardware Used |
+|-------|---------------|---------------------|
+| Image capture / BLE reassembly | 350–500 ms | — |
+| Face detection + blur | < 50 ms | Neural Engine |
+| YOLO11n object detection | < 80 ms | Neural Engine (FP16) |
+| Scene classification | < 30 ms | Neural Engine |
+| Speech recognition | < 200 ms | Neural Engine |
+| **Total on-device pipeline** | **< 700 ms** | Neural Engine |
+| Cloud round-trip | < 3 000 ms | Network |
+| TTS synthesis (PCM) | < 500 ms | CPU / AVFoundation |
+| Audio BLE transfer | ~ 1 600 ms | BLE 5.0 |
+| **Total end-to-end** | **< 8 000 ms** | — |
+
+***
+## 18. Privacy Guarantees
+| Data | Treatment |
+|------|-----------|
+| Raw JPEG from wearable | Discarded in memory after `PrivacyPipelineService.process()` returns |
+| Face bounding boxes | Used only to drive blur, never stored or transmitted |
+| Blurred JPEG | Displayed in-app for debug preview only; never stored to disk or sent to network |
+| Voice audio | Processed on-device via `SFSpeechRecognizer(requiresOnDeviceRecognition: true)` |
+| Transcript text | PII-scrubbed via `PIIScrubber` before inclusion in `ScenePayload` |
+| `ScenePayload` sent to cloud | Contains only anonymous labels and age — no raw sensor data |
+| Cloud response (story text) | Temporary in-memory only, passed to TTS, discarded |
+| TTS audio | PCM Data in memory only; not persisted to disk |
+| `PrivacyMetricsEvent.rawDataTransmitted` | Always `false` — enforced by pipeline invariant, auditable via `PrivacyMetricsStore` |
+
+***
+## 19. Error Handling
+All errors surface via `CompanionViewModel.lastError` / `sessionState = .error(msg)` and are displayed in `CameraTabView`'s error banner.
+
+| Failure | Behaviour |
+|---------|-----------|
+| Wearable permission denied | `WearableError.permissionDenied` → error banner, state → `.idle` |
+| BLE disconnected mid-transfer | `ChunkBuffer.reset()`, state → `.idle`, show reconnect button |
+| CoreML model load failure | Graceful fallback: scene-classification-only; warning logged at startup |
+| Cloud request timeout (> 15s) | `URLSession` timeout → `CloudError` → error banner, state → `.connected` |
+| Cloud 4xx/5xx | `CloudError.unexpectedStatusCode(code)` → display error |
+| Audio synthesis failure | `AudioError.synthesisFailed` → display error |
+| Speech recognizer unavailable | Logged; `transcript` remains `nil`; pipeline continues without voice |
+
+***
+## 20. Key Design Decisions
+| Decision | Reason |
+|----------|--------|
+| `WearableAccessory` protocol | Decouples `CompanionViewModel` from hardware; enables iPhone-camera-only development without AiSee headset |
+| `AppCoordinator` route state machine | Clean navigation without deep `NavigationLink` dependencies; enables auth fast-paths on subsequent launches |
+| `AppDependencyContainer` | Centralises service construction; ViewModels receive injected dependencies; enables future testing |
+| Firebase Auth (Apple + Google) | Parental identity required for child profile ownership; production-grade auth with zero custom server code |
+| `actor` for all services | Swift 6 strict concurrency — eliminates data races without manual locking |
+| `@Observable` ViewModels | iOS 17+ native observation, lighter than `ObservableObject` + `@Published` |
+| `AsyncStream` for wearable I/O | Backpressure-safe; stream pair is recreated on each `startDiscovery()` to support reconnect cycles |
+| Parallel vision stages (async let) | Object detection, scene classification, and speech recognition run concurrently — saves ~100–200 ms |
+| `os_signpost` instrumentation | Every pipeline stage is measurable in Instruments without code changes |
+| `PrivacyMetricsStore` + `PipelineResult` | Provides dissertation-grade audit evidence; `rawDataTransmitted: false` is a provable invariant |
+| `PIIScrubber` as standalone enum | Single source of truth for redaction patterns; used by both pipeline and live transcription paths |
+| PCM output (not AAC) for PoC | Removes codec complexity; AAC encoding is a future milestone |
+| `LocalDeviceAccessory` | Enables full end-to-end testing without AiSee hardware; same `WearableAccessory` interface |
+| `useTestImageForPreview` feature flag | Allows repeatable detection testing against a known asset without capturing a real scene |
+| Zero `ChunkBuffer` in iPhone camera path | JPEG arrives in one shot from `AVCapturePhotoOutput`; no reassembly needed |
+| 20 ms BLE audio write pacing | AiSee BLE buffer is small; pacing prevents `CBATTError.invalidHandle` drops |
+
+***
+## 21. Next Steps — Story Generation (Foundation Models + Cloud Agent)
+The architecture is designed to extend into a **co-creative turn-based story generation** mode. The planned additions are:
+
+```
+iPhone (on-device)                    Cloud Agent (Tier 3)
+──────────────────                    ────────────────────
+Apple Foundation Models API           Multi-turn story agent
+  - Structured output                   - Maintains story state
+  - Local scene enrichment              - Character + arc continuity
+  - Offline-capable first turn          - Cloud TTS (optional)
+        │
+        ▼
+ScenePayload + storyContext (turn N)
+  → POST /story/continue
+        │
+        ▼
+StoryResponse { storyText, storyContext, turnNumber }
+```
+
+Key model fields to add to `ScenePayload` / `StoryResponse` for turn-based support:
+- `storyContext: String?` — serialised prior story state
+- `turnNumber: Int` — current turn index
+- `speakerTurn: String` — `"child"` | `"companion"` (who speaks next)
+
+***
+
+*Document version: 2.0 | Companion to: `seesaw-native` Technical Architecture Blueprint | Platform: iOS 26+, Swift 6 | Last updated: 2026-04-05*
+*UUID constants in Section 5 must remain in sync with `seesaw-native/Constants.kt` at all times.*

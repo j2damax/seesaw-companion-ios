@@ -1,0 +1,57 @@
+Tier 2 — seesaw-companion-ios Additional Tasks (Apple Foundation Models Layer)
+T2-036 — Integrate FoundationModels Framework
+Description:
+Add the FoundationModels framework to the Xcode project. Verify the framework is available on the target device (iPhone 15 Pro or newer, iOS 26+). Add a SystemCapabilityChecker utility that detects at launch whether Foundation Models are available and gracefully degrades to AVSpeechSynthesizer-only mode on unsupported devices. Add NSFoundationModelsUsageDescription to Info.plist with an appropriate privacy explanation.
+
+T2-037 — Define @Generable StoryBeat Struct
+Description:
+Create the StoryBeat.swift file in the Models/ group. Define the @Generable struct with fields: storyText: String, question: String, isEnding: Bool, theme: String, suggestedContinuation: String, newCharacters: [String]. Verify that the @Generable macro generates the correct schema and that LanguageModelSession.generate(StoryBeat.self, prompt:) compiles without error. Write a unit test asserting that a generated StoryBeat contains non-empty storyText and question fields.
+
+T2-038 — Build OnDeviceStoryService Actor
+Description:
+Create OnDeviceStoryService.swift as a Swift actor in the Services/AI/ group. Implement startStory(context: SceneContext, profile: ChildProfile) and continueTurn(childAnswer: String) methods. The service must manage a single LanguageModelSession per story session, increment turnCount, inject the system prompt with child name/age/preferences/detected object labels, and return a StoryBeat via session.generate(StoryBeat.self, prompt:). Add a maxTurns constant (default 8) and set isEnding: true when turnCount >= maxTurns - 1.
+
+T2-039 — Implement System Prompt Builder
+Description:
+Create SystemPromptBuilder.swift in Services/AI/. Implement a pure function buildSystemPrompt(context: SceneContext, profile: ChildProfile) -> String that dynamically constructs the LanguageModelSession system instructions. The prompt must include: child's name and age, vocabulary complexity rules mapped to age groups (3–5 simple, 6–8 richer), detected object labels as required story elements, preferred themes from parent config, topics to avoid from parent config, tone instructions ("warm, imaginative, never scary"), and the rule that Whisper never mentions technology or AI. Write unit tests for each age group's vocabulary instruction.
+
+T2-040 — Wire SFSpeechRecognizer as Turn Input
+Description:
+Update SpeechService.swift to expose a listenForResponse(timeout: TimeInterval) async throws -> String method. This method must activate the microphone, listen using the existing on-device SFSpeechRecognizer session, return the transcript when silence is detected for ≥1.5 seconds or the timeout expires, and deactivate the audio session before returning. Handle the AVAudioSession interruption when AVSpeechSynthesizer is also active — ensure speech recognition does not start before the synthesiser finishes playing the question.
+
+T2-041 — Implement Streaming TTS for Story Beats
+Description:
+Update AudioPlaybackService to support streaming playback from LanguageModelSession.streamResponse(to:). As tokens arrive, buffer complete sentences (ending in ., ?, or !) and immediately pass them to AVSpeechSynthesizer via speak(_:). This allows the first sentence to be audible within ≈300ms of generation start. Implement a flushBuffer() call at stream end to speak any remaining partial sentence. Add a queue to prevent overlapping utterances.
+
+T2-042 — Implement BeatSummary Privacy Scrub Before Cloud Sync
+Description:
+Create BeatSummariser.swift in Services/Privacy/. Implement summarise(childAnswer: String) async throws -> String using Apple FM's summarisation adapter (LanguageModelSession with a summarisation instruction) to compress the child's spoken answer to ≤10 words before it is sent to Tier 3. This ensures no verbatim personal speech leaves the device. Add a fallback that takes the first 10 words directly if the adapter call fails. Write a unit test asserting output is always ≤10 words.
+
+T2-043 — Build CloudAgentService with Firebase Auth
+Description:
+Create CloudAgentService.swift as a Swift actor in Services/Cloud/. Implement startSession(context:onDeviceBeat:profile:), sendBeat(answer:onDeviceBeat:), and syncBeat(summary:) methods. All requests must include a Firebase Auth JWT token in the Authorization: Bearer header obtained from Auth.auth().currentUser?.getIDToken(). Set a 10-second timeout on all requests. All calls must be fire-and-forget from the CompanionViewModel — failures must never propagate to the UI. Log errors silently using Logger.
+
+T2-044 — Implement Dual-Track Pipeline in CompanionViewModel
+Description:
+Update CompanionViewModel.runFullPipeline() to run Track A (on-device Apple FM) and Track B (cloud Gemini) concurrently using async let. Track A must always speak first. Track B result is stored in pendingEnhancedBeat and used on the following turn if available. If Track B is not available, Track A runs for both the current and next turn. Add sessionState enum: .idle, .listening, .processing, .speaking, .awaitingAnswer. Update the minimal SwiftUI ContentView status indicator to reflect state transitions.
+
+T2-045 — Implement Enhanced Beat Queue
+Description:
+Create EnhancedBeatQueue.swift as an actor in Services/AI/. Implement enqueue(beat: EnhancedBeat), dequeue() -> EnhancedBeat?, and clear() methods. The CompanionViewModel calls dequeue() before each turn — if a cloud-enhanced beat is waiting, it plays instead of calling Apple FM. If the queue is empty, Apple FM runs as fallback. Write a unit test simulating rapid enqueue/dequeue across 8 turns to confirm no race conditions.
+
+T2-046 — Build Parent Configuration View (Story Preferences)
+Description:
+Create ParentConfigView.swift in Views/Parent/. Implement a NavigationStack-based settings flow allowing parents to: enter the child's name and age (stored in AppStorage), select up to 5 preferred story themes from a predefined list (adventure, animals, magic, friendship, science, space), add topics to avoid (free text, stored as a string array), and toggle cloud enhancement mode on/off. All values must persist via @AppStorage and be read by SystemPromptBuilder at session start.
+
+T2-047 — Implement Session Persistence with SessionManager
+Description:
+Create SessionManager.swift as an actor in Services/. It must track sessionId: UUID, turnCount: Int, activeTheme: String, characterMemory: [String], and startedAt: Date for the current session. On each turn completion, write a SessionRecord to SwiftData (local persistence) including the StoryBeat summary. Implement resumeLastSession() -> SessionRecord? so the parent app can show the last incomplete session. This local persistence is independent of Firestore sync.
+
+T2-048 — Benchmark On-Device Pipeline Latency (Xcode Instruments)
+Description:
+Run the full on-device pipeline (Stages 1–6 including Foundation Models generation) 20 times in Xcode Instruments on a physical iPhone 15 Pro. Record per-stage latency: face detection, blur, YOLO inference, STT, PII scrub, FM generation. Calculate mean, standard deviation, min, and max for each stage. Export results to a CSV file and add to docs/benchmarks/on_device_latency.csv. This data feeds the Chapter 5 evaluation table directly.
+
+T2-049 — Implement Graceful Offline Mode
+Description:
+Add NetworkMonitor.swift using NWPathMonitor to detect connectivity state. When offline, CloudAgentService must return nil immediately without attempting any network call. OnDeviceStoryService runs as sole story generator. The parent config view must show a subtle offline indicator. Implement a pendingBeats: [BeatSummary] queue that auto-syncs to Tier 3 when connectivity is restored. Write an XCTest using URLProtocol to simulate offline conditions and verify graceful fallback.
+
