@@ -1,14 +1,4 @@
-DETAILED IMPLEMENTATION PLAN
-
-Core thesis is sound — Apple Foundation Models does enable a fully on-device story generation loop, eliminating the cloud dependency for core functionality
-Privacy argument is stronger — "Structurally guaranteed" privacy (no network = no data leak) is academically stronger than "filtered before cloud"
-Three-mode strategy (A/B/C) is well-designed — Graceful degradation from fully on-device → hybrid → offline-only
-@Generable StoryBeat concept is correct — Structured output eliminates JSON parsing and gives type-safe story responses
-Actor-based OnDeviceStoryService follows project conventions — Correctly uses actor keyword
-Turn-management concept is sound — Stateful LanguageModelSession with conversation history is the right approach
-Cloud agent as enhancement layer — Correctly positions Tier 3 as optional for richer stories, analytics, parent dashboard
-
-
+PART 3: DETAILED IMPLEMENTATION PLAN
 Phase 0: Pre-requisites & Model Layer (1-2 days)
 0.1 — Define StoryBeat model
 File: SeeSaw/Model/StoryBeat.swift
