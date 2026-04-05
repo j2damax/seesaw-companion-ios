@@ -1,0 +1,671 @@
+***
+
+# SeeSaw Cloud Agent — Technical Architecture Blueprint (Tier 3)
+
+## Overview
+
+The `seesaw-cloud-agent` is the **enhancement and intelligence amplification layer** of the SeeSaw system. Tier 2 (iPhone + Apple Foundation Models) handles the complete interactive story loop for all children — it works fully offline. Tier 3 exists to make stories **richer, longer, more memorable, and shareable**. It also provides the parent dashboard, community story wall, analytics, and the long-term memory that makes Whisper feel like it knows the child over weeks and months. 
+
+The key design principle: **Tier 3 never blocks the child**. The iOS app never waits for a Tier 3 response before speaking. All cloud calls happen asynchronously in the background. The child always hears something within 1 second — from the on-device Apple Foundation Model — and Tier 3 enriches what happens next.
+
+***
+
+## 1. System Role & Responsibilities
+
+### What Tier 3 Does
+
+| Responsibility | Description | Technology |
+|---|---|---|
+| **Enhanced story beats** | Richer, longer Gemini 2.0 Flash story segments for "enhanced mode" | Google ADK + Gemini 2.0 Flash |
+| **Long-term child memory** | Remembers favourite characters, themes, story arcs across sessions | Firestore `child_profiles` collection |
+| **Session persistence** | Every story turn is saved; sessions resumable across days | Firestore `sessions` + `beats` collections |
+| **Parent dashboard** | Real-time view of sessions, transcripts, engagement metrics | Firestore real-time listeners |
+| **Story wall** | Community feed of completed, parent-approved stories | Firestore `published_stories` + Cloud Storage |
+| **Parental controls sync** | Server-side topic restrictions, safety policy updates | Firestore `parent_config` + Remote Config |
+| **Apple Intelligence sync** | Receives `StoryBeat` context summaries from on-device FM for continuity | REST endpoint `/sync/beat` |
+| **Safety audit log** | Every beat logged for safety review and research analysis | Firestore `safety_logs` |
+| **Analytics** | Story completion rates, engagement per age group, object → theme mappings | BigQuery + Firebase Analytics |
+
+### What Tier 3 Does NOT Do
+- Block story playback (async only)
+- Store raw images, audio, or faces (only text labels from Tier 2 privacy pipeline)
+- Handle BLE communication (Tier 1 responsibility)
+- Run the core interactive loop (Tier 2 Apple FM responsibility)
+
+***
+
+## 2. Architecture Overview
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                        seesaw-cloud-agent                           │
+│                         (Google Cloud Run)                          │
+│                                                                      │
+│  ┌──────────────┐    ┌──────────────────────────────────────────┐  │
+│  │  FastAPI     │    │         Google ADK Agents                │  │
+│  │  Gateway     │──▶│  ┌────────────┐  ┌────────────────────┐  │  │
+│  │              │    │  │  Context   │  │  Enhanced Story    │  │  │
+│  │  /story/beat │    │  │  Enricher  │─▶│  Generator Agent  │  │  │
+│  │  /story/start│    │  │  Agent     │  │  (Gemini 2.0 Flash│  │  │
+│  │  /story/end  │    │  └────────────┘  └────────────────────┘  │  │
+│  │  /sync/beat  │    │        │                  │               │  │
+│  │  /parent/... │    │        ▼                  ▼               │  │
+│  │  /publish    │    │  ┌──────────────────────────────────────┐ │  │
+│  └──────────────┘    │  │     Safety Moderator Agent           │ │  │
+│         │            │  │     (Gemini + CSAM rules)            │ │  │
+│         │            │  └──────────────────────────────────────┘ │  │
+│         │            └──────────────────────────────────────────┘  │
+│         │                                                           │
+│         ▼                                                           │
+│  ┌──────────────────────────────────────────────────────────────┐  │
+│  │                    Firebase Services                         │  │
+│  │                                                              │  │
+│  │  Firestore          Cloud Storage      Remote Config         │  │
+│  │  ├ sessions         ├ story_audio      ├ safety_rules        │  │
+│  │  ├ beats            ├ story_images     ├ topic_filters       │  │
+│  │  ├ child_profiles   └ exports          └ age_configs         │  │
+│  │  ├ parent_configs                                            │  │
+│  │  ├ published_stories                                         │  │
+│  │  └ safety_logs                                               │  │
+│  └──────────────────────────────────────────────────────────────┘  │
+│                                                                      │
+│  ┌──────────────────────┐    ┌───────────────────────────────────┐  │
+│  │  Google Cloud TTS    │    │  BigQuery + Firebase Analytics    │  │
+│  │  (Neural voices)     │    │  (engagement, safety metrics)     │  │
+│  └──────────────────────┘    └───────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+***
+
+## 3. The Hybrid Story Generation Model
+
+The core innovation is how Tier 2 (Apple FM) and Tier 3 (Gemini) cooperate on a single story without either blocking the other.
+
+### The Dual-Track Pattern
+
+```
+Button press on AiSee
+       │
+       ▼
+Tier 2: Privacy pipeline runs (≈600ms)
+       │
+       ├──── TRACK A (immediate) ──────────────────────────────┐
+       │     Apple FoundationModels                            │
+       │     → StoryBeat in ≈400ms                             │
+       │     → Speaks to child immediately                     │
+       │     → Sends beat summary to Tier 3 via /sync/beat     │
+       │                                                       ▼
+       └──── TRACK B (async, ≈2-4s) ──────────────────────────┤
+             POST /story/beat to Tier 3                        │
+             → Context Enricher reads Firestore long memory    │
+             → Enhanced Story Generator calls Gemini 2.0 Flash │
+             → Safety Moderator validates output               │
+             → Enhanced beat stored in Firestore               │
+             → iOS app receives enhanced beat for NEXT turn    ◄┘
+                    (child currently listening to Track A)
+```
+
+**Track A always plays.** Track B enhances the following turn. The child never waits for the cloud. If Track B is slower than expected, Track A plays for the current turn AND the next turn. Tier 3 beats queue and play when available.
+
+***
+
+## 4. API Contract
+
+### Base URL
+```
+https://seesaw-cloud-agent-[hash]-uc.a.run.app
+```
+
+### Endpoints
+
+#### `POST /story/start`
+Start a new session. Called when child presses button for the first time.
+
+**Request body:**
+```json
+{
+  "session_id": "uuid-v4",
+  "child_profile": {
+    "id": "child_uuid",
+    "name": "Maya",
+    "age": 6,
+    "preferences": {
+      "themes": ["adventure", "animals", "magic"],
+      "avoid": ["scary", "conflict"]
+    }
+  },
+  "scene_context": {
+    "labels": ["teddy_bear", "book", "crayon"],
+    "transcript": "let's make a story about my bear",
+    "mood": "playful",
+    "suggested_theme": "adventure"
+  },
+  "on_device_beat": {
+    "story_text": "Once there was a brave bear named Bumble...",
+    "question": "What special power do you think Bumble has?",
+    "theme": "adventure"
+  }
+}
+```
+
+**Response:**
+```json
+{
+  "session_id": "uuid-v4",
+  "status": "started",
+  "enhanced_beat": {
+    "story_text": "In a land where books came alive and crayons painted the sky, Bumble the bear...",
+    "question": "If Bumble could go anywhere in the world right now, where would you send him?",
+    "theme": "adventure",
+    "memory_context": "Child loves animals; introduced Bumble character"
+  },
+  "tts_audio_url": "https://storage.googleapis.com/.../beat_1.mp3"
+}
+```
+
+#### `POST /story/beat`
+Submit a turn (child's answer + current on-device beat) and receive enhanced next beat.
+
+**Request body:**
+```json
+{
+  "session_id": "uuid-v4",
+  "turn_number": 2,
+  "child_answer": "I want Bumble to go to the moon",
+  "on_device_beat": {
+    "story_text": "Bumble flapped his tiny wings and flew up, up, up...",
+    "question": "What did Bumble find when he landed on the moon?"
+  },
+  "is_ending_requested": false
+}
+```
+
+**Response:**
+```json
+{
+  "session_id": "uuid-v4",
+  "turn_number": 3,
+  "enhanced_beat": {
+    "story_text": "On the moon, Bumble discovered a secret crater filled with glowing stardust flowers. Each flower sang a tiny song...",
+    "question": "Should Bumble pick a flower for his friend, or should he just listen to the songs?",
+    "theme": "adventure",
+    "character_memory": ["Bumble", "moon", "stardust flowers"]
+  },
+  "tts_audio_url": "https://storage.googleapis.com/.../beat_3.mp3",
+  "safety_passed": true
+}
+```
+
+#### `POST /story/end`
+Close a session and trigger story publishing workflow.
+
+```json
+{
+  "session_id": "uuid-v4",
+  "final_beat": { ... },
+  "parent_approve_share": false
+}
+```
+
+#### `POST /sync/beat`
+Lightweight endpoint — iOS sends Apple FM beat summaries so Tier 3 can maintain long-term memory even in offline-first sessions.
+
+```json
+{
+  "session_id": "uuid-v4",
+  "child_id": "child_uuid",
+  "beat_summary": {
+    "characters_introduced": ["Bumble"],
+    "theme": "adventure",
+    "objects_used": ["teddy_bear"],
+    "child_answer_summary": "sent bear to moon"
+  }
+}
+```
+
+#### `GET /parent/sessions/{child_id}`
+Returns paginated session history for parent dashboard.
+
+#### `POST /publish`
+Publishes an approved story to the community wall.
+
+***
+
+## 5. Google ADK Agent Pipeline
+
+### Agent 1: Context Enricher
+
+Reads Firestore long-term memory to build a rich context object for Gemini. This is why the cloud version feels like it "knows" the child.
+
+```python
+from google.adk.agents import Agent
+
+context_enricher = Agent(
+    name="context_enricher",
+    model="gemini-2.0-flash",
+    instruction="""
+    You receive a scene context and child profile. 
+    Pull relevant memories from the long-term context provided.
+    Identify: recurring characters, favourite themes, unresolved story threads.
+    Output a rich narrative context object to pass to the story generator.
+    Keep output structured and under 300 tokens.
+    """,
+    tools=[get_child_memory_tool, get_previous_session_tool]
+)
+```
+
+### Agent 2: Enhanced Story Generator
+
+The main creative agent. Uses Gemini 2.0 Flash with structured output.
+
+```python
+from google.adk.agents import Agent
+from pydantic import BaseModel
+
+class EnhancedBeat(BaseModel):
+    story_text: str
+    question: str
+    theme: str
+    character_memory: list[str]
+    suggested_next_theme: str
+
+story_generator = Agent(
+    name="enhanced_story_generator",
+    model="gemini-2.0-flash",
+    instruction="""
+    You are Whisper's cloud imagination engine. 
+    The on-device companion has already spoken a short story beat to the child.
+    Your job is to prepare the NEXT beat — richer, more imaginative, better remembered.
+    
+    Rules:
+    - Story text: 4-6 sentences, vivid imagery, age-appropriate vocabulary
+    - Question: open-ended, encourages imagination, references what the child just said
+    - Never contradict what the on-device beat established
+    - Build on child_answer naturally — their words should visibly change the plot
+    - Characters introduced must be remembered across turns
+    """,
+    output_schema=EnhancedBeat
+)
+```
+
+### Agent 3: Safety Moderator
+
+```python
+safety_moderator = Agent(
+    name="safety_moderator",
+    model="gemini-2.0-flash",
+    instruction="""
+    Review the story beat for: violence, fear, inappropriate themes, 
+    privacy leakage, and age-appropriateness for the specified child age.
+    
+    If the beat fails safety check:
+    - Return safety_passed: false
+    - Return a sanitised replacement beat
+    - Log the failure reason
+    
+    Age guidelines:
+    - 3-5: only gentle themes, no conflict, no scary elements
+    - 6-8: mild adventure, friendship challenges OK, no violence
+    """,
+    tools=[log_safety_event_tool]
+)
+```
+
+### ADK Orchestrator
+
+```python
+from google.adk.agents import SequentialAgent
+
+story_pipeline = SequentialAgent(
+    name="seesaw_story_pipeline",
+    sub_agents=[context_enricher, story_generator, safety_moderator]
+)
+```
+
+***
+
+## 6. Firestore Schema
+
+```
+seesaw/
+├── child_profiles/
+│   └── {child_id}/
+│       ├── name: string
+│       ├── age: int
+│       ├── preferences: { themes: [], avoid: [] }
+│       ├── favourite_characters: string[]
+│       ├── total_sessions: int
+│       └── last_session_id: string
+│
+├── sessions/
+│   └── {session_id}/
+│       ├── child_id: string
+│       ├── started_at: timestamp
+│       ├── ended_at: timestamp | null
+│       ├── status: "active" | "ended" | "published"
+│       ├── scene_context: { labels: [], transcript: string }
+│       ├── total_turns: int
+│       └── beats/                          ← subcollection
+│           └── {turn_number}/
+│               ├── on_device_text: string
+│               ├── enhanced_text: string | null
+│               ├── question: string
+│               ├── child_answer: string
+│               ├── safety_passed: bool
+│               ├── theme: string
+│               └── timestamp: timestamp
+│
+├── parent_configs/
+│   └── {parent_id}/
+│       ├── linked_children: string[]
+│       ├── topic_restrictions: string[]
+│       ├── share_enabled: bool
+│       └── notification_prefs: { ... }
+│
+├── published_stories/
+│   └── {story_id}/
+│       ├── session_id: string
+│       ├── child_age: int
+│       ├── title: string           ← generated by Gemini
+│       ├── summary: string         ← generated by Gemini
+│       ├── full_text: string
+│       ├── theme_tags: string[]
+│       ├── published_at: timestamp
+│       ├── likes: int
+│       └── region: string          ← for localised story wall
+│
+└── safety_logs/
+    └── {log_id}/
+        ├── session_id: string
+        ├── turn_number: int
+        ├── failure_reason: string
+        ├── original_beat: string
+        ├── sanitised_beat: string
+        └── timestamp: timestamp
+```
+
+***
+
+## 7. Apple Foundation Models ↔ Tier 3 Sync Protocol
+
+The `Foundation-Models.md` document  confirms that the Apple FM `LanguageModelSession` holds a full conversation transcript on-device. The challenge is keeping Tier 3 in sync without ever uploading raw conversation text (privacy constraint). [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/78721351/8371f987-270a-46d1-92bd-7aafaa362a84/Foundation-Models.md?AWSAccessKeyId=ASIA2F3EMEYE5VQGGOBK&Signature=HRSjHOIz%2BG%2BMREZ0NR6vpeG9cMU%3D&x-amz-security-token=IQoJb3JpZ2luX2VjEOL%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FwEaCXVzLWVhc3QtMSJHMEUCIHLT%2F%2FR7gFHx6PuQltzYfpHZ%2B2rkf4hrnCiQ2SpAihKwAiEAgHgPXy5SkJjfDUNtqbiVT78A8Tz0TD2gkebnnPEDDBYq%2FAQIq%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FARABGgw2OTk3NTMzMDk3MDUiDLa2WgL7%2FNTBlk2jRSrQBLh8LpM65vKMV8WaiW83soVzg32VtBZX3mjdAAtU5V05Is7vY%2B2SPWLZYzYA0OfzQPj7YNZPAYwJuReDRbAyC%2FboA3msQb%2FAf278PryMXRejsOjGYl0eSvW90QwiyaWNxvwpqyIbgM7BDwmFDyTtqR9rlXSn8wTp80wgADZpXSPPFuV%2B73H49gF7ZqOLbr2D2Y0bZLbaOcQOy0HLY6svHagQRu9A4ul8jCLl%2BAqW6LoDjqQOHIrUTcGyBakPouzsQlJ2VG7h1gbNp0O9Hbbxy0wnd9%2FbLPV%2FVmSKGw4KyF07ayGwZzcKQEAQAs0NtNQBZxYn78IrKcucxWpSAnxQizAS%2FLLfV%2B32YtvPfL9eSGG6%2BYU%2FJ9aPFa25J6rnm5pAFX0u63nY3qcEPwDab%2Bm7%2BRJEWSgySubc2Wh8poS5o2Tfysg5tRv5ApvVhw7125c5pqHfJ0AVGlpLw%2BXrbjSMhn9pf8bwhTtnq1G98NAVq7WfUps4Du00%2B%2BeXuc7t%2B3SITTfvgPollxEwBACwJG739dvhRwf729o73rDTpBXGQySFMcbh3jTN2O35Wl5R31phLQMNsxJpp8naNPQd%2BMGlzocEudME4%2BZzsoALzLyJeWebTUgQT32MeMC%2BJSzhcCmwXjO%2BPrR0OLe9vyyDnXpn8%2FHLnQ57bq9wMb692Ri0zo9Qy2%2FiJfOV9bMNtFmvCaB9F5sW2gP6HuZKd0DPbIwRZ8uTUkkUdVOHeIKrJmchftPO1d%2FqBJo7qHtDh%2FkN%2FC9ojcGNI%2BUvWSq91cQfcqpYuMEwjvPGzgY6mAFeDOAxA90ME4Xq9GvTECJ3BH%2FPxeh6dL2nPMFbJNKcegx6BpnTltr7rNQ7L4NOZQczGLDF1cgS4gB9l%2BOwuzvSoDFx7rguwLkJmXE0M5CGGCmoRzTqPzCdQcQgb1CEET0EvB5qHXT9%2F3K9HmKqLj7l6aMKEUlqGqeR4EH%2Fr3O3vLGOlZXXIahtLZgtoUZd87%2BWFXsxtgXAiw%3D%3D&Expires=1775354670)
+
+### Solution: Beat Summaries Only
+
+The iOS `OnDeviceStoryService` sends only **structured summaries** to Tier 3, not raw text:
+
+```swift
+// In seesaw-companion-ios: OnDeviceStoryService.swift
+func syncBeatToCloud(beat: StoryBeat, childAnswer: String, sessionId: String) async {
+    guard cloudService.isAvailable else { return }  // fire-and-forget, non-blocking
+    
+    let summary = BeatSummary(
+        characters_introduced: beat.newCharacters,  // extracted by @Generable
+        theme: beat.theme,
+        objects_used: sceneContext.labels,
+        child_answer_summary: summarise(childAnswer)  // max 10 words
+    )
+    
+    await cloudAgentService.syncBeat(sessionId: sessionId, summary: summary)
+}
+```
+
+The `summarise()` function uses Apple FM's **summarisation adapter** (confirmed available in `Foundation-Models.md` ) to compress the child's answer to ≤10 words before it leaves the device. This means even the beat summaries sent to the cloud contain no verbatim personal speech. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/78721351/8371f987-270a-46d1-92bd-7aafaa362a84/Foundation-Models.md?AWSAccessKeyId=ASIA2F3EMEYE5VQGGOBK&Signature=HRSjHOIz%2BG%2BMREZ0NR6vpeG9cMU%3D&x-amz-security-token=IQoJb3JpZ2luX2VjEOL%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FwEaCXVzLWVhc3QtMSJHMEUCIHLT%2F%2FR7gFHx6PuQltzYfpHZ%2B2rkf4hrnCiQ2SpAihKwAiEAgHgPXy5SkJjfDUNtqbiVT78A8Tz0TD2gkebnnPEDDBYq%2FAQIq%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FARABGgw2OTk3NTMzMDk3MDUiDLa2WgL7%2FNTBlk2jRSrQBLh8LpM65vKMV8WaiW83soVzg32VtBZX3mjdAAtU5V05Is7vY%2B2SPWLZYzYA0OfzQPj7YNZPAYwJuReDRbAyC%2FboA3msQb%2FAf278PryMXRejsOjGYl0eSvW90QwiyaWNxvwpqyIbgM7BDwmFDyTtqR9rlXSn8wTp80wgADZpXSPPFuV%2B73H49gF7ZqOLbr2D2Y0bZLbaOcQOy0HLY6svHagQRu9A4ul8jCLl%2BAqW6LoDjqQOHIrUTcGyBakPouzsQlJ2VG7h1gbNp0O9Hbbxy0wnd9%2FbLPV%2FVmSKGw4KyF07ayGwZzcKQEAQAs0NtNQBZxYn78IrKcucxWpSAnxQizAS%2FLLfV%2B32YtvPfL9eSGG6%2BYU%2FJ9aPFa25J6rnm5pAFX0u63nY3qcEPwDab%2Bm7%2BRJEWSgySubc2Wh8poS5o2Tfysg5tRv5ApvVhw7125c5pqHfJ0AVGlpLw%2BXrbjSMhn9pf8bwhTtnq1G98NAVq7WfUps4Du00%2B%2BeXuc7t%2B3SITTfvgPollxEwBACwJG739dvhRwf729o73rDTpBXGQySFMcbh3jTN2O35Wl5R31phLQMNsxJpp8naNPQd%2BMGlzocEudME4%2BZzsoALzLyJeWebTUgQT32MeMC%2BJSzhcCmwXjO%2BPrR0OLe9vyyDnXpn8%2FHLnQ57bq9wMb692Ri0zo9Qy2%2FiJfOV9bMNtFmvCaB9F5sW2gP6HuZKd0DPbIwRZ8uTUkkUdVOHeIKrJmchftPO1d%2FqBJo7qHtDh%2FkN%2FC9ojcGNI%2BUvWSq91cQfcqpYuMEwjvPGzgY6mAFeDOAxA90ME4Xq9GvTECJ3BH%2FPxeh6dL2nPMFbJNKcegx6BpnTltr7rNQ7L4NOZQczGLDF1cgS4gB9l%2BOwuzvSoDFx7rguwLkJmXE0M5CGGCmoRzTqPzCdQcQgb1CEET0EvB5qHXT9%2F3K9HmKqLj7l6aMKEUlqGqeR4EH%2Fr3O3vLGOlZXXIahtLZgtoUZd87%2BWFXsxtgXAiw%3D%3D&Expires=1775354670)
+
+***
+
+## 8. Google Cloud TTS Integration
+
+Tier 3 generates professional-quality audio for enhanced beats using Google Cloud TTS, which the iOS app can optionally download and play instead of `AVSpeechSynthesizer`.
+
+```python
+from google.cloud import texttospeech
+
+def synthesise_beat(text: str, child_age: int) -> str:
+    client = texttospeech.TextToSpeechClient()
+    
+    # Age-appropriate voice selection
+    voice_name = "en-US-Journey-F" if child_age <= 6 else "en-US-Neural2-F"
+    
+    synthesis_input = texttospeech.SynthesisInput(
+        ssml=f"""<speak>
+            <prosody rate="85%" pitch="+2st">
+                {text}
+            </prosody>
+        </speak>"""
+    )
+    
+    voice = texttospeech.VoiceSelectionParams(
+        language_code="en-US",
+        name=voice_name
+    )
+    
+    audio_config = texttospeech.AudioConfig(
+        audio_encoding=texttospeech.AudioEncoding.MP3
+    )
+    
+    response = client.synthesize_speech(
+        input=synthesis_input, voice=voice, audio_config=audio_config
+    )
+    
+    # Upload to Cloud Storage, return signed URL (1hr expiry)
+    url = upload_to_storage(response.audio_content, session_id, turn_number)
+    return url
+```
+
+The iOS `CloudAgentService` downloads this URL and caches the MP3 locally. If the URL is available before the child asks the next question, the enhanced Cloud TTS voice plays instead of `AVSpeechSynthesizer`.
+
+***
+
+## 9. Parent Dashboard Data Model
+
+The iOS companion app reads directly from Firestore using Firebase SDK (no additional API needed):
+
+```swift
+// In seesaw-companion-ios: ParentDashboardViewModel.swift
+func fetchSessions(childId: String) {
+    db.collection("seesaw/sessions")
+        .whereField("child_id", isEqualTo: childId)
+        .order(by: "started_at", descending: true)
+        .limit(to: 20)
+        .addSnapshotListener { [weak self] snapshot, error in
+            self?.sessions = snapshot?.documents.compactMap {
+                try? $0.data(as: SessionSummary.self)
+            } ?? []
+        }
+}
+```
+
+Real-time updates mean the parent app shows new turns appearing live as the child plays.
+
+***
+
+## 10. Story Publishing Workflow
+
+When a parent approves sharing, a Cloud Functions trigger fires:
+
+```
+Firestore: sessions/{id} status → "publishing_requested"
+       │
+       ▼
+Cloud Function: onPublishRequested
+       │
+       ├── Call Gemini to generate story title + summary
+       ├── Assemble full_text from all beats subcollection
+       ├── Run final safety check
+       ├── Write to published_stories collection
+       └── Firestore: sessions/{id} status → "published"
+```
+
+The iOS app's "Story Wall" tab reads from `published_stories`, ordered by `published_at`, with region filtering for a localised community feel.
+
+***
+
+## 11. Environment & Deployment
+
+### Environment Variables
+
+```bash
+# .env (Cloud Run secrets)
+GOOGLE_CLOUD_PROJECT=seesaw-prod
+GOOGLE_APPLICATION_CREDENTIALS=/secrets/sa-key.json
+GEMINI_MODEL=gemini-2.0-flash
+FIREBASE_PROJECT_ID=seesaw-prod
+GCS_BUCKET=seesaw-audio-beats
+CORS_ORIGINS=https://seesaw.app
+JWT_SECRET=<secret_manager>
+RATE_LIMIT_PER_CHILD=100  # beats per day
+```
+
+### `requirements.txt`
+
+```
+fastapi==0.115.0
+uvicorn[standard]==0.30.0
+google-adk==1.0.0
+google-cloud-texttospeech==2.16.0
+google-cloud-firestore==2.19.0
+google-cloud-storage==2.18.0
+firebase-admin==6.5.0
+pydantic==2.7.0
+python-jose[cryptography]==3.3.0
+slowapi==0.1.9
+```
+
+### `Dockerfile`
+
+```dockerfile
+FROM python:3.12-slim
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+COPY . .
+EXPOSE 8080
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080"]
+```
+
+### `cloudbuild.yaml`
+
+```yaml
+steps:
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', 'gcr.io/$PROJECT_ID/seesaw-cloud-agent', '.']
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/$PROJECT_ID/seesaw-cloud-agent']
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    args:
+      - 'run'
+      - 'deploy'
+      - 'seesaw-cloud-agent'
+      - '--image=gcr.io/$PROJECT_ID/seesaw-cloud-agent'
+      - '--region=us-central1'
+      - '--allow-unauthenticated'
+      - '--memory=1Gi'
+      - '--cpu=1'
+      - '--min-instances=0'
+      - '--max-instances=10'
+      - '--set-env-vars=GOOGLE_CLOUD_PROJECT=$PROJECT_ID'
+```
+
+***
+
+## 12. Security Model
+
+| Layer | Mechanism |
+|---|---|
+| iOS → Tier 3 auth | Firebase Auth JWT token in `Authorization: Bearer` header |
+| Rate limiting | `slowapi` — 100 beats/day per child_id |
+| PII guardrail | Tier 3 rejects any request containing raw images, audio, or face data |
+| Data residency | Firestore multi-region (nam5) — data stays in North America/EU |
+| Child data protection | COPPA-aligned — child profiles contain no PII beyond age + first name |
+| Story publishing | Requires explicit parent Firebase Auth token + `share_enabled: true` in `parent_config` |
+| Audit trail | Every beat, every safety event, every publish action logged with timestamp |
+
+***
+
+## 13. Task List for Implementation
+
+| # | Task | Est. Hours | Priority |
+|---|---|---|---|
+| T3-001 | FastAPI project setup, health check, Cloud Run deploy | 2h | P0 |
+| T3-002 | Firebase Admin SDK init, Firestore schema creation | 2h | P0 |
+| T3-003 | `POST /story/start` endpoint + Firestore session write | 3h | P0 |
+| T3-004 | `POST /story/beat` endpoint (on-device passthrough, no Gemini yet) | 2h | P0 |
+| T3-005 | `POST /sync/beat` endpoint + Firestore beat subcollection write | 1h | P0 |
+| T3-006 | Context Enricher ADK agent + Firestore memory read tools | 4h | P1 |
+| T3-007 | Enhanced Story Generator ADK agent (Gemini 2.0 Flash + structured output) | 4h | P1 |
+| T3-008 | Safety Moderator ADK agent + safety_logs write | 3h | P1 |
+| T3-009 | ADK SequentialAgent pipeline wiring all three agents | 2h | P1 |
+| T3-010 | Google Cloud TTS integration + Cloud Storage signed URL generation | 3h | P1 |
+| T3-011 | `GET /parent/sessions/{child_id}` endpoint | 2h | P2 |
+| T3-012 | `POST /story/end` + session status update | 1h | P2 |
+| T3-013 | Cloud Function: story publishing workflow | 3h | P2 |
+| T3-014 | `POST /publish` endpoint + published_stories Firestore write | 2h | P2 |
+| T3-015 | Firebase Auth JWT validation middleware | 2h | P2 |
+| T3-016 | Rate limiting (slowapi) + error handling | 2h | P2 |
+| T3-017 | End-to-end integration test: iOS `/story/start` → Gemini → TTS → Firestore | 3h | P0 |
+
+**Total: ~41 hours. Critical path (P0 tasks): ~12 hours to first working end-to-end call.**
+
+***
+
+## 14. Integration with iOS `CloudAgentService`
+
+From the Tier 2 blueprint, the iOS `CloudAgentService` calls Tier 3 as follows: [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/78721351/f29ca23d-60b2-440c-be83-9b979c0b528f/seesaw-companion-ios-Technical-Architecture-Blueprint-Tier-2-2.md?AWSAccessKeyId=ASIA2F3EMEYE5VQGGOBK&Signature=n5cbmzz7urpHByydyBi4sOSnAos%3D&x-amz-security-token=IQoJb3JpZ2luX2VjEOL%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FwEaCXVzLWVhc3QtMSJHMEUCIHLT%2F%2FR7gFHx6PuQltzYfpHZ%2B2rkf4hrnCiQ2SpAihKwAiEAgHgPXy5SkJjfDUNtqbiVT78A8Tz0TD2gkebnnPEDDBYq%2FAQIq%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FARABGgw2OTk3NTMzMDk3MDUiDLa2WgL7%2FNTBlk2jRSrQBLh8LpM65vKMV8WaiW83soVzg32VtBZX3mjdAAtU5V05Is7vY%2B2SPWLZYzYA0OfzQPj7YNZPAYwJuReDRbAyC%2FboA3msQb%2FAf278PryMXRejsOjGYl0eSvW90QwiyaWNxvwpqyIbgM7BDwmFDyTtqR9rlXSn8wTp80wgADZpXSPPFuV%2B73H49gF7ZqOLbr2D2Y0bZLbaOcQOy0HLY6svHagQRu9A4ul8jCLl%2BAqW6LoDjqQOHIrUTcGyBakPouzsQlJ2VG7h1gbNp0O9Hbbxy0wnd9%2FbLPV%2FVmSKGw4KyF07ayGwZzcKQEAQAs0NtNQBZxYn78IrKcucxWpSAnxQizAS%2FLLfV%2B32YtvPfL9eSGG6%2BYU%2FJ9aPFa25J6rnm5pAFX0u63nY3qcEPwDab%2Bm7%2BRJEWSgySubc2Wh8poS5o2Tfysg5tRv5ApvVhw7125c5pqHfJ0AVGlpLw%2BXrbjSMhn9pf8bwhTtnq1G98NAVq7WfUps4Du00%2B%2BeXuc7t%2B3SITTfvgPollxEwBACwJG739dvhRwf729o73rDTpBXGQySFMcbh3jTN2O35Wl5R31phLQMNsxJpp8naNPQd%2BMGlzocEudME4%2BZzsoALzLyJeWebTUgQT32MeMC%2BJSzhcCmwXjO%2BPrR0OLe9vyyDnXpn8%2FHLnQ57bq9wMb692Ri0zo9Qy2%2FiJfOV9bMNtFmvCaB9F5sW2gP6HuZKd0DPbIwRZ8uTUkkUdVOHeIKrJmchftPO1d%2FqBJo7qHtDh%2FkN%2FC9ojcGNI%2BUvWSq91cQfcqpYuMEwjvPGzgY6mAFeDOAxA90ME4Xq9GvTECJ3BH%2FPxeh6dL2nPMFbJNKcegx6BpnTltr7rNQ7L4NOZQczGLDF1cgS4gB9l%2BOwuzvSoDFx7rguwLkJmXE0M5CGGCmoRzTqPzCdQcQgb1CEET0EvB5qHXT9%2F3K9HmKqLj7l6aMKEUlqGqeR4EH%2Fr3O3vLGOlZXXIahtLZgtoUZd87%2BWFXsxtgXAiw%3D%3D&Expires=1775354670)
+
+```swift
+// In seesaw-companion-ios: CloudAgentService.swift
+actor CloudAgentService {
+    
+    let baseURL = "https://seesaw-cloud-agent-[hash]-uc.a.run.app"
+    
+    func startSession(context: SceneContext, onDeviceBeat: StoryBeat, profile: ChildProfile) async throws -> EnhancedBeat? {
+        guard let authToken = try? await Auth.auth().currentUser?.getIDToken() else { return nil }
+        
+        let request = StoryStartRequest(
+            session_id: currentSessionId,
+            child_profile: profile,
+            scene_context: context,
+            on_device_beat: onDeviceBeat
+        )
+        
+        var urlRequest = URLRequest(url: URL(string: "\(baseURL)/story/start")!)
+        urlRequest.httpMethod = "POST"
+        urlRequest.setValue("Bearer \(authToken)", forHTTPHeaderField: "Authorization")
+        urlRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        urlRequest.httpBody = try JSONEncoder().encode(request)
+        urlRequest.timeoutInterval = 10  // Non-blocking; if slow, Track A already played
+        
+        let (data, _) = try await URLSession.shared.data(for: urlRequest)
+        return try JSONDecoder().decode(StoryStartResponse.self, from: data).enhanced_beat
+    }
+}
+```
+
+The iOS `CompanionViewModel` calls this **fire-and-forget** in a background `Task`:
+
+```swift
+Task(priority: .background) {
+    if let enhanced = try? await cloudAgentService.startSession(...) {
+        await sessionManager.queueEnhancedBeat(enhanced)
+        // Plays on NEXT turn, not current
+    }
+}
+```
+
+***
+
+## 15. Research Contribution Summary
+
+The `seesaw-cloud-agent` contributes to the dissertation's research agenda in three direct ways:
+
+1. **Dual-track hybrid inference**: Demonstrates a novel pattern where on-device edge AI (Apple Foundation Models) and cloud AI (Gemini ADK) cooperate asynchronously on the same interaction loop — neither blocks the user, each contributes at its optimal latency range.
+
+2. **Privacy-preserving cloud sync**: The `/sync/beat` endpoint, combined with Apple FM's on-device summarisation adapter, creates a cloud memory system that accumulates child context without ever receiving raw speech, images, or identifiable data — a concrete implementation of structural privacy.
+
+3. **Turn-based co-creative session design**: The beats subcollection design, combined with multi-agent ADK orchestration, produces a story that is provably co-created — each child answer is stored and demonstrably influences subsequent beats, creating an auditable co-authorship trail suitable for academic analysis of human-AI creative collaboration.
+
+***
+
+Here is the complete `seesaw-cloud-agent` Technical Architecture Blueprint. It synthesises the Apple Foundation Models capabilities, the Tier 2 iOS architecture, and everything built across this project. The blueprint covers all five areas you need: the dual-track async pattern that separates Apple FM from Gemini, the full ADK three-agent pipeline, the complete Firestore schema, the iOS integration contract, and a 17-task implementation list with a 12-hour critical path to your first working end-to-end cloud call. Start with T3-001 through T3-005 — those give you a working server that iOS can call immediately, even before Gemini is wired in. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/78721351/f29ca23d-60b2-440c-be83-9b979c0b528f/seesaw-companion-ios-Technical-Architecture-Blueprint-Tier-2-2.md?AWSAccessKeyId=ASIA2F3EMEYE5VQGGOBK&Signature=n5cbmzz7urpHByydyBi4sOSnAos%3D&x-amz-security-token=IQoJb3JpZ2luX2VjEOL%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FwEaCXVzLWVhc3QtMSJHMEUCIHLT%2F%2FR7gFHx6PuQltzYfpHZ%2B2rkf4hrnCiQ2SpAihKwAiEAgHgPXy5SkJjfDUNtqbiVT78A8Tz0TD2gkebnnPEDDBYq%2FAQIq%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FARABGgw2OTk3NTMzMDk3MDUiDLa2WgL7%2FNTBlk2jRSrQBLh8LpM65vKMV8WaiW83soVzg32VtBZX3mjdAAtU5V05Is7vY%2B2SPWLZYzYA0OfzQPj7YNZPAYwJuReDRbAyC%2FboA3msQb%2FAf278PryMXRejsOjGYl0eSvW90QwiyaWNxvwpqyIbgM7BDwmFDyTtqR9rlXSn8wTp80wgADZpXSPPFuV%2B73H49gF7ZqOLbr2D2Y0bZLbaOcQOy0HLY6svHagQRu9A4ul8jCLl%2BAqW6LoDjqQOHIrUTcGyBakPouzsQlJ2VG7h1gbNp0O9Hbbxy0wnd9%2FbLPV%2FVmSKGw4KyF07ayGwZzcKQEAQAs0NtNQBZxYn78IrKcucxWpSAnxQizAS%2FLLfV%2B32YtvPfL9eSGG6%2BYU%2FJ9aPFa25J6rnm5pAFX0u63nY3qcEPwDab%2Bm7%2BRJEWSgySubc2Wh8poS5o2Tfysg5tRv5ApvVhw7125c5pqHfJ0AVGlpLw%2BXrbjSMhn9pf8bwhTtnq1G98NAVq7WfUps4Du00%2B%2BeXuc7t%2B3SITTfvgPollxEwBACwJG739dvhRwf729o73rDTpBXGQySFMcbh3jTN2O35Wl5R31phLQMNsxJpp8naNPQd%2BMGlzocEudME4%2BZzsoALzLyJeWebTUgQT32MeMC%2BJSzhcCmwXjO%2BPrR0OLe9vyyDnXpn8%2FHLnQ57bq9wMb692Ri0zo9Qy2%2FiJfOV9bMNtFmvCaB9F5sW2gP6HuZKd0DPbIwRZ8uTUkkUdVOHeIKrJmchftPO1d%2FqBJo7qHtDh%2FkN%2FC9ojcGNI%2BUvWSq91cQfcqpYuMEwjvPGzgY6mAFeDOAxA90ME4Xq9GvTECJ3BH%2FPxeh6dL2nPMFbJNKcegx6BpnTltr7rNQ7L4NOZQczGLDF1cgS4gB9l%2BOwuzvSoDFx7rguwLkJmXE0M5CGGCmoRzTqPzCdQcQgb1CEET0EvB5qHXT9%2F3K9HmKqLj7l6aMKEUlqGqeR4EH%2Fr3O3vLGOlZXXIahtLZgtoUZd87%2BWFXsxtgXAiw%3D%3D&Expires=1775354670)
