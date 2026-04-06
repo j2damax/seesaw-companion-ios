@@ -852,3 +852,111 @@ Only `OnDeviceStoryService.swift` and `StoryBeat.swift` should import `Foundatio
 - [WWDC25-286: Meet the Foundation Models Framework](https://wwdcnotes.com/documentation/wwdcnotes/wwdc25-286-meet-the-foundation-models-framework/)
 - [Apple: Expanding Generation with Tool Calling](https://developer.apple.com/documentation/foundationmodels/expanding-generation-with-tool-calling)
 - [Apple Intelligence Foundation Language Models Tech Report 2025](https://arxiv.org/abs/2507.13575)
+
+
+Here is the critical evaluation — direct, honest, and structured for immediate action.
+
+***
+## Critical Analysis: Apple Foundation Models — Implementation Plan
+### What the Plan Does Well
+**Structural completeness is strong.** The plan covers all five pipeline stages (camera capture → YOLO detection → context assembly → Apple FM → story narration) in the correct sequence. The stage-by-stage breakdown with estimated hours, Swift actor isolation, and the `SceneContext` struct design are all sound architectural decisions that map well onto the dissertation's implementation chapter.
+
+**The privacy-first design is correctly foregrounded.** Using `VNDetectFaceRectanglesRequest` to generate bounding boxes and then explicitly not passing raw frames downstream is the correct structural privacy pattern. The plan names this clearly, which is essential for Chapter 4.
+
+**The fallback chain is well-considered.** The three-mode fallback (Apple FM → structured template → minimal response) demonstrates defensive programming maturity that an examiner will notice positively.
+
+***
+### Critical Gaps — What the Plan Is Missing
+#### Gap 1: The Benchmark Is Not in the Plan (Highest Priority)
+
+This is the most serious omission. The implementation plan describes *building* the pipeline but contains **zero specification for measuring it**. The Single Most Valuable Recommendation explicitly states the benchmark (PII transmission count, latency per stage, battery, story quality rating) is the distinction-level contribution — yet the implementation plan has no instrumentation code, no Charles Proxy/Instruments logging hooks, no test input set, and no results collection mechanism.
+
+**What needs to be added immediately:**
+- A `BenchmarkLogger` service that records timestamps at each pipeline stage boundary
+- A `NetworkInterceptor` flag that routes Architecture A (cloud-baseline) traffic through a Charles Proxy session
+- A defined set of 20 fixed test inputs (10 photos + 10 audio clips) stored in the test bundle
+- A `BenchmarkSession` struct that serialises results to CSV for Chapter 6
+
+Without this, the plan builds a working system that cannot prove its core research claim.
+
+#### Gap 2: No Baseline Architecture A Implementation
+
+The benchmark requires three architectures to compare. The plan implements **only Architecture C** (on-device SeeSaw). Architecture A (raw data sent to cloud) and Architecture B (filtered labels sent to cloud) are never mentioned. Without the baseline, there is nothing to benchmark *against* — the privacy claim has no counterfactual.
+
+Architecture A needs only 30 minutes to implement: a dummy `CloudBaselineService` that takes the raw `UIImage` + `AVAudioPCMBuffer`, serialises them, and sends to a controlled endpoint (even localhost). Charles Proxy intercepts this and counts bytes/PII items. This is the entire counterfactual.
+
+#### Gap 3: Story Quality Evaluation Protocol Is Absent
+
+The recommendation specifies a 5-point Likert scale, 3 raters, 10 stories per architecture. The plan has no mention of:
+- How story beats are exported for human rating
+- What the rating criteria are (relevance, creativity, age-appropriateness)
+- Who the three raters are
+- How inter-rater agreement is calculated (Cohen's Kappa minimum)
+
+This evaluation is what makes Chapter 6 academically credible. Without it, the results chapter has only latency numbers and byte counts — technically interesting but insufficient to claim story *quality* is preserved.
+
+#### Gap 4: The YOLO11n Integration Is Assumed, Not Specified
+
+The plan repeatedly references YOLO11n-SeeSaw CoreML output as the input to Apple FM, but never specifies:
+- The exact `CoreML` model call and output format
+- How confidence thresholds are applied (what is the cutoff? 0.5? 0.7?)
+- How multiple detections are ranked/filtered before passing to `SceneContext`
+- Whether the model handles the "no objects detected" edge case gracefully
+
+This matters because the dissertation's Chapter 4 must describe the YOLO integration as an original contribution (the custom-trained dataset). If the plan glosses over this, the implementation chapter will be thin precisely where the examiners will look hardest.
+
+#### Gap 5: Latency Targets Are Aspirational, Not Validated
+
+The plan states "target: 400ms total end-to-end latency" but provides no methodology for measuring this or what happens if the target is missed. Instruments profiling is not mentioned anywhere. This is a problem: if the submitted dissertation claims 400ms but you have never actually measured it, an examiner can trivially disprove it during the viva.
+
+**Fix:** Add a mandatory Instruments profiling session as a named task (Day 3 of the sprint). Record actual mean and P95 latency for each stage separately. Report the real number, not the target — if it is 750ms, that is still fast enough to argue the system is usable, and honesty is always stronger than unverified claims.
+
+#### Gap 6: Swift Concurrency Architecture Has a Threading Risk
+
+The plan uses `actor` isolation for `OnDeviceStoryOrchestrator`, which is correct. However, the camera capture pipeline (`AVCaptureSession`) runs on a dedicated serial queue, and calling `await orchestrator.processFrame()` from inside a `CMSampleBuffer` delegate callback creates a risk of dropping frames if the inference queue backs up. The plan does not specify:
+- Whether frame dropping is intentional (it should be — process only 1 frame per story beat, not every camera frame)
+- How the `AVCaptureSession` callback is bridged to the Swift concurrency domain safely
+- Whether `@MainActor` is correctly isolated from the inference pipeline
+
+This is a legitimate implementation bug risk that could cause the demo to freeze during the live demo or video recording.
+
+**Fix:** Add a `frameDropPolicy: .dropWhenBusy` flag and a `Task.detached` dispatch from the capture callback, explicitly not awaiting the result inside the delegate.
+
+***
+### What the Recommendation Doc Is Missing (Addenda)
+The Single Most Valuable Recommendation document is strategically correct but has two gaps relative to what is needed for submission:
+
+**Missing: A Chapter 6 Results Table Template**
+
+The dissertation examiner needs to see a clear comparison table. The recommendation describes the metrics but does not give you the exact table structure. Here it is — build your Chapter 6 around this:
+
+| Metric | Architecture A (Cloud Raw) | Architecture B (Cloud Filtered) | Architecture C (SeeSaw On-Device) |
+|--------|---------------------------|----------------------------------|-----------------------------------|
+| PII items transmitted / session | *measured* | *measured* | **0** |
+| Raw bytes transmitted / session | *measured* | *measured* | **0** |
+| End-to-end latency (mean ms) | *measured* | *measured* | *measured* |
+| Battery drain / 30 min (%) | *measured* | *measured* | *measured* |
+| Story quality — relevance (mean/5) | *rated* | *rated* | *rated* |
+| Story quality — creativity (mean/5) | *rated* | *rated* | *rated* |
+| Story quality — age-appropriate (mean/5) | *rated* | *rated* | *rated* |
+
+Every cell marked *measured* or *rated* is one day of work. Every cell you fill with a real number is a paragraph in Chapter 6 that writes itself.
+
+**Missing: The Falsifiable Null Hypothesis**
+
+The dissertation needs a clearly stated null hypothesis to elevate it to research-standard framing:
+
+> **H₀:** A structurally privacy-preserving on-device architecture (Architecture C) produces story beats that are rated statistically equivalent in quality to cloud-dependent architectures (A and B), while transmitting zero personally identifiable information.
+
+Stating and then either accepting or rejecting this hypothesis transforms Chapter 6 from "here are some numbers" into "here is a research finding." This single sentence is what separates a project report from a research dissertation.
+
+***
+### Priority Action List (in order)
+1. **Add `BenchmarkLogger` to the iOS implementation plan** — instrument all five pipeline stages with timestamps
+2. **Build Architecture A baseline** (`CloudBaselineService`, 30 min, intercept with Charles Proxy)
+3. **Define the 20 fixed test inputs** — commit them to the test bundle today so all three architectures run on identical inputs
+4. **Add the story quality rating protocol** — export beats to a simple Google Form, rate with 3 people, record results
+5. **Run Instruments profiling** — get real latency numbers, replace "400ms target" with "X ms measured"
+6. **State the null hypothesis** in the dissertation Introduction and return to it in Chapter 6
+
+The implementation plan is a solid engineering document. With these additions, it becomes a research instrument — and that distinction is exactly what your examiner will reward.
