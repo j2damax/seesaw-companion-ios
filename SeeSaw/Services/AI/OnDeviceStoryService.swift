@@ -174,18 +174,10 @@ actor OnDeviceStoryService: StoryGenerating {
         session = LanguageModelSession(
             instructions: """
             Continue an ongoing story. Story so far: \(summary)
-            Keep the same warm, imaginative tone.
-            Generate short story segments (3-5 sentences).
-            End every beat with one imaginative question.
-            Never mention technology, devices, or AI.
-            Never include violence or inappropriate content.
+            \(contentRules)
             """
         )
         turnCount = 0
-
-        guard session != nil else {
-            throw StoryError.noActiveSession
-        }
 
         return try await generateWithErrorRecovery(prompt: lastPrompt)
     }
@@ -211,9 +203,7 @@ actor OnDeviceStoryService: StoryGenerating {
             "Tell a short, happy story about friendship and adventure.",
         ]
 
-        let prompt = attempt < fallbackPrompts.count
-            ? fallbackPrompts[attempt]
-            : fallbackPrompts[fallbackPrompts.count - 1]
+        let prompt = fallbackPrompts[min(attempt, fallbackPrompts.count - 1)]
 
         do {
             let response = try await session.respond(
@@ -235,6 +225,13 @@ actor OnDeviceStoryService: StoryGenerating {
 
     // MARK: - Prompt builders
 
+    private let contentRules = """
+        Generate short story segments (3-5 sentences).
+        End every beat with one imaginative question.
+        Never mention technology, devices, or AI.
+        Never include violence or inappropriate content.
+        """
+
     private func buildSystemPrompt(
         context: SceneContext,
         profile: ChildProfile
@@ -249,13 +246,10 @@ actor OnDeviceStoryService: StoryGenerating {
         return """
         You are Whisper, a warm storytelling companion for \(profile.name), \
         aged \(profile.age).
-        Generate short story segments (3-5 sentences).
-        End every beat with one imaginative question.
+        \(contentRules)
         Use detected objects: \(objects).
         Scene: \(scenes).
         Match vocabulary to age \(profile.age).
-        Never mention technology, devices, or AI.
-        Never include violence or inappropriate content.
         """
     }
 

@@ -356,7 +356,7 @@ final class CompanionViewModel {
     private func continueStoryLoop() async {
         while !Task.isCancelled {
             sessionState = .listeningForAnswer
-            guard let answer = await listenForAnswer(timeout: 15) else {
+            guard let answer = await listenForAnswer(timeoutSeconds: 15) else {
                 AppConfig.shared.log("continueStoryLoop: answer timeout, ending story")
                 await endStoryGracefully()
                 break
@@ -395,14 +395,13 @@ final class CompanionViewModel {
         }
         await onDeviceStoryService.endSession()
         storyTurnCount = 0
-        if case .error = sessionState {
-            // Leave the error state as-is
-        } else {
+        guard case .error = sessionState else {
             sessionState = .connected
+            return
         }
     }
 
-    private func listenForAnswer(timeout: Int) async -> String? {
+    private func listenForAnswer(timeoutSeconds: Int) async -> String? {
         do {
             try await audioCaptureService.startCapture()
             let bufferStream = await audioCaptureService.audioBufferStream
@@ -410,25 +409,28 @@ final class CompanionViewModel {
                 audioStream: bufferStream
             )
 
-            var finalText: String?
-            let timeoutTask = Task {
-                try await Task.sleep(for: .seconds(timeout))
-            }
-
-            for await result in transcriptionStream {
-                if Task.isCancelled { break }
-                let scrubbed = SpeechRecognitionService.scrubPII(result.text)
-                currentTranscript = scrubbed
-                if result.isFinal {
-                    finalText = scrubbed
-                    break
+            let result: String? = await withTaskGroup(of: String?.self) { group in
+                group.addTask { [weak self] in
+                    for await result in transcriptionStream {
+                        if Task.isCancelled { return nil }
+                        let scrubbed = SpeechRecognitionService.scrubPII(result.text)
+                        await MainActor.run { self?.currentTranscript = scrubbed }
+                        if result.isFinal { return scrubbed }
+                    }
+                    return nil
                 }
+                group.addTask {
+                    try? await Task.sleep(for: .seconds(timeoutSeconds))
+                    return nil
+                }
+                let first = await group.next() ?? nil
+                group.cancelAll()
+                return first
             }
 
-            timeoutTask.cancel()
             _ = await audioCaptureService.stopCapture()
             _ = await speechRecognitionService.stopTranscription()
-            return finalText
+            return result
         } catch {
             AppConfig.shared.log("listenForAnswer: error=\(error.localizedDescription)", level: .error)
             return nil
