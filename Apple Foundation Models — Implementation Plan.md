@@ -1269,3 +1269,301 @@ extension StoryBeat {
 - [WWDC25-286: Meet the Foundation Models Framework](https://developer.apple.com/videos/play/wwdc2025/286/)
 - [Apple: Expanding Generation with Tool Calling](https://developer.apple.com/documentation/foundationmodels/expanding-generation-with-tool-calling)
 - [Apple Intelligence Foundation Language Models Tech Report (arXiv 2507.13575)](https://arxiv.org/abs/2507.13575)
+
+---
+
+## 15. Technical Review & Feedback
+
+**Reviewer:** Claude (claude-sonnet-4-6)  
+**Review date:** 6 April 2026  
+**Verdict:** Strong plan — ready to implement with the corrections and clarifications noted below.
+
+---
+
+### 15.1 What the Plan Gets Right
+
+These are genuine strengths worth preserving as-is.
+
+**Architectural decisions are sound.**
+Decision 5 (isolating `FoundationModels` import to exactly two files) is the right call. It limits framework coupling, keeps the rest of the codebase testable without hardware, and means a future API change from Apple requires changes in at most two places. This is the kind of constraint that looks obvious in hindsight but is easy to miss under time pressure.
+
+**The corrected API errors section (§4) is the most valuable part of this document.**
+Catching `.generate()` → `.respond(to:generating:)`, the force-unwrap, and the missing availability check before writing a line of code saves approximately 2–3 days of debugging. These are exactly the errors that manifest as cryptic runtime crashes, not compile errors. Whoever wrote §4 did the hard work upfront.
+
+**`StoryGenerating` protocol abstraction (Decision 1) is essential, not optional.**
+Without this, every unit test requires a physical iPhone 15 Pro with Apple Intelligence enabled. With it, `MockStoryService` can run the full `CompanionViewModel` coordinator logic in CI. This decision should be treated as a hard requirement, not an optional refactor.
+
+**The guardrail retry strategy (§9) is realistic for children's content.**
+Words like "dragon", "monster", "scary", "fight" are central to the kind of stories children want to hear. A children's storytelling app that can't handle these words without crashing is broken. The 3-level retry with a static fallback is pragmatic — it accepts that the safety classifier is imperfect and builds resilience around it rather than pretending the problem doesn't exist.
+
+**The benchmark design (§12) is dissertation-quality.**
+Three architectures, three quality dimensions, clear null hypothesis, measured with independent raters. The research question is well-posed. Architecture C's "zero bytes transmitted" result is a hard fact that can be confirmed with a network monitor, not a subjective claim — that's exactly the kind of result that makes a strong dissertation chapter.
+
+**The privacy argument upgrade is academically significant.**
+"Structurally guaranteed — no network call is made" is fundamentally stronger than "filtered before cloud" for a dissertation. The former is provable by static analysis of the call graph. The latter requires auditing every code path. The revised architecture turns a behavioural claim into a structural one — that distinction is worth foregrounding in the dissertation introduction.
+
+---
+
+### 15.2 Bugs and Errors to Fix Before Coding
+
+These are issues that will cause compilation failures or incorrect runtime behaviour.
+
+#### Bug 1 — Token budget math is internally inconsistent
+
+**Section 8, Token Budget Breakdown:**
+
+```
+Max turns without management: 3,500 / 160 ≈ 21 turns (theoretical)
+Practical max (with overhead): ~6 turns
+```
+
+This is contradictory. If 21 turns are theoretically possible, the context window is not the constraint that limits the story to 6 turns. The 6-turn cap appears to be a **user experience choice** (story length), not a technical constraint from the context window.
+
+This matters because the plan treats context overflow as a High/High risk (Risk Register §10, Risk 1) and invests significant implementation complexity in the sliding-window summarisation strategy — yet the math shows the window isn't actually a problem for a 6-turn story without any management.
+
+**Recommendation:** Either (a) justify the "6 turns" cap as a UX/quality decision and downgrade Risk 1 to Low/Low for a 6-turn story, or (b) correct the token estimates. The ~160 tokens/turn estimate likely understates system overhead. If the true overhead pushes the practical limit to ~8–10 turns, document that clearly. The sliding-window implementation is still worth keeping as a safety net, but the risk register should reflect the real numbers.
+
+---
+
+#### Bug 2 — `session.tokenCount(for:)` checks the wrong thing
+
+**Section 8, `checkContextBudget()` implementation:**
+
+```swift
+private func checkContextBudget(nextPrompt: String) async -> Bool {
+    guard let session else { return false }
+    let promptTokens = session.tokenCount(for: nextPrompt)
+    let contextSize = session.contextSize
+    return promptTokens < (contextSize - 800)
+}
+```
+
+This checks whether the *next prompt alone* fits within 800 tokens of the window size. It does not check the *accumulated conversation history*. A 40-token prompt will always pass this check regardless of how full the session's context window is.
+
+The correct check must account for the total tokens already consumed by the session (system prompt + all prior turns). At the time of writing, Apple's API does not expose a `session.usedTokenCount` property directly. The practical approaches are:
+
+1. Track accumulated token usage manually: sum `tokenCount(for:)` calls for each prompt and response after every turn.
+2. Rely on catching `.exceededContextWindowSize` as the signal and use `restartWithSummary()` reactively rather than proactively.
+3. Use a conservative turn-count heuristic (e.g., summarise after turn 4) rather than token counting.
+
+**Recommendation:** Use the turn-count heuristic as primary strategy (simpler, no API dependency), keep `.exceededContextWindowSize` catch as the safety net. The iOS 26.4+ `tokenCount(for:)` API is better suited to measuring individual prompt costs than tracking total session usage.
+
+---
+
+#### Bug 3 — `session.tokenCount(for:)` requires iOS 26.4+ but minimum deployment is iOS 26.0
+
+**Section 8 and §2:**
+
+`session.tokenCount(for:)` and `session.contextSize` are noted as iOS 26.4+ APIs. The app's minimum deployment target is iOS 26.0 (§1: "Target: iOS 26.0+"). This creates an unavoidable API availability gap.
+
+Any call to these APIs without an `if #available(iOS 26.4, *)` guard will cause a crash on iOS 26.0–26.3 devices. The current implementation code in §8 has no availability guard.
+
+**Recommendation:** Wrap all `session.tokenCount` and `session.contextSize` calls in `if #available(iOS 26.4, *) { ... } else { /* use turn-count heuristic */ }`. Document this as a non-trivial compatibility branch, not a one-liner.
+
+---
+
+#### Bug 4 — `StoryBeat.safeFallback` static property may not compile
+
+**Section 9:**
+
+```swift
+extension StoryBeat {
+    static let safeFallback = StoryBeat(
+        storyText: "The friends decided to go on a peaceful walk...",
+        question: "What kind of flower do you think they found?",
+        isEnding: false,
+        theme: "nature",
+        suggestedContinuation: "Continue with gentle nature exploration."
+    )
+}
+```
+
+The `@Generable` macro generates a custom conformance that may synthesise a non-public or modified initialiser. Depending on the macro's expansion, the memberwise initialiser shown here may not be directly accessible, or the field order/signature may differ from the struct definition.
+
+**Recommendation:** Verify that `StoryBeat(storyText:question:isEnding:theme:suggestedContinuation:)` is the actual synthesised init signature after macro expansion. If it is not accessible, the fallback can be constructed by decoding from a JSON literal or by using `@Generable`-generated factory methods if Apple exposes them.
+
+---
+
+#### Bug 5 — `LanguageModelSession` initialiser signature needs verification
+
+The plan uses two different initialisers in different sections:
+
+**Section 5 (Corrected API Reference):**
+```swift
+let session = LanguageModelSession(
+    model: model,
+    instructions: "System prompt here..."
+)
+```
+
+**Section 8 (`restartWithSummary`):**
+```swift
+session = LanguageModelSession(
+    model: model,
+    instructions: "..."
+)
+```
+
+Apple's `LanguageModelSession` documentation (referenced in §14) shows that sessions use `SystemLanguageModel.default` implicitly — the session may not accept an explicit `model:` parameter and the correct init signature may be `LanguageModelSession(instructions:)`.
+
+**Recommendation:** Verify the exact initialiser signature against the Xcode 26 SDK headers before writing `OnDeviceStoryService`. If `model:` is not a parameter, remove it. If it is, the code is correct as written.
+
+---
+
+#### Bug 6 — `response.content` accessor needs verification
+
+**Section 5:**
+```swift
+let response = try await session.respond(
+    to: "User prompt",
+    generating: StoryBeat.self
+)
+let beat: StoryBeat = response.content
+```
+
+The `response.content` property assumes the return type of `respond(to:generating:)` is a wrapper type with a `.content` property. Apple's API may instead return the generated type directly (i.e., `let beat: StoryBeat = try await session.respond(to:generating:)`).
+
+**Recommendation:** Verify the actual return type in the SDK. If it returns the type directly, remove the `.content` accessor throughout `OnDeviceStoryService`.
+
+---
+
+### 15.3 Design Gaps to Address
+
+These are not bugs — the plan doesn't break — but the implementation will require decisions not documented here.
+
+#### Gap 1 — `ChildProfile` is used but never defined
+
+`startStory(context: SceneContext, profile: ChildProfile)` appears in the `StoryGenerating` protocol, `OnDeviceStoryService`, `CompanionViewModel`, and the system prompt builder — but `ChildProfile` is not defined anywhere in the document. It is not in the file change inventory (§11).
+
+Currently, child age and name likely live in `UserDefaults` (via `UserDefaults+Settings.swift`). Two options:
+
+1. **Simple:** Read age and name directly from `UserDefaults` inside `OnDeviceStoryService` (avoids a new type, keeps the call site clean).
+2. **Clean:** Define a `struct ChildProfile: Sendable { let name: String; let age: Int }`, create it in `CompanionViewModel` from `UserDefaults`, and pass it through. Add `ChildProfile.swift` to the file inventory in §11.
+
+Option 2 is more testable and is recommended. Add the file to the inventory.
+
+---
+
+#### Gap 2 — `conversationSummary` is never populated
+
+The sliding-window strategy in §8 depends on `conversationSummary` to reconstruct context after a session restart. The `restartWithSummary()` method reads it:
+
+```swift
+let summary = conversationSummary ?? "An interactive story is in progress."
+```
+
+But nowhere in the plan is `conversationSummary` updated. It is never written to. As implemented, every context restart will use the generic fallback string `"An interactive story is in progress."` — losing all story continuity.
+
+**Recommendation:** After each successful `StoryBeat` generation, append a compact summary to `conversationSummary`. One approach:
+
+```swift
+// After each successful turn
+conversationSummary = "\(conversationSummary ?? "") \(beat.suggestedContinuation)"
+```
+
+The `suggestedContinuation` field exists on `StoryBeat` precisely for this purpose — use it.
+
+---
+
+#### Gap 3 — Streaming and `isEnding` are in tension
+
+**Section 3:**
+
+```swift
+let stream = session.streamResponse(to: prompt, generating: StoryBeat.self)
+for try await partialBeat in stream {
+    if let text = partialBeat.storyText, !text.isEmpty {
+        await beginIncrementalTTS(text)
+    }
+}
+```
+
+Partial `StoryBeat` values during streaming will have `storyText` populated incrementally but other fields (`isEnding`, `theme`, `suggestedContinuation`) will be `nil` or default until the stream completes. The story loop logic in Phase 4 uses `beat.isEnding` to decide whether to loop or terminate:
+
+```swift
+if beat.isEnding { break }
+```
+
+If this check runs against a partial beat during streaming, `isEnding` will always be `false` (its default), and the loop will never end from a streaming partial.
+
+**Recommendation:** Separate streaming concerns from control flow:
+1. Use `streamResponse()` to feed the audio pipeline for low-latency TTS.
+2. After the stream completes, read the **final** `StoryBeat` for `isEnding`, `theme`, and `suggestedContinuation`.
+3. Update `conversationSummary` only from the final beat.
+
+This is a two-variable approach: a streaming `partialBeat` for audio, and a `finalBeat` captured at stream completion for control flow.
+
+---
+
+#### Gap 4 — Hybrid mode is under-specified
+
+Hybrid mode is described in §3 (three operating modes) and mentioned in Phase 2.5 but the implementation of `runHybridPipeline()` is only sketched. Key questions left open:
+
+- If the cloud response arrives while the on-device story is still playing — what happens?
+- If the cloud response is richer/different — do you interrupt playback, queue it, or discard it?
+- Does the on-device session stay open while waiting for cloud?
+- On network timeout, does the story loop continue from on-device only, or terminate?
+
+For a PoC, the simplest hybrid strategy is: fire cloud request in background, play on-device result immediately, log whether cloud arrived within a 10-second window (for the benchmark), and discard the cloud result if not in time. Document this explicitly in the plan so the PoC scope is clear.
+
+---
+
+#### Gap 5 — `StoryGenerating.swift` and `ChildProfile.swift` missing from file inventory
+
+Section 11 lists 10 new files, but the following are referenced in the plan and need to be created:
+
+| Missing File | Contains |
+|---|---|
+| `SeeSaw/Services/AI/StoryGenerating.swift` | `StoryGenerating` protocol + `MockStoryService` |
+| `SeeSaw/Model/ChildProfile.swift` | `ChildProfile` struct (if Gap 1 is resolved with Option 2) |
+
+Update §11 to include these, and revise the file count from "10 new files" to "12 new files".
+
+---
+
+### 15.4 Minor Issues
+
+| # | Location | Issue |
+|---|---|---|
+| M1 | §8 token budget | The 300-token system prompt estimate is reasonable but may be optimistic — the example prompt in §1 is already ~120 tokens for a compact version. Verify with `session.tokenCount(for: systemPrompt)` on first run. |
+| M2 | §6 Phase 3.2 | Sentence splitting on `.`, `?`, `!` will incorrectly split on abbreviations (e.g. `"Dr. Fox"`, `"3 p.m."`). Use `NLTokenizer` with `.sentence` unit instead of regex/character split. |
+| M3 | §9 `retrySoftened` | The method signature shows `attempt: Int` but the call site in §9 loops without an increment — the attempt counter needs to be tracked in the outer method or the retry loop. |
+| M4 | §6 Phase 4.2 | `continueStoryLoop()` uses `try?` to silently swallow errors from `audioService` and `accessoryManager`. Consider logging these even if not throwing — silent audio failures are hard to diagnose. |
+| M5 | §11 modified files | `SeeSaw/Services/AI/BenchmarkService.swift` is a new file (Phase 7) but is not listed in §11. Add it. |
+
+---
+
+### 15.5 Dissertation-Specific Observations
+
+**The "zero bytes transmitted" result is the dissertation's strongest empirical claim.** Make sure the benchmark captures this at the network layer (Charles Proxy or `NWConnection` monitoring), not just by code inspection. The examiner will ask how you verified it.
+
+**Quality evaluation (§12) needs inter-rater reliability.** Three raters with a Likert scale is correct, but you should report Cohen's kappa or Fleiss' kappa for inter-rater agreement, not just the mean rating. Without it, a sceptical examiner can dismiss the quality scores as subjective. This is a one-line addition to the methods section but changes the credibility of the results significantly.
+
+**The "structural vs behavioural privacy" framing (§13) deserves its own subsection in the dissertation literature review.** This distinction exists in the academic privacy literature (Nissenbaum's contextual integrity, Datta et al. on privacy as a structural property). Grounding the SeeSaw claim in that literature would raise the work above a purely engineering contribution.
+
+**Latency comparisons need careful framing.** Architecture A (Cloud Raw) measures latency including raw image upload, which is dominated by network bandwidth — not inference speed. A reader might argue this is an unfair comparison. Frame it as "end-to-end user-perceived latency" rather than "inference latency" to make the comparison legitimate.
+
+---
+
+### 15.6 Overall Assessment
+
+| Dimension | Rating | Notes |
+|---|---|---|
+| API correctness | Good | §4 errors correctly identified; initialisers and return types need final SDK verification (Bugs 5, 6) |
+| Architecture design | Excellent | Protocol abstraction, import isolation, and graceful degradation are all well-reasoned |
+| Context window strategy | Adequate | Sliding window approach is correct; token budget math and proactive check logic need fixes (Bugs 1, 2, 3) |
+| Error handling | Good | Guardrail retry is thorough; streaming/isEnding tension needs resolution (Gap 3) |
+| Testability | Excellent | `StoryGenerating` protocol makes unit testing possible without hardware |
+| Implementation completeness | Good | `ChildProfile` and `conversationSummary` gaps need filling before Phase 1 work starts |
+| Dissertation alignment | Excellent | Benchmark design, null hypothesis, and privacy framing are publication-quality |
+
+**Priority order for fixes before writing code:**
+
+1. **Gap 1** — Define `ChildProfile` (needed by every method signature)
+2. **Bug 5** — Verify `LanguageModelSession` init signature against SDK headers
+3. **Bug 6** — Verify `response.content` vs direct return type
+4. **Gap 3** — Separate streaming audio path from `isEnding` control flow
+5. **Bug 2** — Fix `checkContextBudget()` to track accumulated context, not just next prompt
+6. **Gap 2** — Implement `conversationSummary` update after each turn using `suggestedContinuation`
+7. **Bug 3** — Add `#available(iOS 26.4, *)` guards around `tokenCount` / `contextSize` calls
+8. **Bug 1** — Reconcile token budget math and correct the risk register accordingly
