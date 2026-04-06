@@ -33,6 +33,10 @@ final class AppDependencyContainer {
 
     let privacyMetricsStore: PrivacyMetricsStore
 
+    // MARK: - Story generation
+
+    let onDeviceStoryService: OnDeviceStoryService
+
     // MARK: - Init
 
     init() {
@@ -55,6 +59,7 @@ final class AppDependencyContainer {
         audioService             = AudioService()
         authService              = AuthenticationService()
         privacyMetricsStore      = PrivacyMetricsStore()
+        onDeviceStoryService     = OnDeviceStoryService()
     }
 
     // MARK: - Factory methods
@@ -71,7 +76,8 @@ final class AppDependencyContainer {
             audioService:     audioService,
             audioCaptureService: audioCaptureService,
             speechRecognitionService: speechRecognitionService,
-            metricsStore: privacyMetricsStore
+            metricsStore: privacyMetricsStore,
+            onDeviceStoryService: onDeviceStoryService
         )
     }
 

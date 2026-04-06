@@ -20,6 +20,8 @@ final class CompanionViewModel {
     var connectedDeviceName: String?
     var childAge: Int = UserDefaults.standard.childAge
     var timeline: [TimelineEntry] = []
+    var storyMode: StoryGenerationMode = UserDefaults.standard.storyMode
+    var storyTurnCount: Int = 0
 
     /// Full-screen debug preview after "Capture Scene".
     var isShowingScenePreview: Bool = false
@@ -47,12 +49,14 @@ final class CompanionViewModel {
     private let audioCaptureService: AudioCaptureService
     private let speechRecognitionService: SpeechRecognitionService
     let metricsStore: PrivacyMetricsStore
+    private let onDeviceStoryService: OnDeviceStoryService
 
     // MARK: - Active stream tasks (cancelled on disconnect)
 
     private var imageStreamTask: Task<Void, Never>?
     private var statusStreamTask: Task<Void, Never>?
     private var transcriptionStreamTask: Task<Void, Never>?
+    private var storyLoopTask: Task<Void, Never>?
 
     // MARK: - Init
 
@@ -63,7 +67,8 @@ final class CompanionViewModel {
         audioService: AudioService,
         audioCaptureService: AudioCaptureService,
         speechRecognitionService: SpeechRecognitionService,
-        metricsStore: PrivacyMetricsStore
+        metricsStore: PrivacyMetricsStore,
+        onDeviceStoryService: OnDeviceStoryService
     ) {
         self.accessoryManager = accessoryManager
         self.privacyPipeline  = privacyPipeline
@@ -72,6 +77,7 @@ final class CompanionViewModel {
         self.audioCaptureService = audioCaptureService
         self.speechRecognitionService = speechRecognitionService
         self.metricsStore = metricsStore
+        self.onDeviceStoryService = onDeviceStoryService
     }
 
     // MARK: - Public actions
@@ -123,8 +129,12 @@ final class CompanionViewModel {
     }
 
     func disconnect() {
-        Task { await accessoryManager.activeAccessory.disconnect() }
+        Task {
+            await onDeviceStoryService.endSession()
+            await accessoryManager.activeAccessory.disconnect()
+        }
         cancelStreamTasks()
+        storyTurnCount = 0
         sessionState = .idle
         connectedDeviceName = nil
     }
@@ -264,39 +274,228 @@ final class CompanionViewModel {
         }
     }
 
-    // MARK: - Full pipeline (cloud + audio)
+    // MARK: - Full pipeline (mode-based routing)
 
     private func runFullPipeline(jpegData: Data) async {
-        AppConfig.shared.log("runFullPipeline: start, jpegBytes=\(jpegData.count), childAge=\(childAge)")
+        AppConfig.shared.log("runFullPipeline: start, mode=\(storyMode.rawValue), jpegBytes=\(jpegData.count), childAge=\(childAge)")
+        switch storyMode {
+        case .onDevice:
+            await runOnDevicePipeline(jpegData: jpegData)
+        case .cloud:
+            await runCloudPipeline(jpegData: jpegData)
+        case .hybrid:
+            await runOnDevicePipeline(jpegData: jpegData)
+        }
+    }
+
+    // MARK: - On-device story pipeline
+
+    private func runOnDevicePipeline(jpegData: Data) async {
+        AppConfig.shared.log("runOnDevicePipeline: start")
+        do {
+            sessionState = .processingPrivacy
+            let result = try await privacyPipeline.process(
+                jpegData: jpegData,
+                childAge: childAge
+            )
+            await metricsStore.record(result.metrics)
+            AppConfig.shared.log("runOnDevicePipeline: privacy done, objects=\(result.payload.objects)")
+
+            let context = SceneContext(from: result.payload)
+            let profile = ChildProfile(
+                name: UserDefaults.standard.childName,
+                age: childAge,
+                preferences: UserDefaults.standard.childPreferences
+            )
+
+            sessionState = .generatingStory
+            let startTime = CFAbsoluteTimeGetCurrent()
+            let beat = try await onDeviceStoryService.startStory(
+                context: context,
+                profile: profile
+            )
+            let generationMs = (CFAbsoluteTimeGetCurrent() - startTime) * 1000
+            AppConfig.shared.log("runOnDevicePipeline: story generated in \(Int(generationMs))ms")
+            storyTurnCount = await onDeviceStoryService.currentTurnCount
+
+            sessionState = .encodingAudio
+            let storyAudio = try await audioService.generateAndEncodeAudio(
+                from: beat.storyText
+            )
+            sessionState = .sendingAudio
+            try await accessoryManager.activeAccessory.sendAudio(storyAudio)
+
+            let questionAudio = try await audioService.generateAndEncodeAudio(
+                from: beat.question
+            )
+            try await accessoryManager.activeAccessory.sendAudio(questionAudio)
+
+            timeline.insert(TimelineEntry(
+                sceneObjects: result.payload.objects,
+                storySnippet: String(beat.storyText.prefix(120))
+            ), at: 0)
+
+            if !beat.isEnding {
+                storyLoopTask = Task { [weak self] in
+                    await self?.continueStoryLoop()
+                }
+            } else {
+                await onDeviceStoryService.endSession()
+                storyTurnCount = 0
+                sessionState = .connected
+            }
+        } catch let error as StoryError {
+            AppConfig.shared.log("runOnDevicePipeline: StoryError=\(error.localizedDescription)", level: .error)
+            await handleStoryError(error, jpegData: jpegData)
+        } catch {
+            AppConfig.shared.log("runOnDevicePipeline: error=\(error.localizedDescription)", level: .error)
+            setError(error.localizedDescription)
+        }
+    }
+
+    private func continueStoryLoop() async {
+        while !Task.isCancelled {
+            sessionState = .listeningForAnswer
+            guard let answer = await listenForAnswer(timeout: 15) else {
+                AppConfig.shared.log("continueStoryLoop: answer timeout, ending story")
+                await endStoryGracefully()
+                break
+            }
+
+            sessionState = .generatingStory
+            do {
+                let beat = try await onDeviceStoryService.continueTurn(
+                    childAnswer: answer
+                )
+                storyTurnCount = await onDeviceStoryService.currentTurnCount
+
+                sessionState = .encodingAudio
+                let storyAudio = try await audioService.generateAndEncodeAudio(
+                    from: beat.storyText
+                )
+                sessionState = .sendingAudio
+                try await accessoryManager.activeAccessory.sendAudio(storyAudio)
+
+                let questionAudio = try await audioService.generateAndEncodeAudio(
+                    from: beat.question
+                )
+                try await accessoryManager.activeAccessory.sendAudio(questionAudio)
+
+                timeline.insert(TimelineEntry(
+                    sceneObjects: [],
+                    storySnippet: String(beat.storyText.prefix(120))
+                ), at: 0)
+
+                if beat.isEnding { break }
+            } catch {
+                AppConfig.shared.log("continueStoryLoop: error=\(error.localizedDescription)", level: .error)
+                setError(error.localizedDescription)
+                break
+            }
+        }
+        await onDeviceStoryService.endSession()
+        storyTurnCount = 0
+        if case .error = sessionState {
+            // Leave the error state as-is
+        } else {
+            sessionState = .connected
+        }
+    }
+
+    private func listenForAnswer(timeout: Int) async -> String? {
+        do {
+            try await audioCaptureService.startCapture()
+            let bufferStream = await audioCaptureService.audioBufferStream
+            let transcriptionStream = try await speechRecognitionService.startLiveTranscription(
+                audioStream: bufferStream
+            )
+
+            var finalText: String?
+            let timeoutTask = Task {
+                try await Task.sleep(for: .seconds(timeout))
+            }
+
+            for await result in transcriptionStream {
+                if Task.isCancelled { break }
+                let scrubbed = SpeechRecognitionService.scrubPII(result.text)
+                currentTranscript = scrubbed
+                if result.isFinal {
+                    finalText = scrubbed
+                    break
+                }
+            }
+
+            timeoutTask.cancel()
+            _ = await audioCaptureService.stopCapture()
+            _ = await speechRecognitionService.stopTranscription()
+            return finalText
+        } catch {
+            AppConfig.shared.log("listenForAnswer: error=\(error.localizedDescription)", level: .error)
+            return nil
+        }
+    }
+
+    private func endStoryGracefully() async {
+        do {
+            let endBeat = StoryBeat.endingFallback
+            sessionState = .encodingAudio
+            let audio = try await audioService.generateAndEncodeAudio(
+                from: endBeat.storyText
+            )
+            sessionState = .sendingAudio
+            try await accessoryManager.activeAccessory.sendAudio(audio)
+        } catch {
+            AppConfig.shared.log("endStoryGracefully: error=\(error.localizedDescription)", level: .error)
+        }
+        await onDeviceStoryService.endSession()
+        storyTurnCount = 0
+        sessionState = .connected
+    }
+
+    private func handleStoryError(
+        _ error: StoryError,
+        jpegData: Data
+    ) async {
+        switch error {
+        case .modelUnavailable, .modelDownloading:
+            AppConfig.shared.log("handleStoryError: falling back to cloud pipeline")
+            await runCloudPipeline(jpegData: jpegData)
+        default:
+            setError(error.localizedDescription)
+        }
+    }
+
+    // MARK: - Cloud story pipeline
+
+    private func runCloudPipeline(jpegData: Data) async {
+        AppConfig.shared.log("runCloudPipeline: start, jpegBytes=\(jpegData.count), childAge=\(childAge)")
         do {
             sessionState = .processingPrivacy
             let result = try await privacyPipeline.process(jpegData: jpegData, childAge: childAge)
             await metricsStore.record(result.metrics)
-            AppConfig.shared.log("runFullPipeline: privacy pipeline done, objects=\(result.payload.objects), scene=\(result.payload.scene), latency=\(Int(result.metrics.pipelineLatencyMs))ms")
+            AppConfig.shared.log("runCloudPipeline: privacy done, objects=\(result.payload.objects), scene=\(result.payload.scene), latency=\(Int(result.metrics.pipelineLatencyMs))ms")
 
             sessionState = .requestingStory
             let story = try await cloudService.requestStory(payload: result.payload)
-            AppConfig.shared.log("runFullPipeline: story received, textLength=\(story.storyText.count)")
+            AppConfig.shared.log("runCloudPipeline: story received, textLength=\(story.storyText.count)")
 
             sessionState = .encodingAudio
             let audioData = try await audioService.generateAndEncodeAudio(from: story.storyText)
-            AppConfig.shared.log("runFullPipeline: audio encoded, pcmBytes=\(audioData.count)")
+            AppConfig.shared.log("runCloudPipeline: audio encoded, pcmBytes=\(audioData.count)")
 
             sessionState = .sendingAudio
             try await accessoryManager.activeAccessory.sendAudio(audioData)
-            AppConfig.shared.log("runFullPipeline: audio sent to accessory")
+            AppConfig.shared.log("runCloudPipeline: audio sent to accessory")
 
-            // Record this interaction in the timeline (newest first)
-            let entry = TimelineEntry(
+            timeline.insert(TimelineEntry(
                 sceneObjects: result.payload.objects,
                 storySnippet: String(story.storyText.prefix(120))
-            )
-            timeline.insert(entry, at: 0)
+            ), at: 0)
 
             sessionState = .connected
-            AppConfig.shared.log("runFullPipeline: complete, timelineEntries=\(timeline.count)")
+            AppConfig.shared.log("runCloudPipeline: complete, timelineEntries=\(timeline.count)")
         } catch {
-            AppConfig.shared.log("runFullPipeline: error=\(error.localizedDescription)", level: .error)
+            AppConfig.shared.log("runCloudPipeline: error=\(error.localizedDescription)", level: .error)
             setError(error.localizedDescription)
         }
     }
@@ -307,9 +506,11 @@ final class CompanionViewModel {
         imageStreamTask?.cancel()
         statusStreamTask?.cancel()
         transcriptionStreamTask?.cancel()
+        storyLoopTask?.cancel()
         imageStreamTask  = nil
         statusStreamTask = nil
         transcriptionStreamTask = nil
+        storyLoopTask = nil
     }
 
     private func setError(_ message: String) {

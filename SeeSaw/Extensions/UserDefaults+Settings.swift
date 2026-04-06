@@ -42,6 +42,16 @@ extension UserDefaults {
         set { set(newValue, forKey: "childPreferences") }
     }
 
+    // MARK: - Story generation
+
+    var storyMode: StoryGenerationMode {
+        get {
+            let raw = string(forKey: "storyMode") ?? StoryGenerationMode.onDevice.rawValue
+            return StoryGenerationMode(rawValue: raw) ?? .onDevice
+        }
+        set { set(newValue.rawValue, forKey: "storyMode") }
+    }
+
     // MARK: - Accessory
 
     var selectedWearableType: WearableType {

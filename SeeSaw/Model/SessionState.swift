@@ -12,6 +12,8 @@ enum SessionState: Equatable, Sendable {
     case sendingAudio
     case recordingAudio
     case transcribingAudio
+    case generatingStory
+    case listeningForAnswer
     case error(String)
 
     // MARK: - Display
@@ -28,6 +30,8 @@ enum SessionState: Equatable, Sendable {
         case .sendingAudio:      return "Sending audio…"
         case .recordingAudio:    return "Recording…"
         case .transcribingAudio: return "Transcribing…"
+        case .generatingStory:   return "Generating story…"
+        case .listeningForAnswer: return "Listening…"
         case .error(let msg):    return "Error: \(msg)"
         }
     }
@@ -43,7 +47,8 @@ enum SessionState: Equatable, Sendable {
         switch self {
         case .connected, .receivingImage, .processingPrivacy,
              .requestingStory, .encodingAudio, .sendingAudio,
-             .recordingAudio, .transcribingAudio:
+             .recordingAudio, .transcribingAudio,
+             .generatingStory, .listeningForAnswer:
             return true
         default:
             return false
