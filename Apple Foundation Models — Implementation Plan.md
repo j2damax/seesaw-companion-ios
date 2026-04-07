@@ -2,8 +2,9 @@
 
 **Project:** seesaw-companion-ios (Tier 2)  
 **Date:** 6 April 2026  
-**Status:** Planning → Ready for Implementation  
+**Status:** Implementation Complete (Phases 0–8) — Pending Device Validation  
 **Target:** iOS 26.0+ / iPhone 15 Pro+  
+**Last Updated:** 7 April 2026
 
 ---
 
@@ -221,11 +222,10 @@ import FoundationModels
 
 // MARK: - Model access
 let model = SystemLanguageModel.default
-let availability = model.availability  // .available | .downloading | .unavailable
+let availability = model.availability  // .available | .unavailable(reason)
 
 // MARK: - Session creation
 let session = LanguageModelSession(
-    model: model,
     instructions: "System prompt here..."
 )
 
@@ -304,9 +304,11 @@ struct SceneContextTool: Tool {
 
 ## 6. Implementation Phases
 
-### Phase 0: Model Layer (1 day)
+### Phase 0: Model Layer (1 day) ✅ COMPLETE
 
 **Goal:** Define all new model types needed for Foundation Models integration.
+
+**Status:** All 4 model files implemented and compiling: `StoryBeat.swift`, `StoryGenerationMode.swift`, `StoryError.swift`, `SceneContext.swift`. Additional models added: `ChildProfile.swift`, `StoryMetricsEvent.swift`.
 
 #### 0.1 — `StoryBeat.swift`
 
@@ -424,9 +426,11 @@ struct SceneContext: Sendable {
 
 ---
 
-### Phase 1: OnDeviceStoryService (2–3 days)
+### Phase 1: OnDeviceStoryService (2–3 days) ✅ COMPLETE
 
 **Goal:** Core actor managing LLM sessions, context windows, and error recovery.
+
+**Status:** Full actor implemented with `StoryGenerating` protocol conformance. Availability check uses `.unavailable(.modelNotReady)` (corrected from wrong `.downloading` API). Error recovery: context window overflow → `restartWithSummary()`, guardrail violation → `retrySoftened()` with 3-level retry, static `safeFallback` as last resort. `session.respond(to:, generating:)` returns `Response<StoryBeat>` — `.content` property extracted correctly.
 
 **File:** `SeeSaw/Services/AI/OnDeviceStoryService.swift`
 
@@ -532,9 +536,11 @@ private func buildSystemPrompt(context: SceneContext, profile: ChildProfile) -> 
 
 ---
 
-### Phase 2: ViewModel & Pipeline Integration (1–2 days)
+### Phase 2: ViewModel & Pipeline Integration (1–2 days) ✅ COMPLETE
 
 **Goal:** Wire `OnDeviceStoryService` into the existing `CompanionViewModel` and add mode-based pipeline routing.
+
+**Status:** OnDeviceStoryService registered in `AppDependencyContainer` and injected into `CompanionViewModel`. Pipeline routing via `runFullPipeline()` → `runOnDevicePipeline()` / `runCloudPipeline()` based on `storyMode`. Two new session states (`.generatingStory`, `.listeningForAnswer`) added. `storyMode` persisted in `UserDefaults+Settings`. Cloud fallback on `.modelUnavailable` / `.modelDownloading` errors implemented.
 
 #### 2.1 — Register in `AppDependencyContainer`
 
@@ -612,9 +618,11 @@ private func runFullPipeline(jpegData: Data) async {
 
 ---
 
-### Phase 3: Streaming & Audio Optimisation (1–2 days)
+### Phase 3: Streaming & Audio Optimisation (1–2 days) ⏳ DEFERRED
 
 **Goal:** Use streaming generation for sub-second time-to-first-word.
+
+**Status:** Deferred for post-PoC. Currently uses blocking `.respond()`. Streaming via `.streamResponse()` is planned but not yet implemented. The blocking approach works correctly and meets the PoC requirements. Streaming will improve perceived latency from ~2s to <1s.
 
 #### 3.1 — Streaming Story Generation
 
@@ -651,9 +659,11 @@ for try await partialBeat in stream {
 
 ---
 
-### Phase 4: Interactive Story Loop (1–2 days)
+### Phase 4: Interactive Story Loop (1–2 days) ✅ COMPLETE
 
 **Goal:** Implement the full interaction cycle: story → question → child answers → continue.
+
+**Status:** `continueStoryLoop()` fully implemented in `CompanionViewModel`. Listens for child answers via `AudioCaptureService` + `SpeechRecognitionService` with 15-second timeout. PII scrubbing applied to answers via `SpeechRecognitionService.scrubPII()`. Story ends on `isEnding == true`, `maxTurns` reached, or timeout. Graceful ending via `endStoryGracefully()` using `StoryBeat.endingFallback`.
 
 #### 4.1 — Story Loop Flow
 
@@ -742,9 +752,11 @@ If the child doesn't respond within 15 seconds:
 
 ---
 
-### Phase 5: UI Updates (1 day)
+### Phase 5: UI Updates (1 day) ✅ COMPLETE
 
 **Goal:** Add story mode selection and generation status indicators.
+
+**Status:** Story mode segmented picker added to `SettingsTabView` (On-Device / Cloud / Hybrid) with mode descriptions. `CameraTabView` now shows dedicated UI for `.generatingStory` (spinner + "Turn X of 6") and `.listeningForAnswer` (mic icon + live transcript + turn count). `storyMode` persists via `UserDefaults` with `didSet` handler.
 
 #### 5.1 — Story Mode Picker in SettingsTabView
 
@@ -774,9 +786,11 @@ If the child doesn't respond within 15 seconds:
 
 ---
 
-### Phase 6: Testing (1–2 days)
+### Phase 6: Testing (1–2 days) ✅ COMPLETE
 
 **Goal:** Unit tests for all new functionality using Swift Testing framework.
+
+**Status:** 30 new tests across 4 test files, all using Swift Testing (`import Testing`, `#expect`). `MockStoryService` actor conforms to `StoryGenerating` protocol for hardware-free testing. Tests cover: StoryBeat (6), SceneContext (5), StoryGenerationMode (7), MockStoryService lifecycle (7), StoryError (3), StoryMetricsStore (5), StoryMetricsEvent Codable (1). Total repository tests: 89 unit + 3 UI = 92.
 
 #### 6.1 — `OnDeviceStoryServiceTests.swift`
 
@@ -831,9 +845,11 @@ For unit tests, use the protocol abstraction approach. Integration tests require
 
 ---
 
-### Phase 7: Benchmark Instrumentation (1–2 days)
+### Phase 7: Benchmark Instrumentation (1–2 days) ✅ COMPLETE
 
 **Goal:** Add measurement infrastructure for the dissertation's Chapter 6 (Results).
+
+**Status:** `StoryMetricsEvent` struct defined with 7 fields (generationMode, timeToFirstTokenMs, totalGenerationMs, turnCount, guardrailViolations, storyTextLength, timestamp). `StoryMetricsStore` actor created with record/query/CSV export methods. `CompanionViewModel` records metrics after every story generation with `CFAbsoluteTimeGetCurrent()` timing. `SettingsView` displays story generation metrics dashboard (generations, avg latency, avg story length, guardrail violations) with CSV export button.
 
 #### 7.1 — Story Generation Metrics
 
@@ -865,7 +881,9 @@ Extend the existing CSV export in `PrivacyMetricsStore` to include story generat
 
 ---
 
-### Phase 8: Documentation (0.5 day)
+### Phase 8: Documentation (0.5 day) ✅ COMPLETE
+
+**Status:** This implementation plan updated with phase completion status. API references corrected (`.respond()` not `.generate()`, `Response<T>.content` extraction, `.unavailable(.modelNotReady)` availability check). All 8 phases documented with implementation notes.
 
 #### 8.1 — Update `Apple Foundation Models.md`
 
@@ -1120,40 +1138,34 @@ extension StoryBeat {
 
 ## 11. File Change Inventory
 
-### New Files (10)
+### New Files (12)
 
-| File | Purpose | Phase |
-|------|---------|-------|
-| `SeeSaw/Model/StoryBeat.swift` | `@Generable` struct for LLM output | 0 |
-| `SeeSaw/Model/StoryGenerationMode.swift` | Mode enum (onDevice/cloud/hybrid) | 0 |
-| `SeeSaw/Model/StoryError.swift` | Error types for story generation | 0 |
-| `SeeSaw/Model/SceneContext.swift` | Bridge: PipelineResult → story service | 0 |
-| `SeeSaw/Services/AI/OnDeviceStoryService.swift` | Core actor: session, generation, context window | 1 |
-| `SeeSawTests/OnDeviceStoryServiceTests.swift` | Unit tests for story service | 6 |
-| `SeeSawTests/StoryBeatTests.swift` | Unit tests for StoryBeat model | 6 |
-| `SeeSawTests/SceneContextTests.swift` | Unit tests for SceneContext | 6 |
-| `SeeSawTests/StoryGenerationModeTests.swift` | Unit tests for mode enum | 6 |
-| `SeeSaw/Model/StoryMetricsEvent.swift` | Benchmark metrics struct | 7 |
+| File | Purpose | Phase | Status |
+|------|---------|-------|--------|
+| `SeeSaw/Model/StoryBeat.swift` | `@Generable` struct for LLM output | 0 | ✅ |
+| `SeeSaw/Model/StoryGenerationMode.swift` | Mode enum (onDevice/cloud/hybrid) | 0 | ✅ |
+| `SeeSaw/Model/StoryError.swift` | Error types for story generation | 0 | ✅ |
+| `SeeSaw/Model/SceneContext.swift` | Bridge: PipelineResult → story service | 0 | ✅ |
+| `SeeSaw/Services/AI/OnDeviceStoryService.swift` | Core actor: session, generation, context window | 1 | ✅ |
+| `SeeSaw/Services/AI/StoryGenerating.swift` | Protocol abstraction for testability | 1 | ✅ |
+| `SeeSaw/Services/AI/StoryMetricsStore.swift` | Actor: story metrics recording + CSV export | 7 | ✅ |
+| `SeeSaw/Model/StoryMetricsEvent.swift` | Benchmark metrics struct | 7 | ✅ |
+| `SeeSawTests/OnDeviceStoryServiceTests.swift` | Mock-based unit tests + StoryMetrics tests | 6 | ✅ |
+| `SeeSawTests/StoryBeatTests.swift` | Unit tests for StoryBeat model | 6 | ✅ |
+| `SeeSawTests/SceneContextTests.swift` | Unit tests for SceneContext | 6 | ✅ |
+| `SeeSawTests/StoryGenerationModeTests.swift` | Unit tests for mode enum | 6 | ✅ |
 
-### Modified Files (6)
+### Modified Files (7)
 
-| File | Change | Phase |
-|------|--------|-------|
-| `SeeSaw/App/AppDependencyContainer.swift` | Register `OnDeviceStoryService`; pass to CompanionViewModel | 2 |
-| `SeeSaw/ViewModel/CompanionViewModel.swift` | Add `storyMode`, `onDeviceStoryService`, pipeline routing, story loop | 2, 4 |
-| `SeeSaw/Model/SessionState.swift` | Add `.generatingStory`, `.listeningForAnswer` cases | 2 |
-| `SeeSaw/Extensions/UserDefaults+Settings.swift` | Add `storyMode` persistence key | 2 |
-| `SeeSaw/View/Home/SettingsTabView.swift` | Add story mode picker + model status | 5 |
-| `SeeSaw/View/Home/CameraTabView.swift` | Story generation status indicator | 5 |
-
-### Optionally Modified (2)
-
-| File | Change | Phase |
-|------|--------|-------|
-| `SeeSaw/View/StatusView.swift` | Model availability indicator | 5 |
-| `SeeSaw/Services/AI/PrivacyMetricsStore.swift` | Extended CSV export with story metrics | 7 |
-
-**Total: 10 new files, 6–8 modified files, ~600–800 new lines of Swift**
+| File | Change | Phase | Status |
+|------|--------|-------|--------|
+| `SeeSaw/App/AppDependencyContainer.swift` | Register `OnDeviceStoryService` + `StoryMetricsStore`; pass to CompanionViewModel | 2, 7 | ✅ |
+| `SeeSaw/ViewModel/CompanionViewModel.swift` | Add `storyMode`, `onDeviceStoryService`, `storyMetricsStore`, pipeline routing, story loop, metrics recording | 2, 4, 7 | ✅ |
+| `SeeSaw/Model/SessionState.swift` | Add `.generatingStory`, `.listeningForAnswer` cases | 2 | ✅ |
+| `SeeSaw/Extensions/UserDefaults+Settings.swift` | Add `storyMode` persistence key | 2 | ✅ |
+| `SeeSaw/View/Home/SettingsTabView.swift` | Add story mode segmented picker | 5 | ✅ |
+| `SeeSaw/View/Home/CameraTabView.swift` | Story generation + listening status with turn count | 5 | ✅ |
+| `SeeSaw/View/SettingsView.swift` | Story generation metrics dashboard section | 7 | ✅ |
 
 ---
 
@@ -1236,8 +1248,8 @@ extension StoryBeat {
 | API | Usage in SeeSaw |
 |-----|-----------------|
 | `SystemLanguageModel.default` | Access the on-device language model |
-| `SystemLanguageModel.availability` | Check `.available` / `.downloading` / `.unavailable` |
-| `LanguageModelSession(model:instructions:)` | Create conversation session with Whisper persona |
+| `SystemLanguageModel.availability` | Check `.available` / `.unavailable(reason)` |
+| `LanguageModelSession(instructions:)` | Create conversation session with Whisper persona |
 | `session.respond(to:generating:)` | Generate structured `StoryBeat` (full response) |
 | `session.streamResponse(to:generating:)` | Generate `StoryBeat` with streaming partial results |
 | `session.contextSize` | Query max context window (iOS 26.4+) |
