@@ -3,6 +3,8 @@
 //
 // Error types for on-device story generation via Foundation Models.
 
+import Foundation
+
 enum StoryError: LocalizedError, Sendable {
     case noActiveSession
     case modelUnavailable
