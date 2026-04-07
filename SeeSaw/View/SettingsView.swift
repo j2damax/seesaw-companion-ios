@@ -115,7 +115,7 @@ struct SettingsView: View {
     private var storyMetricsSection: some View {
         Section {
             LabeledContent("Story Generations", value: "\(storyCount)")
-            LabeledContent("Avg Generation", value: storyCount > 0 ? "\(Int(avgGenMs)) ms" : "—")
+            LabeledContent("Avg Generation Time", value: storyCount > 0 ? "\(Int(avgGenMs)) ms" : "—")
             LabeledContent("Avg Story Length", value: storyCount > 0 ? "\(avgStoryLen) chars" : "—")
             LabeledContent("Guardrail Violations", value: "\(totalViolations)")
             Button("Export Story CSV") {

@@ -35,7 +35,7 @@ actor StoryMetricsStore {
     }
 
     func totalTurns() -> Int {
-        events.map(\.turnCount).max() ?? 0
+        events.map(\.turnCount).reduce(0, +)
     }
 
     func totalGuardrailViolations() -> Int {
