@@ -38,9 +38,9 @@ actor OnDeviceStoryService: StoryGenerating {
         switch model.availability {
         case .available:
             return .available
-        case .downloading:
+        case .unavailable(.modelNotReady):
             return .downloading
-        default:
+        case .unavailable:
             return .unavailable
         }
     }
@@ -122,7 +122,7 @@ actor OnDeviceStoryService: StoryGenerating {
                 to: prompt,
                 generating: StoryBeat.self
             )
-            return response
+            return response.content
         } catch let error as LanguageModelSession.GenerationError {
             return try await handleGenerationError(error, prompt: prompt)
         } catch {
@@ -136,14 +136,14 @@ actor OnDeviceStoryService: StoryGenerating {
     ) async throws -> StoryBeat {
         switch error {
         case .exceededContextWindowSize:
-            AppConfig.shared.log(
+            await AppConfig.shared.log(
                 "OnDeviceStoryService: context window exceeded, restarting with summary",
                 level: .warning
             )
             return try await restartWithSummary(lastPrompt: prompt)
 
         case .guardrailViolation:
-            AppConfig.shared.log(
+            await AppConfig.shared.log(
                 "OnDeviceStoryService: guardrail violation, retrying with softened prompt",
                 level: .warning
             )
@@ -210,12 +210,12 @@ actor OnDeviceStoryService: StoryGenerating {
                 to: prompt,
                 generating: StoryBeat.self
             )
-            return response
+            return response.content
         } catch {
             if attempt < fallbackPrompts.count - 1 {
                 return try await retrySoftened(attempt: attempt + 1)
             }
-            AppConfig.shared.log(
+            await AppConfig.shared.log(
                 "OnDeviceStoryService: all retries failed, returning static fallback",
                 level: .warning
             )
