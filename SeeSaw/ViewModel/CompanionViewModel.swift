@@ -20,7 +20,9 @@ final class CompanionViewModel {
     var connectedDeviceName: String?
     var childAge: Int = UserDefaults.standard.childAge
     var timeline: [TimelineEntry] = []
-    var storyMode: StoryGenerationMode = UserDefaults.standard.storyMode
+    var storyMode: StoryGenerationMode = UserDefaults.standard.storyMode {
+        didSet { UserDefaults.standard.storyMode = storyMode }
+    }
     var storyTurnCount: Int = 0
 
     /// Full-screen debug preview after "Capture Scene".
@@ -49,6 +51,7 @@ final class CompanionViewModel {
     private let audioCaptureService: AudioCaptureService
     private let speechRecognitionService: SpeechRecognitionService
     let metricsStore: PrivacyMetricsStore
+    let storyMetricsStore: StoryMetricsStore
     private let onDeviceStoryService: OnDeviceStoryService
 
     // MARK: - Active stream tasks (cancelled on disconnect)
@@ -68,6 +71,7 @@ final class CompanionViewModel {
         audioCaptureService: AudioCaptureService,
         speechRecognitionService: SpeechRecognitionService,
         metricsStore: PrivacyMetricsStore,
+        storyMetricsStore: StoryMetricsStore,
         onDeviceStoryService: OnDeviceStoryService
     ) {
         self.accessoryManager = accessoryManager
@@ -77,6 +81,7 @@ final class CompanionViewModel {
         self.audioCaptureService = audioCaptureService
         self.speechRecognitionService = speechRecognitionService
         self.metricsStore = metricsStore
+        self.storyMetricsStore = storyMetricsStore
         self.onDeviceStoryService = onDeviceStoryService
     }
 
@@ -318,6 +323,16 @@ final class CompanionViewModel {
             AppConfig.shared.log("runOnDevicePipeline: story generated in \(Int(generationMs))ms")
             storyTurnCount = await onDeviceStoryService.currentTurnCount
 
+            await storyMetricsStore.record(StoryMetricsEvent(
+                generationMode: storyMode.rawValue,
+                timeToFirstTokenMs: generationMs,
+                totalGenerationMs: generationMs,
+                turnCount: storyTurnCount,
+                guardrailViolations: 0,
+                storyTextLength: beat.storyText.count,
+                timestamp: Date().timeIntervalSince1970
+            ))
+
             sessionState = .encodingAudio
             let storyAudio = try await audioService.generateAndEncodeAudio(
                 from: beat.storyText
@@ -364,10 +379,22 @@ final class CompanionViewModel {
 
             sessionState = .generatingStory
             do {
+                let turnStart = CFAbsoluteTimeGetCurrent()
                 let beat = try await onDeviceStoryService.continueTurn(
                     childAnswer: answer
                 )
+                let turnMs = (CFAbsoluteTimeGetCurrent() - turnStart) * 1000
                 storyTurnCount = await onDeviceStoryService.currentTurnCount
+
+                await storyMetricsStore.record(StoryMetricsEvent(
+                    generationMode: storyMode.rawValue,
+                    timeToFirstTokenMs: turnMs,
+                    totalGenerationMs: turnMs,
+                    turnCount: storyTurnCount,
+                    guardrailViolations: 0,
+                    storyTextLength: beat.storyText.count,
+                    timestamp: Date().timeIntervalSince1970
+                ))
 
                 sessionState = .encodingAudio
                 let storyAudio = try await audioService.generateAndEncodeAudio(

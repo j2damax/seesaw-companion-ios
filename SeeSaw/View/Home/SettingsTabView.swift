@@ -2,15 +2,17 @@
 // SeeSaw — Tier 2 companion app
 //
 // "Settings" tab on the home screen.
-// Contains three sections:
-//   1. Accessory Setup  — reuses AccessoryPickerView
-//   2. Child Preferences — name, age, favourite topics
-//   3. Account          — Sign Out
+// Contains four sections:
+//   1. Story Mode       — on-device / cloud / hybrid selector
+//   2. Accessory Setup  — reuses AccessoryPickerView
+//   3. Child Preferences — name, age, favourite topics
+//   4. Account          — Sign Out
 
 import SwiftUI
 
 struct SettingsTabView: View {
 
+    @Bindable var vm: CompanionViewModel
     var accessoryManager: AccessoryManager
     let coordinator: AppCoordinator
 
@@ -24,6 +26,7 @@ struct SettingsTabView: View {
     var body: some View {
         NavigationStack {
             Form {
+                storyModeSection
                 AccessoryPickerView(accessoryManager: accessoryManager)
                 childPreferencesSection
                 accountSection
@@ -43,6 +46,25 @@ struct SettingsTabView: View {
                 Button("Sign Out", role: .destructive) { coordinator.signOut() }
                 Button("Cancel", role: .cancel) {}
             }
+        }
+    }
+
+    // MARK: - Story Mode section
+
+    private var storyModeSection: some View {
+        Section {
+            Picker("Story Mode", selection: $vm.storyMode) {
+                ForEach(StoryGenerationMode.allCases, id: \.self) { mode in
+                    Text(mode.displayName).tag(mode)
+                }
+            }
+            .pickerStyle(.segmented)
+
+            Text(vm.storyMode.description)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        } header: {
+            Text("Story Generation")
         }
     }
 
@@ -113,6 +135,7 @@ struct SettingsTabView: View {
 #Preview {
     let container = AppDependencyContainer()
     SettingsTabView(
+        vm: container.makeCompanionViewModel(),
         accessoryManager: container.accessoryManager,
         coordinator: AppCoordinator(container: container)
     )

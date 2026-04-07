@@ -113,6 +113,43 @@ struct CameraTabView: View {
                     .tint(.secondary)
             }
 
+        case .generatingStory:
+            VStack(spacing: 8) {
+                HStack(spacing: 8) {
+                    ProgressView()
+                    Text("Generating story…")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+                if vm.storyTurnCount > 0 {
+                    Text("Turn \(vm.storyTurnCount) of 6")
+                        .font(.caption)
+                        .foregroundStyle(.tertiary)
+                }
+            }
+
+        case .listeningForAnswer:
+            VStack(spacing: 8) {
+                HStack(spacing: 8) {
+                    Image(systemName: "mic.fill")
+                        .foregroundStyle(.teal)
+                    Text("Listening for answer…")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+                if let transcript = vm.currentTranscript, !transcript.isEmpty {
+                    Text(transcript)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(2)
+                }
+                if vm.storyTurnCount > 0 {
+                    Text("Turn \(vm.storyTurnCount) of 6")
+                        .font(.caption)
+                        .foregroundStyle(.tertiary)
+                }
+            }
+
         case .error:
             Button("Dismiss") { vm.dismissError() }
                 .buttonStyle(.bordered)
@@ -146,7 +183,8 @@ struct CameraTabView: View {
                 SettingsView(
                     childAge: $vm.childAge,
                     accessoryManager: coordinator.container.accessoryManager,
-                    metricsStore: coordinator.container.privacyMetricsStore
+                    metricsStore: coordinator.container.privacyMetricsStore,
+                    storyMetricsStore: coordinator.container.storyMetricsStore
                 )
             } label: {
                 Image(systemName: "gear")

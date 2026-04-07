@@ -14,6 +14,7 @@ struct SettingsView: View {
     @Binding var childAge: Int
     var accessoryManager: AccessoryManager
     var metricsStore: PrivacyMetricsStore
+    var storyMetricsStore: StoryMetricsStore
 
     @State private var cloudURLString: String = UserDefaults.standard.cloudAgentURL.absoluteString
     @State private var metricsCount = 0
@@ -22,6 +23,10 @@ struct SettingsView: View {
     @State private var totalFaces = 0
     @State private var totalBlurred = 0
     @State private var totalTokensScrubbed = 0
+    @State private var storyCount = 0
+    @State private var avgGenMs = 0.0
+    @State private var avgStoryLen = 0
+    @State private var totalViolations = 0
     @State private var csvData = ""
     @State private var showingCSVShare = false
     @Environment(\.dismiss) private var dismiss
@@ -35,6 +40,7 @@ struct SettingsView: View {
                 childAgeSection
                 cloudSection
                 privacyMetricsSection
+                storyMetricsSection
                 aboutSection
             }
             .navigationTitle("Settings")
@@ -106,6 +112,27 @@ struct SettingsView: View {
         }
     }
 
+    private var storyMetricsSection: some View {
+        Section {
+            LabeledContent("Story Generations", value: "\(storyCount)")
+            LabeledContent("Avg Generation", value: storyCount > 0 ? "\(Int(avgGenMs)) ms" : "—")
+            LabeledContent("Avg Story Length", value: storyCount > 0 ? "\(avgStoryLen) chars" : "—")
+            LabeledContent("Guardrail Violations", value: "\(totalViolations)")
+            Button("Export Story CSV") {
+                Task {
+                    csvData = await storyMetricsStore.exportCSV()
+                    showingCSVShare = true
+                }
+            }
+            .disabled(storyCount == 0)
+        } header: {
+            Text("Story Generation Metrics")
+        } footer: {
+            Text("Benchmark data for dissertation Chapter 6. Stories generated on-device via Foundation Models.")
+                .font(.caption)
+        }
+    }
+
     // MARK: - Helpers
 
     private func loadMetrics() async {
@@ -115,6 +142,10 @@ struct SettingsView: View {
         totalFaces = await metricsStore.totalFacesDetected()
         totalBlurred = await metricsStore.totalFacesBlurred()
         totalTokensScrubbed = await metricsStore.totalTokensScrubbed()
+        storyCount = await storyMetricsStore.eventCount()
+        avgGenMs = await storyMetricsStore.averageGenerationMs()
+        avgStoryLen = await storyMetricsStore.averageStoryLength()
+        totalViolations = await storyMetricsStore.totalGuardrailViolations()
     }
 
     private func formatPercent(_ value: Double) -> String {
@@ -133,6 +164,11 @@ struct SettingsView: View {
 
 #Preview {
     let container = AppDependencyContainer()
-    SettingsView(childAge: .constant(5), accessoryManager: container.accessoryManager, metricsStore: container.privacyMetricsStore)
+    SettingsView(
+        childAge: .constant(5),
+        accessoryManager: container.accessoryManager,
+        metricsStore: container.privacyMetricsStore,
+        storyMetricsStore: container.storyMetricsStore
+    )
 }
 
