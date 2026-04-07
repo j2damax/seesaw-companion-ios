@@ -5,7 +5,7 @@
 
 import Foundation
 
-enum StoryError: LocalizedError, Sendable {
+enum StoryError: LocalizedError, Sendable, Equatable {
     case noActiveSession
     case modelUnavailable
     case modelDownloading
