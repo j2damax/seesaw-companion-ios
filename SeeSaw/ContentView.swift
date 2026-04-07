@@ -93,7 +93,8 @@ struct ContentView: View {
                 SettingsView(
                     childAge: $vm.childAge,
                     accessoryManager: coordinator.container.accessoryManager,
-                    metricsStore: coordinator.container.privacyMetricsStore
+                    metricsStore: coordinator.container.privacyMetricsStore,
+                    storyMetricsStore: coordinator.container.storyMetricsStore
                 )
             } label: {
                 Image(systemName: "gear")
