@@ -2,9 +2,9 @@
 
 **Project:** seesaw-companion-ios (Tier 2)  
 **Date:** 6 April 2026  
-**Status:** Implementation Complete (Phases 0–8) — Pending Device Validation  
+**Status:** Implementation Complete (Phases 0–8) — Phase 3 Streaming Deferred — Pending Device Validation  
 **Target:** iOS 26.0+ / iPhone 15 Pro+  
-**Last Updated:** 7 April 2026
+**Last Updated:** 8 April 2026
 
 ---
 
@@ -33,6 +33,8 @@
 12. [Benchmark Strategy](#12-benchmark-strategy)
 13. [Dissertation Contribution](#13-dissertation-contribution)
 14. [Appendix: API Quick Reference](#14-appendix-api-quick-reference)
+15. [Technical Review & Feedback](#15-technical-review--feedback)
+16. [Follow-Up & To-Do Items](#16-follow-up--to-do-items)
 
 ---
 
@@ -1579,3 +1581,109 @@ Update §11 to include these, and revise the file count from "10 new files" to "
 6. **Gap 2** — Implement `conversationSummary` update after each turn using `suggestedContinuation`
 7. **Bug 3** — Add `#available(iOS 26.4, *)` guards around `tokenCount` / `contextSize` calls
 8. **Bug 1** — Reconcile token budget math and correct the risk register accordingly
+
+---
+
+## 16. Follow-Up & To-Do Items
+
+**Updated:** 8 April 2026
+
+### 16.1 — Implementation Completion Summary
+
+| Phase | Status | GitHub Issue(s) | Notes |
+|-------|--------|-----------------|-------|
+| Phase 0: Model Layer | ✅ Complete | #41 (closed), #40 (closed) | 6 model files: StoryBeat, StoryGenerationMode, StoryError, SceneContext, ChildProfile, StoryMetricsEvent |
+| Phase 1: OnDeviceStoryService | ✅ Complete | #42 (closed), #43 (closed) | Actor + StoryGenerating protocol. Turn-count heuristic for context window. 3-level guardrail retry. |
+| Phase 2: ViewModel Integration | ✅ Complete | #48 (closed), #56 (closed), #53 (closed) | Pipeline routing, SessionState, UserDefaults persistence, graceful degradation chain |
+| Phase 3: Streaming | ⏳ Deferred | #45 (closed as deferred) | Uses blocking `.respond()`. Streaming planned post-PoC for sub-second time-to-first-word. |
+| Phase 4: Interactive Story Loop | ✅ Complete | #44 (closed) | continueStoryLoop, 15s answer timeout, PII scrubbing on answers, graceful ending |
+| Phase 5: UI Updates | ✅ Complete | #50 (closed) | Story mode picker, generation status, turn count display |
+| Phase 6: Testing | ✅ Complete | #57 (closed), #58 (closed) | 30 new tests (92 total). MockStoryService for hardware-free testing. |
+| Phase 7: Benchmarks | ✅ Complete | #52 (closed) | StoryMetricsStore actor, CSV export, SettingsView dashboard |
+| Phase 8: Documentation | ✅ Complete | #59 (closed) | Plan updated, API references corrected |
+
+### 16.2 — Review Bugs & Gaps Resolution Status
+
+| ID | Issue | Status | Resolution |
+|----|-------|--------|------------|
+| Bug 1 | Token budget math inconsistency | ✅ Resolved | 6-turn cap is a UX decision; context window is not the constraint. Risk 1 effectively Low for 6 turns. |
+| Bug 2 | `checkContextBudget()` checks wrong thing | ✅ Resolved | Turn-count heuristic used as primary strategy (summarise after turn 4); `.exceededContextWindowSize` catch as safety net. |
+| Bug 3 | `tokenCount(for:)` requires iOS 26.4+ | ✅ Resolved | Not called — turn-count heuristic avoids API dependency entirely. |
+| Bug 4 | `StoryBeat.safeFallback` compilation | ✅ Resolved | Compiles correctly; `@Generable` generates accessible memberwise init. |
+| Bug 5 | `LanguageModelSession` init signature | ✅ Resolved | Correct signature: `LanguageModelSession(instructions:)` — no `model:` parameter. |
+| Bug 6 | `response.content` accessor | ✅ Resolved | `session.respond(to:generating:)` returns `Response<T>`, access via `.content`. |
+| Gap 1 | `ChildProfile` undefined | ✅ Resolved | `ChildProfile.swift` created in Model/. |
+| Gap 2 | `conversationSummary` never populated | ✅ Resolved | Updated after each turn using `suggestedContinuation`. |
+| Gap 3 | Streaming vs `isEnding` tension | ⏳ Deferred | Blocking `.respond()` used — no streaming/isEnding conflict. To be resolved when Phase 3 is implemented. |
+| Gap 4 | Hybrid mode under-specified | ⚠️ Partial | On-device plays immediately; cloud fires in background. Discard semantics still informal. |
+| Gap 5 | Missing files from inventory | ✅ Resolved | `StoryGenerating.swift` and `ChildProfile.swift` added to §11 (12 new files total). |
+
+### 16.3 — Pending To-Do Items
+
+#### 🔴 Critical — Must Complete Before Dissertation Submission
+
+- [ ] **Device Validation** — Run full app on iPhone 15 Pro+ with Apple Intelligence enabled. Validate OnDeviceStoryService generates real StoryBeats on device. Test all 3 modes (on-device, cloud, hybrid).
+- [ ] **Battery Drain Test** — 30-minute active session measurement (GitHub Issue #34). Target: < 15% drain.
+- [ ] **Full Pipeline Integration Test** — Mock AiSee + mock cloud, 10 runs, 100% pass rate (GitHub Issue #33). Wire mock BLE peripheral through full pipeline.
+- [ ] **Benchmark Data Collection** — Collect latency and quality measurements per §12 across all 3 architectures:
+  - Network intercept via Charles Proxy to verify "zero bytes transmitted" for Architecture C
+  - End-to-end latency (mean + P95) for all 3 architectures
+  - Human quality evaluation: 3 raters × 10 stories × 3 architectures, Likert scale
+  - Report inter-rater reliability (Fleiss' kappa) alongside mean ratings
+- [ ] **Document Tier 2 Implementation Decisions** — (GitHub Issue #35) CoreML model version, YOLO11n FPS, STT accuracy, actual pipeline latency vs target, privacy pipeline design changes.
+
+#### 🟡 Important — Should Complete for PoC Quality
+
+- [ ] **Close Completed GitHub Issues** — Issues #41, #1, #3, #4, #5 remain open but the corresponding work is done. Close with appropriate comments.
+- [ ] **BLE Chunk Reassembly Unit Test** — (GitHub Issue #13) Mock chunk notifications in sequence and out of order.
+- [ ] **README** — (GitHub Issue #5) Document architecture, setup, entitlements, BLE GATT UUIDs, cloud API contract.
+- [ ] **Hybrid Mode Specification** — Fully specify cloud-discard semantics and timeout behaviour (Gap 4 from review).
+- [ ] **Test Coverage Improvement** — Current SeeSaw.app coverage is 15.8%. Target files for improvement:
+  - `CompanionViewModel.swift` (3.5% → target 30%+)
+  - `OnDeviceStoryService.swift` (3.9% — hardware-dependent, improve via MockStoryService tests)
+  - `SpeechRecognitionService.swift` (1.4%)
+  - `AudioCaptureService.swift` (1.6%)
+
+#### 🟢 Post-PoC / Future Enhancements
+
+- [ ] **Phase 3: Streaming Generation** — Replace blocking `.respond()` with `.streamResponse()` for sub-second time-to-first-word. Resolve Gap 3 (separate streaming audio from `isEnding` control flow).
+- [ ] **NLTokenizer for Sentence Splitting** — Replace `.`/`?`/`!` splitting with `NLTokenizer(.sentence)` to handle abbreviations (Minor Issue M2).
+- [ ] **Tool Protocol Integration** — Future: scene context injection via Foundation Models `Tool` protocol.
+- [ ] **Error Logging for Audio Failures** — Replace silent `try?` in `continueStoryLoop()` with logged errors (Minor Issue M4).
+- [ ] **GitHub Actions CI** — (GitHub Issue #3) Add xcodebuild workflow for automated build + test on push.
+
+### 16.4 — Project Board Alignment
+
+**Project Board:** https://github.com/users/j2damax/projects/4/views/6
+
+| Open Issue | Status | Action Required |
+|------------|--------|-----------------|
+| #41 — Phase 0 model types | ✅ Code complete | Close issue |
+| #35 — Document Tier 2 decisions | ❌ Not started | Create `DISSERTATION_NOTES.md` |
+| #34 — Battery drain test | ❌ Requires device | Run on physical iPhone 15 Pro+ |
+| #33 — Full pipeline integration test | ❌ Not started | Write integration test with mocks |
+| #13 — BLE chunk reassembly unit test | ❌ Not started | Write unit test |
+| #5 — Write repo README | ❌ Not started | Document architecture and setup |
+| #4 — Create project folder structure | ✅ Structure exists | Close issue |
+| #3 — GitHub Actions CI | ❌ Not started | Add xcodebuild workflow |
+| #1 — Initialise SwiftUI project | ✅ Project initialised | Close issue (deployment target updated to iOS 26) |
+
+### 16.5 — End-to-End Completion Checklist
+
+To conclude this project end-to-end for the dissertation:
+
+- [x] Privacy pipeline (6-stage) — face blur, YOLO11n, scene classify, STT, PII scrub
+- [x] Privacy metrics + CSV export
+- [x] Foundation Models integration (8 phases, 12 new files, 7 modified files)
+- [x] Story metrics + CSV export
+- [x] 92 unit tests + 3 UI tests (95 total)
+- [x] On-device/cloud/hybrid routing with graceful degradation
+- [ ] Physical device validation on iPhone 15 Pro+ with Apple Intelligence
+- [ ] Battery drain measurement (30-min session)
+- [ ] Full pipeline integration test (10 runs, 100% pass)
+- [ ] Benchmark data collection across 3 architectures
+- [ ] Human quality evaluation (3 raters × 10 stories)
+- [ ] Inter-rater reliability reporting (Fleiss' kappa)
+- [ ] Dissertation Chapter 6 results table populated with measured values
+- [ ] Network intercept evidence (Charles Proxy) for zero-transmission claim
+- [ ] DISSERTATION_NOTES.md with implementation decisions
