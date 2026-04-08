@@ -64,7 +64,7 @@ struct BookmarkMomentToolTests {
 
         let tool = BookmarkMomentTool()
         let result = try await tool.call(arguments: .init(description: "A funny moment"))
-        #expect(result.contains("bookmarked") || result.contains("Moment"))
+        #expect(result == "Moment bookmarked: A funny moment")
     }
 
     @Test func multipleCallsAccumulateBookmarks() async throws {

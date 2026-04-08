@@ -20,6 +20,13 @@ actor OnDeviceStoryService: StoryGenerating {
     private var conversationSummary: String?
     private var currentProfile: ChildProfile?
 
+    // MARK: - Tools
+
+    /// Single source of truth for the tool set registered with every session.
+    private var storyTools: [any Tool] {
+        [AdjustDifficultyTool(), BookmarkMomentTool(), SwitchSceneTool()]
+    }
+
     // MARK: - Public computed properties
 
     var isSessionActive: Bool { session != nil }
@@ -67,7 +74,7 @@ actor OnDeviceStoryService: StoryGenerating {
         let systemPrompt = buildSystemPrompt(context: context, profile: profile)
         session = LanguageModelSession(
             instructions: systemPrompt,
-            tools: [AdjustDifficultyTool(), BookmarkMomentTool(), SwitchSceneTool()]
+            tools: storyTools
         )
         turnCount = 0
         conversationSummary = nil
@@ -82,10 +89,12 @@ actor OnDeviceStoryService: StoryGenerating {
     /// fills in progressively. Returns the final complete `StoryBeat` for control flow.
     /// The `isEnding` flag should only be read from the returned final beat, not from
     /// partial values (Gap 3 resolution: separate streaming display from control flow).
+    /// When context summarisation triggers mid-session, the recovery turn runs through
+    /// the non-streaming `generateWithErrorRecovery` path and `onPartialText` is not called.
     func streamStartStory(
         context: SceneContext,
         profile: ChildProfile,
-        onPartialText: @Sendable @escaping (String) -> Void
+        onPartialText: @Sendable @escaping (String) async -> Void
     ) async throws -> StoryBeat {
         let availability = checkAvailability()
         switch availability {
@@ -103,7 +112,7 @@ actor OnDeviceStoryService: StoryGenerating {
         let systemPrompt = buildSystemPrompt(context: context, profile: profile)
         session = LanguageModelSession(
             instructions: systemPrompt,
-            tools: [AdjustDifficultyTool(), BookmarkMomentTool(), SwitchSceneTool()]
+            tools: storyTools
         )
         turnCount = 0
         conversationSummary = nil
@@ -138,9 +147,11 @@ actor OnDeviceStoryService: StoryGenerating {
 
     /// Streaming variant of `continueTurn`. Calls `onPartialText` as `storyText`
     /// fills in, then returns the final complete beat for `isEnding` checks.
+    /// When context summarisation triggers, falls back to non-streaming generation
+    /// for that recovery turn only.
     func streamContinueTurn(
         childAnswer: String,
-        onPartialText: @Sendable @escaping (String) -> Void
+        onPartialText: @Sendable @escaping (String) async -> Void
     ) async throws -> StoryBeat {
         guard session != nil else {
             throw StoryError.noActiveSession
@@ -200,26 +211,39 @@ actor OnDeviceStoryService: StoryGenerating {
 
     /// Streaming variant: iterates partial beats, calls `onPartialText` for each
     /// non-empty `storyText`, then returns the final complete `StoryBeat`.
+    /// Throws `generationFailed` when the stream completes without generating any story content.
+    /// Note: when `restartWithSummary` triggers (context overflow), it falls back
+    /// to the non-streaming `generateWithErrorRecovery` path — streaming text is
+    /// not delivered for that single recovery turn.
     private func streamWithErrorRecovery(
         prompt: String,
-        onPartialText: @Sendable @escaping (String) -> Void
+        onPartialText: @Sendable @escaping (String) async -> Void
     ) async throws -> StoryBeat {
         guard let session else {
             throw StoryError.noActiveSession
         }
 
         do {
-            var finalBeat: StoryBeat = .safeFallback
+            var finalBeat: StoryBeat?
             let stream = session.streamResponse(to: prompt, generating: StoryBeat.self)
             for try await partial in stream {
+                // `partial.storyText` is cumulative — each partial contains all text
+                // generated so far for that field, not just the newest tokens.
+                // Assigning it directly to `streamingStoryText` gives the correct
+                // progressively-growing display without needing delta computation.
                 if !partial.storyText.isEmpty {
-                    onPartialText(partial.storyText)
+                    await onPartialText(partial.storyText)
                 }
                 finalBeat = partial
             }
-            return finalBeat
+            guard let beat = finalBeat else {
+                throw StoryError.generationFailed("Stream completed without generating any story content.")
+            }
+            return beat
         } catch let error as LanguageModelSession.GenerationError {
             return try await handleGenerationError(error, prompt: prompt)
+        } catch let error as StoryError {
+            throw error
         } catch {
             throw StoryError.generationFailed(error.localizedDescription)
         }
@@ -271,7 +295,7 @@ actor OnDeviceStoryService: StoryGenerating {
             Continue an ongoing story. Story so far: \(summary)
             \(contentRules)
             """,
-            tools: [AdjustDifficultyTool(), BookmarkMomentTool(), SwitchSceneTool()]
+            tools: storyTools
         )
         turnCount = 0
 

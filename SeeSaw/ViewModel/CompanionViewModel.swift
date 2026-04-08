@@ -342,10 +342,8 @@ final class CompanionViewModel {
             let beat = try await onDeviceStoryService.streamStartStory(
                 context: context,
                 profile: profile,
-                onPartialText: { [weak self] text in
-                    Task { @MainActor [weak self] in
-                        self?.streamingStoryText = text
-                    }
+                onPartialText: { text in
+                    await MainActor.run { self.streamingStoryText = text }
                 }
             )
             streamingStoryText = ""
@@ -415,10 +413,8 @@ final class CompanionViewModel {
                 streamingStoryText = ""
                 let beat = try await onDeviceStoryService.streamContinueTurn(
                     childAnswer: answer,
-                    onPartialText: { [weak self] text in
-                        Task { @MainActor [weak self] in
-                            self?.streamingStoryText = text
-                        }
+                    onPartialText: { text in
+                        await MainActor.run { self.streamingStoryText = text }
                     }
                 )
                 streamingStoryText = ""
