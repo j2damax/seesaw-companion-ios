@@ -97,6 +97,8 @@ struct MockStoryServiceLifecycleTests {
             #expect(Bool(false), "Expected StoryError.modelUnavailable")
         } catch let error as StoryError {
             #expect(error == .modelUnavailable)
+        } catch {
+            #expect(Bool(false), "Unexpected error type: \(error)")
         }
     }
 
@@ -111,6 +113,8 @@ struct MockStoryServiceLifecycleTests {
             #expect(Bool(false), "Expected StoryError.modelDownloading")
         } catch let error as StoryError {
             #expect(error == .modelDownloading)
+        } catch {
+            #expect(Bool(false), "Unexpected error type: \(error)")
         }
     }
 
@@ -125,6 +129,8 @@ struct MockStoryServiceLifecycleTests {
             #expect(Bool(false), "Expected StoryError.noActiveSession")
         } catch let error as StoryError {
             #expect(error == .noActiveSession)
+        } catch {
+            #expect(Bool(false), "Unexpected error type: \(error)")
         }
     }
 
