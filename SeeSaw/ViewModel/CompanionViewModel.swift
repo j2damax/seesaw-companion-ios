@@ -25,6 +25,10 @@ final class CompanionViewModel {
     }
     var storyTurnCount: Int = 0
 
+    /// Partial story text streamed token-by-token during on-device generation.
+    /// Reset to empty when generation completes or before each new turn.
+    var streamingStoryText: String = ""
+
     /// Full-screen debug preview after "Capture Scene".
     var isShowingScenePreview: Bool = false
     var capturedImageData: Data?
@@ -334,10 +338,15 @@ final class CompanionViewModel {
 
             sessionState = .generatingStory
             let startTime = CFAbsoluteTimeGetCurrent()
-            let beat = try await onDeviceStoryService.startStory(
+            streamingStoryText = ""
+            let beat = try await onDeviceStoryService.streamStartStory(
                 context: context,
-                profile: profile
+                profile: profile,
+                onPartialText: { text in
+                    await MainActor.run { self.streamingStoryText = text }
+                }
             )
+            streamingStoryText = ""
             let generationMs = (CFAbsoluteTimeGetCurrent() - startTime) * 1000
             AppConfig.shared.log("runOnDevicePipeline: story generated in \(Int(generationMs))ms")
             storyTurnCount = await onDeviceStoryService.currentTurnCount
@@ -379,9 +388,11 @@ final class CompanionViewModel {
                 sessionState = .connected
             }
         } catch let error as StoryError {
+            streamingStoryText = ""
             AppConfig.shared.log("runOnDevicePipeline: StoryError=\(error.localizedDescription)", level: .error)
             await handleStoryError(error, jpegData: jpegData)
         } catch {
+            streamingStoryText = ""
             AppConfig.shared.log("runOnDevicePipeline: error=\(error.localizedDescription)", level: .error)
             setError(error.localizedDescription)
         }
@@ -399,9 +410,14 @@ final class CompanionViewModel {
             sessionState = .generatingStory
             do {
                 let turnStart = CFAbsoluteTimeGetCurrent()
-                let beat = try await onDeviceStoryService.continueTurn(
-                    childAnswer: answer
+                streamingStoryText = ""
+                let beat = try await onDeviceStoryService.streamContinueTurn(
+                    childAnswer: answer,
+                    onPartialText: { text in
+                        await MainActor.run { self.streamingStoryText = text }
+                    }
                 )
+                streamingStoryText = ""
                 let turnMs = (CFAbsoluteTimeGetCurrent() - turnStart) * 1000
                 storyTurnCount = await onDeviceStoryService.currentTurnCount
 
@@ -434,6 +450,7 @@ final class CompanionViewModel {
 
                 if beat.isEnding { break }
             } catch {
+                streamingStoryText = ""
                 AppConfig.shared.log("continueStoryLoop: error=\(error.localizedDescription)", level: .error)
                 setError(error.localizedDescription)
                 break
