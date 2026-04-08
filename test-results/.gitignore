@@ -1,0 +1,4 @@
+# Ignore all test artefacts — only TestCoverage.md is tracked in git
+*
+!.gitignore
+!TestCoverage.md
