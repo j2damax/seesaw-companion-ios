@@ -165,6 +165,17 @@ final class CompanionViewModel {
         sceneDetections = []
     }
 
+    func generateStory() {
+        guard let jpegData = capturedImageData else {
+            setError("No captured image available for story generation.")
+            return
+        }
+        isShowingScenePreview = false
+        Task {
+            await runFullPipeline(jpegData: jpegData)
+        }
+    }
+
     // MARK: - Audio recording & transcription
 
     func startRecording() {
@@ -297,6 +308,14 @@ final class CompanionViewModel {
 
     private func runOnDevicePipeline(jpegData: Data) async {
         AppConfig.shared.log("runOnDevicePipeline: start")
+
+        // Ensure speech recognition is authorized before entering the story loop.
+        // This prompts the user on first run; subsequent calls return immediately.
+        let speechAuthorized = await speechRecognitionService.requestAuthorization()
+        if !speechAuthorized {
+            AppConfig.shared.log("runOnDevicePipeline: speech recognition not authorized, story loop will skip listening", level: .warning)
+        }
+
         do {
             sessionState = .processingPrivacy
             let result = try await privacyPipeline.process(

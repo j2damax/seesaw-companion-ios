@@ -36,7 +36,8 @@ struct CameraTabView: View {
                     ScenePreviewView(
                         imageData: imageData,
                         detections: vm.sceneDetections,
-                        onDismiss: { vm.dismissScenePreview() }
+                        onDismiss: { vm.dismissScenePreview() },
+                        onGenerateStory: { vm.generateStory() }
                     )
                 }
             }

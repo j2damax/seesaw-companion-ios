@@ -121,14 +121,10 @@ actor AudioCaptureService {
     }
 
     private static func recordingFormat(for inputNode: AVAudioInputNode) -> AVAudioFormat {
-        if let desired = AVAudioFormat(
-            commonFormat: .pcmFormatFloat32,
-            sampleRate: sampleRate,
-            channels: channels,
-            interleaved: false
-        ) {
-            return desired
-        }
+        // Use the input node's native hardware format for the tap.
+        // Installing a tap with a mismatched sample rate (e.g. 16000 Hz vs
+        // the hardware's 48000 Hz) causes a fatal "format mismatch" crash.
+        // SFSpeechRecognizer handles sample rate conversion internally.
         return inputNode.outputFormat(forBus: 0)
     }
 }

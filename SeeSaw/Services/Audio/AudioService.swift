@@ -22,6 +22,11 @@ actor AudioService {
 
     @MainActor
     private func synthesizeWithAVSpeech(_ text: String) async throws -> Data {
+        // Configure audio session for playback before synthesis
+        let session = AVAudioSession.sharedInstance()
+        try? session.setCategory(.playback, mode: .default)
+        try? session.setActive(true)
+
         return try await withCheckedThrowingContinuation { continuation in
             let accumulator = AudioAccumulator()
             let utterance = AVSpeechUtterance(string: text)
@@ -29,6 +34,9 @@ actor AudioService {
             utterance.rate = AVSpeechUtteranceDefaultSpeechRate * 0.85
             utterance.pitchMultiplier = 1.1
             let synthesizer = AVSpeechSynthesizer()
+            // Retain the synthesizer in the accumulator so it stays alive
+            // until synthesis completes (otherwise ARC deallocates it mid-callback).
+            accumulator.retainSynthesizer(synthesizer)
             synthesizer.write(utterance) { buffer in
                 guard let pcm = buffer as? AVAudioPCMBuffer else { return }
                 if pcm.frameLength == 0 {
@@ -47,6 +55,12 @@ private final class AudioAccumulator: @unchecked Sendable {
     private var buffer = Data()
     private var completed = false
     private let lock  = NSLock()
+    // Strong reference keeps the synthesizer alive until the final callback fires.
+    private var synthesizer: AVSpeechSynthesizer?
+
+    func retainSynthesizer(_ synth: AVSpeechSynthesizer) {
+        lock.withLock { synthesizer = synth }
+    }
 
     func append(_ data: Data) {
         lock.withLock { buffer.append(data) }
@@ -57,6 +71,7 @@ private final class AudioAccumulator: @unchecked Sendable {
         guard !completed else { lock.unlock(); return }
         completed = true
         let result = buffer
+        synthesizer = nil
         lock.unlock()
         continuation.resume(returning: result)
     }
