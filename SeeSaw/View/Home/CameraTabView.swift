@@ -122,6 +122,16 @@ struct CameraTabView: View {
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                 }
+                if !vm.streamingStoryText.isEmpty {
+                    Text(vm.streamingStoryText)
+                        .font(.caption)
+                        .foregroundStyle(.primary)
+                        .multilineTextAlignment(.leading)
+                        .lineLimit(4)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.horizontal, 4)
+                        .animation(.easeInOut(duration: 0.1), value: vm.streamingStoryText)
+                }
                 if vm.storyTurnCount > 0 {
                     Text("Turn \(vm.storyTurnCount) of 6")
                         .font(.caption)

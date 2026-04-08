@@ -5,7 +5,7 @@
 // story generation. Handles session lifecycle, context window management,
 // guardrail violation recovery, and graceful degradation.
 //
-// One of only two files that imports FoundationModels (the other is StoryBeat).
+// Imports FoundationModels along with StoryBeat.swift and StoryTools.swift.
 
 import FoundationModels
 import Foundation
@@ -65,12 +65,51 @@ actor OnDeviceStoryService: StoryGenerating {
         currentProfile = profile
 
         let systemPrompt = buildSystemPrompt(context: context, profile: profile)
-        session = LanguageModelSession(instructions: systemPrompt)
+        session = LanguageModelSession(
+            instructions: systemPrompt,
+            tools: [AdjustDifficultyTool(), BookmarkMomentTool(), SwitchSceneTool()]
+        )
         turnCount = 0
         conversationSummary = nil
 
         let prompt = buildInitialPrompt(context: context)
         return try await generateWithErrorRecovery(prompt: prompt)
+    }
+
+    // MARK: - Streaming story start
+
+    /// Streams tokens for the first story beat, calling `onPartialText` as `storyText`
+    /// fills in progressively. Returns the final complete `StoryBeat` for control flow.
+    /// The `isEnding` flag should only be read from the returned final beat, not from
+    /// partial values (Gap 3 resolution: separate streaming display from control flow).
+    func streamStartStory(
+        context: SceneContext,
+        profile: ChildProfile,
+        onPartialText: @Sendable @escaping (String) -> Void
+    ) async throws -> StoryBeat {
+        let availability = checkAvailability()
+        switch availability {
+        case .unavailable:
+            throw StoryError.modelUnavailable
+        case .downloading:
+            throw StoryError.modelDownloading
+        case .available:
+            break
+        }
+
+        endSessionInternal()
+        currentProfile = profile
+
+        let systemPrompt = buildSystemPrompt(context: context, profile: profile)
+        session = LanguageModelSession(
+            instructions: systemPrompt,
+            tools: [AdjustDifficultyTool(), BookmarkMomentTool(), SwitchSceneTool()]
+        )
+        turnCount = 0
+        conversationSummary = nil
+
+        let prompt = buildInitialPrompt(context: context)
+        return try await streamWithErrorRecovery(prompt: prompt, onPartialText: onPartialText)
     }
 
     func continueTurn(childAnswer: String) async throws -> StoryBeat {
@@ -91,6 +130,35 @@ actor OnDeviceStoryService: StoryGenerating {
         }
 
         let beat = try await generateWithErrorRecovery(prompt: prompt)
+        updateConversationSummary(beat: beat)
+        return beat
+    }
+
+    // MARK: - Streaming continuation
+
+    /// Streaming variant of `continueTurn`. Calls `onPartialText` as `storyText`
+    /// fills in, then returns the final complete beat for `isEnding` checks.
+    func streamContinueTurn(
+        childAnswer: String,
+        onPartialText: @Sendable @escaping (String) -> Void
+    ) async throws -> StoryBeat {
+        guard session != nil else {
+            throw StoryError.noActiveSession
+        }
+
+        turnCount += 1
+
+        let isFinalTurn = turnCount >= maxTurns
+        let prompt = buildContinuationPrompt(
+            childAnswer: childAnswer,
+            isFinalTurn: isFinalTurn
+        )
+
+        if shouldSummariseContext() {
+            return try await restartWithSummary(lastPrompt: prompt)
+        }
+
+        let beat = try await streamWithErrorRecovery(prompt: prompt, onPartialText: onPartialText)
         updateConversationSummary(beat: beat)
         return beat
     }
@@ -123,6 +191,33 @@ actor OnDeviceStoryService: StoryGenerating {
                 generating: StoryBeat.self
             )
             return response.content
+        } catch let error as LanguageModelSession.GenerationError {
+            return try await handleGenerationError(error, prompt: prompt)
+        } catch {
+            throw StoryError.generationFailed(error.localizedDescription)
+        }
+    }
+
+    /// Streaming variant: iterates partial beats, calls `onPartialText` for each
+    /// non-empty `storyText`, then returns the final complete `StoryBeat`.
+    private func streamWithErrorRecovery(
+        prompt: String,
+        onPartialText: @Sendable @escaping (String) -> Void
+    ) async throws -> StoryBeat {
+        guard let session else {
+            throw StoryError.noActiveSession
+        }
+
+        do {
+            var finalBeat: StoryBeat = .safeFallback
+            let stream = session.streamResponse(to: prompt, generating: StoryBeat.self)
+            for try await partial in stream {
+                if !partial.storyText.isEmpty {
+                    onPartialText(partial.storyText)
+                }
+                finalBeat = partial
+            }
+            return finalBeat
         } catch let error as LanguageModelSession.GenerationError {
             return try await handleGenerationError(error, prompt: prompt)
         } catch {
@@ -175,7 +270,8 @@ actor OnDeviceStoryService: StoryGenerating {
             instructions: """
             Continue an ongoing story. Story so far: \(summary)
             \(contentRules)
-            """
+            """,
+            tools: [AdjustDifficultyTool(), BookmarkMomentTool(), SwitchSceneTool()]
         )
         turnCount = 0
 
@@ -243,13 +339,21 @@ actor OnDeviceStoryService: StoryGenerating {
             ? "an interesting place"
             : context.sceneCategories.joined(separator: ", ")
 
+        let difficulty = UserDefaults.standard.storyDifficultyLevel
+        let difficultyGuidance: String
+        switch difficulty {
+        case 1: difficultyGuidance = "Use very simple words and short sentences suitable for ages 3–5."
+        case 3: difficultyGuidance = "Use richer vocabulary and more complex sentences suitable for ages 9–12."
+        default: difficultyGuidance = "Use age-appropriate vocabulary and sentence length for ages 6–8."
+        }
+
         return """
         You are Whisper, a warm storytelling companion for \(profile.name), \
         aged \(profile.age).
         \(contentRules)
         Use detected objects: \(objects).
         Scene: \(scenes).
-        Match vocabulary to age \(profile.age).
+        \(difficultyGuidance)
         """
     }
 
