@@ -8,6 +8,7 @@
 //   - SwitchSceneTool      — transition to a new story setting
 
 import FoundationModels
+import Foundation
 
 // MARK: - AdjustDifficultyTool
 

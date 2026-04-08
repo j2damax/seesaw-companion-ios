@@ -73,8 +73,8 @@ actor OnDeviceStoryService: StoryGenerating {
 
         let systemPrompt = buildSystemPrompt(context: context, profile: profile)
         session = LanguageModelSession(
-            instructions: systemPrompt,
-            tools: storyTools
+            tools: storyTools,
+            instructions: systemPrompt
         )
         turnCount = 0
         conversationSummary = nil
@@ -111,8 +111,8 @@ actor OnDeviceStoryService: StoryGenerating {
 
         let systemPrompt = buildSystemPrompt(context: context, profile: profile)
         session = LanguageModelSession(
-            instructions: systemPrompt,
-            tools: storyTools
+            tools: storyTools,
+            instructions: systemPrompt
         )
         turnCount = 0
         conversationSummary = nil
@@ -224,22 +224,21 @@ actor OnDeviceStoryService: StoryGenerating {
         }
 
         do {
-            var finalBeat: StoryBeat?
+            var finalResponse: LanguageModelSession.Response<StoryBeat>?
             let stream = session.streamResponse(to: prompt, generating: StoryBeat.self)
-            for try await partial in stream {
-                // `partial.storyText` is cumulative — each partial contains all text
-                // generated so far for that field, not just the newest tokens.
-                // Assigning it directly to `streamingStoryText` gives the correct
-                // progressively-growing display without needing delta computation.
-                if !partial.storyText.isEmpty {
-                    await onPartialText(partial.storyText)
+            for try await snapshot in stream {
+                // `snapshot.content.storyText` is cumulative — each snapshot contains
+                // all text generated so far for that field, not just the newest tokens.
+                // On PartiallyGenerated the property is Optional; we unwrap safely.
+                if let text = snapshot.content.storyText, !text.isEmpty {
+                    await onPartialText(text)
                 }
-                finalBeat = partial
             }
-            guard let beat = finalBeat else {
+            finalResponse = try await stream.collect()
+            guard let response = finalResponse else {
                 throw StoryError.generationFailed("Stream completed without generating any story content.")
             }
-            return beat
+            return response.content
         } catch let error as LanguageModelSession.GenerationError {
             return try await handleGenerationError(error, prompt: prompt)
         } catch let error as StoryError {
@@ -291,11 +290,11 @@ actor OnDeviceStoryService: StoryGenerating {
         currentProfile = profile
 
         session = LanguageModelSession(
+            tools: storyTools,
             instructions: """
             Continue an ongoing story. Story so far: \(summary)
             \(contentRules)
-            """,
-            tools: storyTools
+            """
         )
         turnCount = 0
 
