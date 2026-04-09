@@ -14,6 +14,7 @@ struct ScenePreviewView: View {
     let imageData: Data
     let detections: [DetectionResult]
     let onDismiss: () -> Void
+    let onGenerateStory: () -> Void
 
     // MARK: - Body
 
@@ -68,6 +69,16 @@ struct ScenePreviewView: View {
             }
             Spacer()
             labelChipsBar
+            Button(action: onGenerateStory) {
+                Label("Generate Story", systemImage: "sparkles")
+                    .font(.headline)
+                    .foregroundStyle(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 14)
+                    .background(Color.teal, in: RoundedRectangle(cornerRadius: 14))
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
         }
     }
 
@@ -169,6 +180,7 @@ struct ScenePreviewView: View {
             DetectionResult(label: "chair",  confidence: 0.92, boundingBox: CGRect(x: 0.1, y: 0.2, width: 0.3, height: 0.4)),
             DetectionResult(label: "laptop", confidence: 0.78, boundingBox: CGRect(x: 0.5, y: 0.4, width: 0.25, height: 0.3))
         ],
-        onDismiss: {}
+        onDismiss: {},
+        onGenerateStory: {}
     )
 }

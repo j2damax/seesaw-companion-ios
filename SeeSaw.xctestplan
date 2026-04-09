@@ -9,6 +9,7 @@
     }
   ],
   "defaultOptions" : {
+    "codeCoverageEnabled" : true,
     "performanceAntipatternCheckerEnabled" : true,
     "targetForVariableExpansion" : {
       "containerPath" : "container:SeeSaw.xcodeproj",

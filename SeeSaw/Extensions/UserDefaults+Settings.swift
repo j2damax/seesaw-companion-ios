@@ -42,6 +42,25 @@ extension UserDefaults {
         set { set(newValue, forKey: "childPreferences") }
     }
 
+    // MARK: - Story generation
+
+    /// Vocabulary difficulty level set by AdjustDifficultyTool (1=simple, 2=moderate, 3=advanced).
+    var storyDifficultyLevel: Int {
+        get {
+            let stored = integer(forKey: "storyDifficultyLevel")
+            return stored > 0 ? min(stored, 3) : 2
+        }
+        set { set(max(1, min(3, newValue)), forKey: "storyDifficultyLevel") }
+    }
+
+    var storyMode: StoryGenerationMode {
+        get {
+            let raw = string(forKey: "storyMode") ?? StoryGenerationMode.onDevice.rawValue
+            return StoryGenerationMode(rawValue: raw) ?? .onDevice
+        }
+        set { set(newValue.rawValue, forKey: "storyMode") }
+    }
+
     // MARK: - Accessory
 
     var selectedWearableType: WearableType {

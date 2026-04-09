@@ -188,6 +188,7 @@ struct WearableTypeTests {
 
 // MARK: - UserDefaults selectedWearableType round-trip tests
 
+@Suite(.serialized)
 struct UserDefaultsWearableTypeTests {
 
     @Test func roundTripAllTypes() async throws {

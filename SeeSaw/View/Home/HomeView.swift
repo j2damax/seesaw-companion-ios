@@ -34,6 +34,7 @@ struct HomeView: View {
                 }
 
             SettingsTabView(
+                vm: vm,
                 accessoryManager: coordinator.container.accessoryManager,
                 coordinator: coordinator
             )
