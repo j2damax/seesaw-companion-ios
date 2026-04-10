@@ -2,139 +2,11 @@
 
 **Project:** seesaw-companion-ios (Tier 2)  
 **Date:** 6 April 2026  
-**Status:** Implementation Complete (Phases 0–8) — Phase 3 Streaming Deferred — Pending Device Validation  
+**Status:** Implementation Complete (Phases 0–8) 
 **Target:** iOS 26.0+ / iPhone 15 Pro+  
 **Last Updated:** 8 April 2026
 
 ---
-
-## Table of Contents
-
-1. [Executive Summary](#1-executive-summary)
-2. [What Apple Foundation Models Provides](#2-what-apple-foundation-models-provides)
-3. [Architectural Impact on SeeSaw](#3-architectural-impact-on-seesaw)
-4. [Critical Analysis of Previous Plan](#4-critical-analysis-of-previous-plan)
-5. [Corrected API Reference](#5-corrected-api-reference)
-6. [Implementation Phases](#6-implementation-phases)
-   - [Phase 0: Model Layer](#phase-0-model-layer-1-day)
-   - [Phase 1: OnDeviceStoryService](#phase-1-ondevicestoryservice-2-3-days)
-   - [Phase 2: ViewModel & Pipeline Integration](#phase-2-viewmodel--pipeline-integration-1-2-days)
-   - [Phase 3: Streaming & Audio Optimisation](#phase-3-streaming--audio-optimisation-1-2-days)
-   - [Phase 4: Interactive Story Loop](#phase-4-interactive-story-loop-1-2-days)
-   - [Phase 5: UI Updates](#phase-5-ui-updates-1-day)
-   - [Phase 6: Testing](#phase-6-testing-1-2-days)
-   - [Phase 7: Benchmark Instrumentation](#phase-7-benchmark-instrumentation-1-2-days)
-   - [Phase 8: Documentation](#phase-8-documentation-05-day)
-7. [Key Architectural Decisions](#7-key-architectural-decisions)
-8. [Context Window Management Strategy](#8-context-window-management-strategy)
-9. [Error Handling & Graceful Degradation](#9-error-handling--graceful-degradation)
-10. [Risk Register](#10-risk-register)
-11. [File Change Inventory](#11-file-change-inventory)
-12. [Benchmark Strategy](#12-benchmark-strategy)
-13. [Dissertation Contribution](#13-dissertation-contribution)
-14. [Appendix: API Quick Reference](#14-appendix-api-quick-reference)
-15. [Technical Review & Feedback](#15-technical-review--feedback)
-16. [Follow-Up & To-Do Items](#16-follow-up--to-do-items)
-
----
-
-## 1. Executive Summary
-
-Apple's Foundation Models framework (iOS 26+, WWDC 2025) provides a ~3B parameter on-device LLM running on the Neural Engine. This enables SeeSaw to generate interactive children's stories **entirely on-device**, eliminating the cloud dependency for core functionality and providing **structural privacy guarantees** — no raw data ever leaves the device.
-
-### What Changes
-
-| Before (Cloud-Dependent) | After (On-Device First) |
-|---|---|
-| Privacy pipeline → POST `ScenePayload` to cloud → receive `StoryResponse` | Privacy pipeline → on-device LLM generates `StoryBeat` → TTS → BLE |
-| Cloud agent required for story generation | Cloud agent becomes optional enhancement |
-| Latency: ~3–5s (network round-trip) | Latency: < 1s to first word (streaming) |
-| Privacy: "filtered before cloud" | Privacy: "structurally guaranteed — no network" |
-
-### Scope
-
-- **8 new files**, **6 modified files**, ~600–800 new lines of Swift
-- **Zero new dependencies** — `FoundationModels` is a first-party Apple framework
-- **Backward compatible** — existing cloud pipeline remains as fallback
-- Estimated total effort: **8–12 days**
-
----
-
-## 2. What Apple Foundation Models Provides
-
-### On-Device LLM Capabilities
-
-| Capability | API | SeeSaw Usage |
-|---|---|---|
-| Text generation | `LanguageModelSession.respond(to:)` | Story beat generation |
-| Streaming generation | `LanguageModelSession.streamResponse(to:)` | Real-time TTS as text generates |
-| Structured output | `@Generable` macro on Swift structs | Type-safe `StoryBeat` response |
-| Field constraints | `@Guide` macro with descriptions/ranges | Enforce story length, question format |
-| Conversation history | `LanguageModelSession` transcript | Multi-turn story continuation |
-| System instructions | `LanguageModelSession(instructions:)` | Whisper persona, age-appropriate rules |
-| Tool calling | `Tool` protocol | Future: scene context injection |
-| Content safety | Built-in guardrail classifiers | Automatic child-safe content filtering |
-| Context window | 4,096 tokens (input + output + history) | Requires sliding window management |
-| Availability check | `SystemLanguageModel.default.availability` | Graceful fallback to cloud |
-| Token counting | `session.tokenCount(for:)` (iOS 26.4+) | Budget monitoring |
-
-### Hardware Requirements
-
-- **Minimum device:** iPhone 15 Pro / Pro Max (A17 Pro Neural Engine)
-- **Minimum OS:** iOS 26.0
-- **Prerequisite:** Apple Intelligence must be enabled in Settings
-- **Model state:** On-device model must be downloaded (`.available` status)
-
-### What's Already Built (No Changes Needed)
-
-| Component | Status |
-|---|---|
-| Face detection + blur (VNDetectFaceRectanglesRequest + CIGaussianBlur σ=30) | ✅ Complete |
-| Object detection (YOLO11n, 43 classes, conf ≥ 0.25) | ✅ Complete |
-| Scene classification (VNClassifyImageRequest, conf ≥ 0.3) | ✅ Complete |
-| On-device STT (SFSpeechRecognizer, `requiresOnDeviceRecognition = true`) | ✅ Complete |
-| PII scrubbing (PIIScrubber, 8 pattern types) | ✅ Complete |
-| TTS synthesis (AVSpeechSynthesizer, en-GB, rate 0.85x, pitch 1.1x) | ✅ Complete |
-| BLE audio chunking + 20ms pacing | ✅ Complete |
-| Privacy metrics + CSV export | ✅ Complete |
-| Cloud story service (CloudAgentService, POST /story) | ✅ Complete (becomes fallback) |
-
----
-
-## 3. Architectural Impact on SeeSaw
-
-### Three Operating Modes
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│ Mode A: Fully On-Device (No Internet Required)                  │
-│                                                                  │
-│ Tier 1 (AiSee) ──BLE──▶ Tier 2 (iPhone)                       │
-│                          ├─ Privacy Pipeline (6 stages)         │
-│                          ├─ FoundationModels LLM → StoryBeat   │
-│                          ├─ AVSpeechSynthesizer → PCM audio     │
-│                          └──BLE──▶ Tier 1 (AiSee speaker)      │
-│                                                                  │
-│ Privacy: Absolute — nothing leaves device                       │
-│ Latency: < 1s to first word (streaming)                         │
-│ Quality: Good (3B parameter model)                              │
-├─────────────────────────────────────────────────────────────────┤
-│ Mode B: Hybrid (Internet Available)                             │
-│                                                                  │
-│ Same as Mode A, plus:                                           │
-│ └─ Parallel cloud dispatch → richer story (Tier 3)             │
-│ └─ Parent dashboard sync, analytics                            │
-│                                                                  │
-│ Strategy: Play on-device story immediately; optionally          │
-│           upgrade to cloud story if it arrives in time          │
-├─────────────────────────────────────────────────────────────────┤
-│ Mode C: Offline Story Mode (No BLE, No Internet)               │
-│                                                                  │
-│ Child interacts directly with iPhone (mic + speaker)            │
-│ Same FoundationModels pipeline, no AiSee required               │
-│ Useful for standalone mode or testing                           │
-└─────────────────────────────────────────────────────────────────┘
-```
 
 ### Updated Data Flow
 
@@ -142,9 +14,9 @@ Apple's Foundation Models framework (iOS 26+, WWDC 2025) provides a ~3B paramete
 AiSee Headset / iPhone Camera (Tier 1)
     │ JPEG + Audio via BLE / local capture
     ▼
-┌─── PRIVACY PIPELINE (unchanged, 210ms) ────────────────────────┐
+┌─── PRIVACY PIPELINE (210ms) ───────────────────────────────────┐
 │ Stage 1: VNDetectFaceRectanglesRequest → face bounding boxes   │
-│ Stage 2: CIGaussianBlur (σ=30) → anonymised frame             │
+│ Stage 2: CIGaussianBlur (σ=30) → anonymised frame              │
 │ Stage 3: VNCoreMLRequest (YOLO11n) → object labels             │
 │ Stage 4: VNClassifyImageRequest → scene categories             │
 │ Stage 5: SFSpeechRecognizer (on-device) → child transcript     │
@@ -180,133 +52,9 @@ AiSee Headset / iPhone Camera (Tier 1)
 
 ---
 
-## 4. Critical Analysis of Previous Plan
+## Implementation Phases
 
-The original `Apple Foundation Models.md` and its code examples contain several errors that must be corrected before implementation. These are documented here for traceability.
-
-### 🔴 Critical Errors (Must Fix Before Coding)
-
-| # | Issue | Current (Wrong) | Correct | Impact |
-|---|-------|-----------------|---------|--------|
-| 1 | **Wrong API method** | `session.generate(StoryBeat.self, prompt:)` | `session.respond(to:, generating: StoryBeat.self)` | Compilation failure |
-| 2 | **iOS version** | "iOS 18+" | "iOS 26+" | Misleading documentation |
-| 3 | **Context window not addressed** | No mitigation strategy | Sliding window summarisation required | Session crashes at turn 4–5 |
-| 4 | **Force unwrap** | `session!.generate(...)` | `guard let session else { throw }` | Violates project standards |
-| 5 | **No availability check** | Model assumed present | Must check `SystemLanguageModel.default.availability` | Crash on unsupported devices |
-
-### 🟡 Significant Issues (Should Fix)
-
-| # | Issue | Detail |
-|---|-------|--------|
-| 6 | Streaming not used | Code uses blocking `.respond()` despite claiming "< 1s to first word" |
-| 7 | `@Guide` annotations missing | `StoryBeat` fields have no schema-level guidance for the LLM |
-| 8 | Pipeline signature mismatch | Doc uses `process(jpeg:, audio:)` but actual API is `process(jpegData:, childAge:)` returning `PipelineResult` |
-| 9 | `bleService.sendAudioToDevice(text:)` doesn't exist | Must use `audioService.generateAndEncodeAudio(from:)` then `accessory.sendAudio()` |
-| 10 | No guardrail error handling | Words like "monster", "scary" could trigger `.guardrailViolation` in children's context |
-
-### 🟢 What the Plan Gets Right
-
-1. **Core thesis is correct** — on-device story generation eliminates cloud dependency
-2. **Privacy argument is academically stronger** — "structurally guaranteed" vs "filtered before cloud"
-3. **Three-mode strategy (A/B/C) is well-designed** — graceful degradation
-4. **`@Generable StoryBeat` concept is correct** — type-safe structured output
-5. **Actor-based `OnDeviceStoryService` follows project conventions**
-6. **Turn-management via `LanguageModelSession` is the right approach**
-
----
-
-## 5. Corrected API Reference
-
-### Verified API Methods (from Apple Developer Documentation)
-
-```swift
-import FoundationModels
-
-// MARK: - Model access
-let model = SystemLanguageModel.default
-let availability = model.availability  // .available | .unavailable(reason)
-
-// MARK: - Session creation
-let session = LanguageModelSession(
-    instructions: "System prompt here..."
-)
-
-// MARK: - Full response (blocking)
-let response = try await session.respond(
-    to: "User prompt",
-    generating: StoryBeat.self
-)
-let beat: StoryBeat = response.content
-
-// MARK: - Streaming response
-let stream = session.streamResponse(
-    to: "User prompt",
-    generating: StoryBeat.self
-)
-for try await partial in stream {
-    // partial.storyText available incrementally
-}
-
-// MARK: - Context window management (iOS 26.4+)
-let contextSize = session.contextSize           // Max tokens (4096)
-let tokenCount = session.tokenCount(for: prompt) // Tokens in string
-
-// MARK: - Error handling
-catch let error as LanguageModelSession.GenerationError {
-    switch error {
-    case .exceededContextWindowSize:  // Session must be restarted
-    case .guardrailViolation:        // Content blocked by safety filter
-    default: break
-    }
-}
-```
-
-### @Generable and @Guide Macros
-
-```swift
-@Generable
-struct StoryBeat: Sendable {
-    @Guide(description: "3-5 sentences, age-appropriate story segment to speak aloud")
-    var storyText: String
-
-    @Guide(description: "One open-ended imaginative question for the child")
-    var question: String
-
-    @Guide(description: "True only when the story should conclude")
-    var isEnding: Bool
-
-    @Guide(description: "Current story theme: adventure, friendship, discovery, etc.")
-    var theme: String
-
-    @Guide(description: "Brief context hint for next turn, not spoken aloud")
-    var suggestedContinuation: String
-}
-```
-
-### Tool Protocol (Future — Not Used in Initial Implementation)
-
-```swift
-struct SceneContextTool: Tool {
-    let name = "getSceneContext"
-    let description = "Get the current scene objects and categories detected by the camera"
-
-    @Generable struct Arguments {
-        @Guide(description: "Whether to include scene categories") let includeScene: Bool
-    }
-
-    func call(arguments: Arguments) async throws -> String {
-        // Return scene labels from cached PipelineResult
-    }
-}
-```
-
-> **Decision:** Tool calling is deferred to a future phase. Tool schemas consume context window tokens (counted toward the 4,096 limit). For the PoC, scene context is passed directly in the prompt.
-
----
-
-## 6. Implementation Phases
-
-### Phase 0: Model Layer (1 day) ✅ COMPLETE
+### Phase 0: Model Layer ✅ COMPLETE
 
 **Goal:** Define all new model types needed for Foundation Models integration.
 
@@ -337,12 +85,6 @@ struct StoryBeat: Sendable {
     var suggestedContinuation: String
 }
 ```
-
-**Notes:**
-- `@Generable` requires `var` (not `let`) for all properties
-- `@Guide` provides schema-level descriptions that the LLM uses to constrain output
-- `Sendable` conformance required for actor isolation
-- This is the **only model file** that imports `FoundationModels`
 
 #### 0.2 — `StoryGenerationMode.swift`
 
@@ -428,7 +170,7 @@ struct SceneContext: Sendable {
 
 ---
 
-### Phase 1: OnDeviceStoryService (2–3 days) ✅ COMPLETE
+### Phase 1: OnDeviceStoryService ✅ COMPLETE
 
 **Goal:** Core actor managing LLM sessions, context windows, and error recovery.
 
@@ -538,7 +280,7 @@ private func buildSystemPrompt(context: SceneContext, profile: ChildProfile) -> 
 
 ---
 
-### Phase 2: ViewModel & Pipeline Integration (1–2 days) ✅ COMPLETE
+### Phase 2: ViewModel & Pipeline Integration ✅ COMPLETE
 
 **Goal:** Wire `OnDeviceStoryService` into the existing `CompanionViewModel` and add mode-based pipeline routing.
 
@@ -620,11 +362,11 @@ private func runFullPipeline(jpegData: Data) async {
 
 ---
 
-### Phase 3: Streaming & Audio Optimisation (1–2 days) ⏳ DEFERRED
+### Phase 3: Streaming & Audio Optimisation 
 
 **Goal:** Use streaming generation for sub-second time-to-first-word.
 
-**Status:** Deferred for post-PoC. Currently uses blocking `.respond()`. Streaming via `.streamResponse()` is planned but not yet implemented. The blocking approach works correctly and meets the PoC requirements. Streaming will improve perceived latency from ~2s to <1s.
+**Status:** Streaming via `.streamResponse()` is planned but not yet implemented. Streaming will improve perceived latency from ~2s to <1s.
 
 #### 3.1 — Streaming Story Generation
 
@@ -661,7 +403,7 @@ for try await partialBeat in stream {
 
 ---
 
-### Phase 4: Interactive Story Loop (1–2 days) ✅ COMPLETE
+### Phase 4: Interactive Story Loop ✅ COMPLETE
 
 **Goal:** Implement the full interaction cycle: story → question → child answers → continue.
 
@@ -754,7 +496,7 @@ If the child doesn't respond within 15 seconds:
 
 ---
 
-### Phase 5: UI Updates (1 day) ✅ COMPLETE
+### Phase 5: UI Updates ✅ COMPLETE
 
 **Goal:** Add story mode selection and generation status indicators.
 
@@ -788,7 +530,7 @@ If the child doesn't respond within 15 seconds:
 
 ---
 
-### Phase 6: Testing (1–2 days) ✅ COMPLETE
+### Phase 6: Testing  ✅ COMPLETE
 
 **Goal:** Unit tests for all new functionality using Swift Testing framework.
 
@@ -847,7 +589,7 @@ For unit tests, use the protocol abstraction approach. Integration tests require
 
 ---
 
-### Phase 7: Benchmark Instrumentation (1–2 days) ✅ COMPLETE
+### Phase 7: Benchmark Instrumentation ✅ COMPLETE
 
 **Goal:** Add measurement infrastructure for the dissertation's Chapter 6 (Results).
 
@@ -883,7 +625,7 @@ Extend the existing CSV export in `PrivacyMetricsStore` to include story generat
 
 ---
 
-### Phase 8: Documentation (0.5 day) ✅ COMPLETE
+### Phase 8: Documentation ✅ COMPLETE
 
 **Status:** This implementation plan updated with phase completion status. API references corrected (`.respond()` not `.generate()`, `Response<T>.content` extraction, `.unavailable(.modelNotReady)` availability check). All 8 phases documented with implementation notes.
 
@@ -1138,39 +880,6 @@ extension StoryBeat {
 
 ---
 
-## 11. File Change Inventory
-
-### New Files (12)
-
-| File | Purpose | Phase | Status |
-|------|---------|-------|--------|
-| `SeeSaw/Model/StoryBeat.swift` | `@Generable` struct for LLM output | 0 | ✅ |
-| `SeeSaw/Model/StoryGenerationMode.swift` | Mode enum (onDevice/cloud/hybrid) | 0 | ✅ |
-| `SeeSaw/Model/StoryError.swift` | Error types for story generation | 0 | ✅ |
-| `SeeSaw/Model/SceneContext.swift` | Bridge: PipelineResult → story service | 0 | ✅ |
-| `SeeSaw/Services/AI/OnDeviceStoryService.swift` | Core actor: session, generation, context window | 1 | ✅ |
-| `SeeSaw/Services/AI/StoryGenerating.swift` | Protocol abstraction for testability | 1 | ✅ |
-| `SeeSaw/Services/AI/StoryMetricsStore.swift` | Actor: story metrics recording + CSV export | 7 | ✅ |
-| `SeeSaw/Model/StoryMetricsEvent.swift` | Benchmark metrics struct | 7 | ✅ |
-| `SeeSawTests/OnDeviceStoryServiceTests.swift` | Mock-based unit tests + StoryMetrics tests | 6 | ✅ |
-| `SeeSawTests/StoryBeatTests.swift` | Unit tests for StoryBeat model | 6 | ✅ |
-| `SeeSawTests/SceneContextTests.swift` | Unit tests for SceneContext | 6 | ✅ |
-| `SeeSawTests/StoryGenerationModeTests.swift` | Unit tests for mode enum | 6 | ✅ |
-
-### Modified Files (7)
-
-| File | Change | Phase | Status |
-|------|--------|-------|--------|
-| `SeeSaw/App/AppDependencyContainer.swift` | Register `OnDeviceStoryService` + `StoryMetricsStore`; pass to CompanionViewModel | 2, 7 | ✅ |
-| `SeeSaw/ViewModel/CompanionViewModel.swift` | Add `storyMode`, `onDeviceStoryService`, `storyMetricsStore`, pipeline routing, story loop, metrics recording | 2, 4, 7 | ✅ |
-| `SeeSaw/Model/SessionState.swift` | Add `.generatingStory`, `.listeningForAnswer` cases | 2 | ✅ |
-| `SeeSaw/Extensions/UserDefaults+Settings.swift` | Add `storyMode` persistence key | 2 | ✅ |
-| `SeeSaw/View/Home/SettingsTabView.swift` | Add story mode segmented picker | 5 | ✅ |
-| `SeeSaw/View/Home/CameraTabView.swift` | Story generation + listening status with turn count | 5 | ✅ |
-| `SeeSaw/View/SettingsView.swift` | Story generation metrics dashboard section | 7 | ✅ |
-
----
-
 ## 12. Benchmark Strategy
 
 ### Research Question
@@ -1244,34 +953,6 @@ extension StoryBeat {
 ---
 
 ## 14. Appendix: API Quick Reference
-
-### Foundation Models Framework — APIs Used
-
-| API | Usage in SeeSaw |
-|-----|-----------------|
-| `SystemLanguageModel.default` | Access the on-device language model |
-| `SystemLanguageModel.availability` | Check `.available` / `.unavailable(reason)` |
-| `LanguageModelSession(instructions:)` | Create conversation session with Whisper persona |
-| `session.respond(to:generating:)` | Generate structured `StoryBeat` (full response) |
-| `session.streamResponse(to:generating:)` | Generate `StoryBeat` with streaming partial results |
-| `session.contextSize` | Query max context window (iOS 26.4+) |
-| `session.tokenCount(for:)` | Count tokens in a string (iOS 26.4+) |
-| `@Generable` macro | Mark `StoryBeat` struct for guided generation |
-| `@Guide` macro | Constrain/describe each field for LLM accuracy |
-| `LanguageModelSession.GenerationError` | Error types: `.exceededContextWindowSize`, `.guardrailViolation` |
-
-### Existing APIs (No Changes)
-
-| API | Usage |
-|-----|-------|
-| `VNDetectFaceRectanglesRequest` | Privacy pipeline Stage 1 |
-| `CIGaussianBlur` (σ=30) | Privacy pipeline Stage 2 |
-| `VNCoreMLRequest` (YOLO11n) | Privacy pipeline Stage 3 |
-| `VNClassifyImageRequest` | Privacy pipeline Stage 4 |
-| `SFSpeechRecognizer` (on-device) | Privacy pipeline Stage 5 + answer capture |
-| `PIIScrubber` | Privacy pipeline Stage 6 + answer scrubbing |
-| `AVSpeechSynthesizer` | TTS for story text + questions |
-| `CloudAgentService` | Cloud fallback / hybrid mode |
 
 ### References
 
@@ -1588,35 +1269,6 @@ Update §11 to include these, and revise the file count from "10 new files" to "
 
 **Updated:** 8 April 2026
 
-### 16.1 — Implementation Completion Summary
-
-| Phase | Status | GitHub Issue(s) | Notes |
-|-------|--------|-----------------|-------|
-| Phase 0: Model Layer | ✅ Complete | #41 (closed), #40 (closed) | 6 model files: StoryBeat, StoryGenerationMode, StoryError, SceneContext, ChildProfile, StoryMetricsEvent |
-| Phase 1: OnDeviceStoryService | ✅ Complete | #42 (closed), #43 (closed) | Actor + StoryGenerating protocol. Turn-count heuristic for context window. 3-level guardrail retry. |
-| Phase 2: ViewModel Integration | ✅ Complete | #48 (closed), #56 (closed), #53 (closed) | Pipeline routing, SessionState, UserDefaults persistence, graceful degradation chain |
-| Phase 3: Streaming | ⏳ Deferred | #45 (closed as deferred) | Uses blocking `.respond()`. Streaming planned post-PoC for sub-second time-to-first-word. |
-| Phase 4: Interactive Story Loop | ✅ Complete | #44 (closed) | continueStoryLoop, 15s answer timeout, PII scrubbing on answers, graceful ending |
-| Phase 5: UI Updates | ✅ Complete | #50 (closed) | Story mode picker, generation status, turn count display |
-| Phase 6: Testing | ✅ Complete | #57 (closed), #58 (closed) | 30 new tests (92 total). MockStoryService for hardware-free testing. |
-| Phase 7: Benchmarks | ✅ Complete | #52 (closed) | StoryMetricsStore actor, CSV export, SettingsView dashboard |
-| Phase 8: Documentation | ✅ Complete | #59 (closed) | Plan updated, API references corrected |
-
-### 16.2 — Review Bugs & Gaps Resolution Status
-
-| ID | Issue | Status | Resolution |
-|----|-------|--------|------------|
-| Bug 1 | Token budget math inconsistency | ✅ Resolved | 6-turn cap is a UX decision; context window is not the constraint. Risk 1 effectively Low for 6 turns. |
-| Bug 2 | `checkContextBudget()` checks wrong thing | ✅ Resolved | Turn-count heuristic used as primary strategy (summarise after turn 4); `.exceededContextWindowSize` catch as safety net. |
-| Bug 3 | `tokenCount(for:)` requires iOS 26.4+ | ✅ Resolved | Not called — turn-count heuristic avoids API dependency entirely. |
-| Bug 4 | `StoryBeat.safeFallback` compilation | ✅ Resolved | Compiles correctly; `@Generable` generates accessible memberwise init. |
-| Bug 5 | `LanguageModelSession` init signature | ✅ Resolved | Correct signature: `LanguageModelSession(instructions:)` — no `model:` parameter. |
-| Bug 6 | `response.content` accessor | ✅ Resolved | `session.respond(to:generating:)` returns `Response<T>`, access via `.content`. |
-| Gap 1 | `ChildProfile` undefined | ✅ Resolved | `ChildProfile.swift` created in Model/. |
-| Gap 2 | `conversationSummary` never populated | ✅ Resolved | Updated after each turn using `suggestedContinuation`. |
-| Gap 3 | Streaming vs `isEnding` tension | ⏳ Deferred | Blocking `.respond()` used — no streaming/isEnding conflict. To be resolved when Phase 3 is implemented. |
-| Gap 4 | Hybrid mode under-specified | ⚠️ Partial | On-device plays immediately; cloud fires in background. Discard semantics still informal. |
-| Gap 5 | Missing files from inventory | ✅ Resolved | `StoryGenerating.swift` and `ChildProfile.swift` added to §11 (12 new files total). |
 
 ### 16.3 — Pending To-Do Items
 
