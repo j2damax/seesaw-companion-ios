@@ -58,6 +58,8 @@ final class CompanionViewModel {
     let metricsStore: PrivacyMetricsStore
     let storyMetricsStore: StoryMetricsStore
     private let onDeviceStoryService: OnDeviceStoryService
+    let gemma4StoryService: Gemma4StoryService
+    let modelDownloadManager: ModelDownloadManager
     private let storyTimelineStore: StoryTimelineStore
 
     // MARK: - Active stream tasks (cancelled on disconnect)
@@ -99,6 +101,8 @@ final class CompanionViewModel {
         metricsStore: PrivacyMetricsStore,
         storyMetricsStore: StoryMetricsStore,
         onDeviceStoryService: OnDeviceStoryService,
+        gemma4StoryService: Gemma4StoryService,
+        modelDownloadManager: ModelDownloadManager,
         storyTimelineStore: StoryTimelineStore
     ) {
         self.accessoryManager = accessoryManager
@@ -110,6 +114,8 @@ final class CompanionViewModel {
         self.metricsStore = metricsStore
         self.storyMetricsStore = storyMetricsStore
         self.onDeviceStoryService = onDeviceStoryService
+        self.gemma4StoryService = gemma4StoryService
+        self.modelDownloadManager = modelDownloadManager
         self.storyTimelineStore = storyTimelineStore
     }
 
@@ -328,10 +334,13 @@ final class CompanionViewModel {
         switch storyMode {
         case .onDevice:
             await runOnDevicePipeline(jpegData: jpegData)
+        case .gemma4OnDevice:
+            await runGemma4Pipeline(jpegData: jpegData)
         case .cloud:
             await runCloudPipeline(jpegData: jpegData)
         case .hybrid:
-            await runOnDevicePipeline(jpegData: jpegData)
+            // Fallback chain: cloud → gemma4OnDevice → onDevice
+            await runHybridPipeline(jpegData: jpegData)
         }
     }
 
@@ -574,6 +583,175 @@ final class CompanionViewModel {
             await runCloudPipeline(jpegData: jpegData)
         default:
             setError(error.localizedDescription)
+        }
+    }
+
+    // MARK: - Gemma 4 on-device story pipeline
+
+    /// Identical flow to `runOnDevicePipeline` but uses `Gemma4StoryService`.
+    /// Falls back to `runOnDevicePipeline` silently when the model is not yet
+    /// downloaded or MediaPipe integration is pending.
+    private func runGemma4Pipeline(jpegData: Data) async {
+        AppConfig.shared.log("runGemma4Pipeline: start")
+        let speechAuthorized = await speechRecognitionService.requestAuthorization()
+        if !speechAuthorized {
+            AppConfig.shared.log("runGemma4Pipeline: speech not authorized", level: .warning)
+        }
+
+        do {
+            sessionState = .processingPrivacy
+            let result = try await privacyPipeline.process(jpegData: jpegData, childAge: childAge)
+            await metricsStore.record(result.metrics)
+
+            let context = SceneContext(from: result.payload)
+            let profile = ChildProfile(
+                name: UserDefaults.standard.childName,
+                age: childAge,
+                preferences: UserDefaults.standard.childPreferences
+            )
+
+            beginStorySession(
+                jpegData: jpegData,
+                payload: result.payload,
+                privacyMetrics: result.metrics,
+                childName: profile.name,
+                childAge: profile.age
+            )
+
+            sessionState = .generatingStory
+            generationStartTime = CFAbsoluteTimeGetCurrent()
+            ttftMs = 0
+            streamingStoryText = ""
+
+            let beat = try await gemma4StoryService.startStory(context: context, profile: profile)
+            streamingStoryText = ""
+            let generationMs = (CFAbsoluteTimeGetCurrent() - generationStartTime) * 1000
+            AppConfig.shared.log("runGemma4Pipeline: beat[0] generated in \(Int(generationMs))ms")
+            storyTurnCount = await gemma4StoryService.currentTurnCount
+            recordBeat(beat, generationMs: generationMs, ttftMs: ttftMs, localIndex: 0)
+
+            await storyMetricsStore.record(StoryMetricsEvent(
+                generationMode: storyMode.rawValue,
+                timeToFirstTokenMs: ttftMs,
+                totalGenerationMs: generationMs,
+                turnCount: storyTurnCount,
+                guardrailViolations: 0,
+                storyTextLength: beat.storyText.count,
+                timestamp: Date().timeIntervalSince1970
+            ))
+
+            sessionState = .sendingAudio
+            await audioService.speak(beat.storyText)
+            await audioService.speak(beat.question)
+
+            timeline.insert(TimelineEntry(
+                sceneObjects: result.payload.objects,
+                storySnippet: String(beat.storyText.prefix(120))
+            ), at: 0)
+
+            if !beat.isEnding {
+                storyLoopTask = Task { [weak self] in
+                    await self?.continueGemma4Loop()
+                }
+            } else {
+                await gemma4StoryService.endSession()
+                finalizeCurrentSession()
+                storyTurnCount = 0
+                sessionState = .connected
+            }
+        } catch let error as StoryError where
+            error == .modelUnavailable || error == .modelDownloading {
+            AppConfig.shared.log("runGemma4Pipeline: model not ready, falling back to Apple FM", level: .warning)
+            streamingStoryText = ""
+            await runOnDevicePipeline(jpegData: jpegData)
+        } catch {
+            streamingStoryText = ""
+            AppConfig.shared.log("runGemma4Pipeline: error=\(error.localizedDescription)", level: .error)
+            setError(error.localizedDescription)
+        }
+    }
+
+    private func continueGemma4Loop() async {
+        while !Task.isCancelled {
+            sessionState = .listeningForAnswer
+            latestAnswerPiiCount = 0
+            guard let answer = await listenForAnswer(timeoutSeconds: 15) else {
+                await endStoryGracefully()
+                break
+            }
+            recordAnswer(answer, piiCount: latestAnswerPiiCount)
+
+            sessionState = .generatingStory
+            do {
+                generationStartTime = CFAbsoluteTimeGetCurrent()
+                ttftMs = 0
+                streamingStoryText = ""
+                let beat = try await gemma4StoryService.continueTurn(childAnswer: answer)
+                streamingStoryText = ""
+                let turnMs = (CFAbsoluteTimeGetCurrent() - generationStartTime) * 1000
+                storyTurnCount = await gemma4StoryService.currentTurnCount
+                recordBeat(beat, generationMs: turnMs, ttftMs: ttftMs, localIndex: storyTurnCount)
+
+                await storyMetricsStore.record(StoryMetricsEvent(
+                    generationMode: storyMode.rawValue,
+                    timeToFirstTokenMs: ttftMs,
+                    totalGenerationMs: turnMs,
+                    turnCount: storyTurnCount,
+                    guardrailViolations: 0,
+                    storyTextLength: beat.storyText.count,
+                    timestamp: Date().timeIntervalSince1970
+                ))
+
+                sessionState = .sendingAudio
+                await audioService.speak(beat.storyText)
+                await audioService.speak(beat.question)
+
+                timeline.insert(TimelineEntry(sceneObjects: [], storySnippet: String(beat.storyText.prefix(120))), at: 0)
+                if beat.isEnding { break }
+            } catch {
+                streamingStoryText = ""
+                AppConfig.shared.log("continueGemma4Loop: error=\(error.localizedDescription)", level: .error)
+                setError(error.localizedDescription)
+                break
+            }
+        }
+        await gemma4StoryService.endSession()
+        finalizeCurrentSession()
+        storyTurnCount = 0
+        guard case .error = sessionState else {
+            sessionState = .connected
+            return
+        }
+    }
+
+    // MARK: - Hybrid pipeline (cloud → gemma4 → onDevice)
+
+    private func runHybridPipeline(jpegData: Data) async {
+        AppConfig.shared.log("runHybridPipeline: trying cloud first")
+        do {
+            // Attempt cloud; on any error, fall through to on-device
+            sessionState = .processingPrivacy
+            let result = try await privacyPipeline.process(jpegData: jpegData, childAge: childAge)
+            await metricsStore.record(result.metrics)
+
+            sessionState = .requestingStory
+            let story = try await cloudService.requestStory(payload: result.payload)
+
+            sessionState = .encodingAudio
+            let audioData = try await audioService.generateAndEncodeAudio(from: story.storyText)
+
+            sessionState = .sendingAudio
+            try await accessoryManager.activeAccessory.sendAudio(audioData)
+
+            timeline.insert(TimelineEntry(
+                sceneObjects: result.payload.objects,
+                storySnippet: String(story.storyText.prefix(120))
+            ), at: 0)
+            sessionState = .connected
+            AppConfig.shared.log("runHybridPipeline: cloud succeeded")
+        } catch {
+            AppConfig.shared.log("runHybridPipeline: cloud failed (\(error.localizedDescription)), falling back to Gemma 4", level: .warning)
+            await runGemma4Pipeline(jpegData: jpegData)
         }
     }
 

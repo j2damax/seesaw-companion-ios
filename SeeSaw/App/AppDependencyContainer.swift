@@ -36,6 +36,8 @@ final class AppDependencyContainer {
     // MARK: - Story generation
 
     let onDeviceStoryService: OnDeviceStoryService
+    let gemma4StoryService: Gemma4StoryService
+    let modelDownloadManager: ModelDownloadManager
     let storyMetricsStore: StoryMetricsStore
 
     // MARK: - Story timeline (SwiftData persistence)
@@ -65,6 +67,8 @@ final class AppDependencyContainer {
         authService              = AuthenticationService()
         privacyMetricsStore      = PrivacyMetricsStore()
         onDeviceStoryService     = OnDeviceStoryService()
+        gemma4StoryService       = Gemma4StoryService()
+        modelDownloadManager     = ModelDownloadManager(storyService: gemma4StoryService)
         storyMetricsStore        = StoryMetricsStore()
         storyTimelineStore       = StoryTimelineStore()
     }
@@ -86,6 +90,8 @@ final class AppDependencyContainer {
             metricsStore: privacyMetricsStore,
             storyMetricsStore: storyMetricsStore,
             onDeviceStoryService: onDeviceStoryService,
+            gemma4StoryService: gemma4StoryService,
+            modelDownloadManager: modelDownloadManager,
             storyTimelineStore: storyTimelineStore
         )
     }
