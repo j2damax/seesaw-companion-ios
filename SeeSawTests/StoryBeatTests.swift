@@ -14,8 +14,6 @@ struct StoryBeatTests {
         let beat = StoryBeat.safeFallback
         #expect(!beat.storyText.isEmpty)
         #expect(!beat.question.isEmpty)
-        #expect(!beat.theme.isEmpty)
-        #expect(!beat.suggestedContinuation.isEmpty)
         #expect(beat.isEnding == false)
     }
 
@@ -30,21 +28,14 @@ struct StoryBeatTests {
         #expect(StoryBeat.safeFallback.isEnding == false)
     }
 
-    @Test func endingFallbackHasEmptyContinuation() {
-        #expect(StoryBeat.endingFallback.suggestedContinuation.isEmpty)
-    }
-
     @Test func manualConstructionPreservesFields() {
         let beat = StoryBeat(
             storyText: "Once upon a time, there was a kind dragon.",
             question: "What colour was the dragon?",
-            isEnding: false,
-            theme: "adventure",
-            suggestedContinuation: "The dragon befriends a knight."
+            isEnding: false
         )
         #expect(beat.storyText.contains("dragon"))
         #expect(beat.question.contains("colour"))
-        #expect(beat.theme == "adventure")
         #expect(beat.isEnding == false)
     }
 

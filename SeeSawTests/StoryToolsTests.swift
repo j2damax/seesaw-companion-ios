@@ -9,37 +9,83 @@ import Foundation
 
 @testable import SeeSaw
 
-// MARK: - AdjustDifficultyTool
+// MARK: - Difficulty-level tests (serialized — all suites share UserDefaults.standard)
+//
+// AdjustDifficultyToolTests and StoryDifficultyLevelTests both read/write
+// "storyDifficultyLevel" in UserDefaults.standard. Wrapping them under a single
+// @Suite(.serialized) parent prevents cross-suite parallel contamination when
+// Xcode runs tests on multiple simulator clones simultaneously.
 
-struct AdjustDifficultyToolTests {
+@Suite(.serialized)
+struct DifficultyLevelTests {
 
-    @Test func callClampsLevelBelowOne() async throws {
-        let tool = AdjustDifficultyTool()
-        let result = try await tool.call(arguments: .init(level: 0))
-        #expect(result.contains("1"))
-        #expect(UserDefaults.standard.storyDifficultyLevel == 1)
-    }
+    // MARK: AdjustDifficultyTool
 
-    @Test func callClampsLevelAboveThree() async throws {
-        let tool = AdjustDifficultyTool()
-        let result = try await tool.call(arguments: .init(level: 99))
-        #expect(result.contains("3"))
-        #expect(UserDefaults.standard.storyDifficultyLevel == 3)
-    }
+    struct AdjustDifficultyToolTests {
 
-    @Test func callPersistsValidLevel() async throws {
-        let tool = AdjustDifficultyTool()
-        for level in 1...3 {
-            let result = try await tool.call(arguments: .init(level: level))
-            #expect(result.contains("\(level)"))
-            #expect(UserDefaults.standard.storyDifficultyLevel == level)
+        @Test func callClampsLevelBelowOne() async throws {
+            defer { UserDefaults.standard.removeObject(forKey: "storyDifficultyLevel") }
+            let tool = AdjustDifficultyTool()
+            let result = try await tool.call(arguments: .init(level: 0))
+            #expect(result.contains("1"))
+            #expect(UserDefaults.standard.storyDifficultyLevel == 1)
+        }
+
+        @Test func callClampsLevelAboveThree() async throws {
+            defer { UserDefaults.standard.removeObject(forKey: "storyDifficultyLevel") }
+            let tool = AdjustDifficultyTool()
+            let result = try await tool.call(arguments: .init(level: 99))
+            #expect(result.contains("3"))
+            #expect(UserDefaults.standard.storyDifficultyLevel == 3)
+        }
+
+        @Test func callPersistsValidLevel() async throws {
+            defer { UserDefaults.standard.removeObject(forKey: "storyDifficultyLevel") }
+            let tool = AdjustDifficultyTool()
+            for level in 1...3 {
+                let result = try await tool.call(arguments: .init(level: level))
+                #expect(result.contains("\(level)"))
+                #expect(UserDefaults.standard.storyDifficultyLevel == level)
+            }
+        }
+
+        @Test func callReturnsNonEmptyString() async throws {
+            defer { UserDefaults.standard.removeObject(forKey: "storyDifficultyLevel") }
+            let tool = AdjustDifficultyTool()
+            let result = try await tool.call(arguments: .init(level: 2))
+            #expect(!result.isEmpty)
         }
     }
 
-    @Test func callReturnsNonEmptyString() async throws {
-        let tool = AdjustDifficultyTool()
-        let result = try await tool.call(arguments: .init(level: 2))
-        #expect(!result.isEmpty)
+    // MARK: UserDefaults storyDifficultyLevel
+
+    struct StoryDifficultyLevelTests {
+
+        @Test func defaultLevelIsTwo() {
+            defer { UserDefaults.standard.removeObject(forKey: "storyDifficultyLevel") }
+            UserDefaults.standard.removeObject(forKey: "storyDifficultyLevel")
+            #expect(UserDefaults.standard.storyDifficultyLevel == 2)
+        }
+
+        @Test func roundTripValidValues() {
+            defer { UserDefaults.standard.removeObject(forKey: "storyDifficultyLevel") }
+            for level in 1...3 {
+                UserDefaults.standard.storyDifficultyLevel = level
+                #expect(UserDefaults.standard.storyDifficultyLevel == level)
+            }
+        }
+
+        @Test func clampsBelowOne() {
+            defer { UserDefaults.standard.removeObject(forKey: "storyDifficultyLevel") }
+            UserDefaults.standard.storyDifficultyLevel = 0
+            #expect(UserDefaults.standard.storyDifficultyLevel >= 1)
+        }
+
+        @Test func clampsAboveThree() {
+            defer { UserDefaults.standard.removeObject(forKey: "storyDifficultyLevel") }
+            UserDefaults.standard.storyDifficultyLevel = 10
+            #expect(UserDefaults.standard.storyDifficultyLevel <= 3)
+        }
     }
 }
 
@@ -142,30 +188,3 @@ struct StoryBookmarkStoreTests {
     }
 }
 
-// MARK: - UserDefaults storyDifficultyLevel
-
-@Suite(.serialized)
-struct StoryDifficultyLevelTests {
-
-    @Test func defaultLevelIsTwo() {
-        UserDefaults.standard.removeObject(forKey: "storyDifficultyLevel")
-        #expect(UserDefaults.standard.storyDifficultyLevel == 2)
-    }
-
-    @Test func roundTripValidValues() {
-        for level in 1...3 {
-            UserDefaults.standard.storyDifficultyLevel = level
-            #expect(UserDefaults.standard.storyDifficultyLevel == level)
-        }
-    }
-
-    @Test func clampsBelowOne() {
-        UserDefaults.standard.storyDifficultyLevel = 0
-        #expect(UserDefaults.standard.storyDifficultyLevel >= 1)
-    }
-
-    @Test func clampsAboveThree() {
-        UserDefaults.standard.storyDifficultyLevel = 10
-        #expect(UserDefaults.standard.storyDifficultyLevel <= 3)
-    }
-}

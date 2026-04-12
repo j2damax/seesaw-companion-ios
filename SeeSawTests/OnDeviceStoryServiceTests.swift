@@ -139,9 +139,7 @@ struct MockStoryServiceLifecycleTests {
         let customBeat = StoryBeat(
             storyText: "A custom test story.",
             question: "What happens next?",
-            isEnding: true,
-            theme: "test",
-            suggestedContinuation: ""
+            isEnding: true
         )
         await mock.setBeat(customBeat)
         let context = SceneContext(labels: ["toy"], sceneCategories: ["room"], transcript: nil, childAge: 4)
