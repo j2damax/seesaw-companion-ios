@@ -38,6 +38,10 @@ final class AppDependencyContainer {
     let onDeviceStoryService: OnDeviceStoryService
     let storyMetricsStore: StoryMetricsStore
 
+    // MARK: - Story timeline (SwiftData persistence)
+
+    let storyTimelineStore: StoryTimelineStore
+
     // MARK: - Init
 
     init() {
@@ -62,6 +66,7 @@ final class AppDependencyContainer {
         privacyMetricsStore      = PrivacyMetricsStore()
         onDeviceStoryService     = OnDeviceStoryService()
         storyMetricsStore        = StoryMetricsStore()
+        storyTimelineStore       = StoryTimelineStore()
     }
 
     // MARK: - Factory methods
@@ -80,7 +85,8 @@ final class AppDependencyContainer {
             speechRecognitionService: speechRecognitionService,
             metricsStore: privacyMetricsStore,
             storyMetricsStore: storyMetricsStore,
-            onDeviceStoryService: onDeviceStoryService
+            onDeviceStoryService: onDeviceStoryService,
+            storyTimelineStore: storyTimelineStore
         )
     }
 

@@ -6,6 +6,7 @@
 
 import FirebaseCore
 import GoogleSignIn
+import SwiftData
 import SwiftUI
 
 @main
@@ -39,6 +40,7 @@ struct AppRootView: View {
 
     var body: some View {
         coordinatedView
+            .modelContainer(coordinator.container.storyTimelineStore.container)
             .animation(.easeInOut(duration: 0.25), value: coordinator.currentRoute == .home)
     }
 

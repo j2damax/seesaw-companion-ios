@@ -1,33 +1,60 @@
 // TimelineTabView.swift
-// SeeSaw — Tier 2 companion app
+// SeeSaw — Story Timeline tab.
 //
-// "Timeline" tab on the home screen.
-// Displays a reverse-chronological list of completed pipeline runs
-// (each entry = one captured scene + story snippet).
+// Shows all stored StorySessionRecords in reverse-chronological order via @Query.
+// Each row provides object-detection tags, the story snippet, and metadata badges.
+// Tapping a row navigates to StorySessionDetailView for the full session.
+// Swipe-to-delete and "Delete All" are available in the toolbar.
 
 import SwiftUI
+import SwiftData
 
 struct TimelineTabView: View {
 
-    var timeline: [TimelineEntry]
+    @Query(sort: \StorySessionRecord.createdAt, order: .reverse)
+    private var sessions: [StorySessionRecord]
+
+    private let store: StoryTimelineStore
+
+    init(store: StoryTimelineStore) {
+        self.store = store
+    }
 
     // MARK: - Body
 
     var body: some View {
         NavigationStack {
             Group {
-                if timeline.isEmpty {
+                if sessions.isEmpty {
                     emptyState
                 } else {
-                    List(timeline) { entry in
-                        TimelineRowView(entry: entry)
-                            .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
-                    }
-                    .listStyle(.plain)
+                    sessionList
                 }
             }
             .navigationTitle("Timeline")
+            .toolbar { toolbarContent }
         }
+    }
+
+    // MARK: - Session list
+
+    private var sessionList: some View {
+        List {
+            ForEach(sessions) { session in
+                NavigationLink {
+                    StorySessionDetailView(session: session, store: store)
+                } label: {
+                    SessionRowView(session: session)
+                }
+                .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
+            }
+            .onDelete { indexSet in
+                for index in indexSet {
+                    store.delete(sessions[index])
+                }
+            }
+        }
+        .listStyle(.plain)
     }
 
     // MARK: - Empty state
@@ -40,54 +67,153 @@ struct TimelineTabView: View {
             Text("No stories yet")
                 .font(.headline)
                 .foregroundStyle(.secondary)
-            Text("Captured scenes will appear here after a story is generated.")
+            Text("Captured scenes and full conversations will appear here after a story is generated.")
                 .font(.subheadline)
                 .foregroundStyle(.tertiary)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 40)
         }
     }
+
+    // MARK: - Toolbar
+
+    @ToolbarContentBuilder
+    private var toolbarContent: some ToolbarContent {
+        ToolbarItem(placement: .topBarTrailing) {
+            if !sessions.isEmpty {
+                Button("Delete All", role: .destructive) {
+                    store.deleteAll()
+                }
+                .font(.caption)
+            }
+        }
+    }
 }
 
-// MARK: - Row
+// MARK: - Session row
 
-private struct TimelineRowView: View {
+private struct SessionRowView: View {
 
-    let entry: TimelineEntry
+    let session: StorySessionRecord
+
+    private var relativeTimeString: String {
+        let formatter = RelativeDateTimeFormatter()
+        formatter.unitsStyle = .abbreviated
+        return formatter.localizedString(for: session.createdAt, relativeTo: Date())
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
-            HStack {
-                Text(entry.timestamp, style: .relative)
+
+            // Timestamp + badges
+            // NOTE: Text(date, style: .relative) triggers "TimeDataFormattingStorage was
+            // resolved without idiom" log spam on iOS 26 beta inside @Query-backed Lists.
+            // Pre-formatting to a String avoids the live-update formatter machinery.
+            HStack(spacing: 6) {
+                Text(relativeTimeString)
                     .font(.caption)
                     .foregroundStyle(.secondary)
                 Spacer()
-                Text(entry.timestamp, style: .time)
+                if session.isLiked {
+                    Image(systemName: "heart.fill")
+                        .font(.caption2)
+                        .foregroundStyle(.pink)
+                }
+                if !session.isCompleted {
+                    Image(systemName: "exclamationmark.circle")
+                        .font(.caption2)
+                        .foregroundStyle(.orange)
+                }
+                Text(session.createdAt.formatted(date: .omitted, time: .shortened))
                     .font(.caption2)
                     .foregroundStyle(.tertiary)
             }
 
-            if !entry.sceneObjects.isEmpty {
-                Text(entry.sceneObjects.joined(separator: " · "))
-                    .font(.subheadline.bold())
-                    .lineLimit(1)
+            // Child name + age
+            Text("\(session.displayChildName), age \(session.childAge)")
+                .font(.subheadline.bold())
+
+            // Object detection tags
+            if !session.detectedObjects.isEmpty {
+                objectTags(for: session.detectedObjects)
             }
 
-            if let snippet = entry.storySnippet {
+            // Story snippet
+            if let snippet = session.storySnippet {
                 Text(snippet)
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .lineLimit(2)
             }
+
+            // Metadata row
+            metadataRow
         }
         .padding(.vertical, 4)
+    }
+
+    private func objectTags(for objects: [String]) -> some View {
+        // Avoid horizontal ScrollView inside List — it steals vertical scroll gestures.
+        // Show up to 5 tags in a clipped HStack instead.
+        HStack(spacing: 4) {
+            ForEach(objects.prefix(5), id: \.self) { object in
+                Text(object)
+                    .font(.caption2.bold())
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 2)
+                    .background(.teal.opacity(0.15))
+                    .foregroundStyle(.teal)
+                    .clipShape(Capsule())
+                    .lineLimit(1)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private var metadataRow: some View {
+        HStack(spacing: 4) {
+            Label("\(session.totalBeats) beats", systemImage: "text.bubble")
+                .font(.caption2)
+                .foregroundStyle(.tertiary)
+            Text("·")
+                .font(.caption2)
+                .foregroundStyle(.quaternary)
+            Text(session.storyMode)
+                .font(.caption2)
+                .foregroundStyle(.tertiary)
+            if session.hadContextRestart {
+                Text("· restarted")
+                    .font(.caption2)
+                    .foregroundStyle(.orange)
+            }
+            if session.totalPiiTokensRedacted > 0 {
+                Text("· PII redacted")
+                    .font(.caption2)
+                    .foregroundStyle(.teal)
+            }
+        }
     }
 }
 
 #Preview {
-    let sample = [
-        TimelineEntry(sceneObjects: ["dinosaur", "book"], storySnippet: "Once upon a time in a magical library…"),
-        TimelineEntry(sceneObjects: ["spaceship", "star"], storySnippet: "The little astronaut zoomed past Jupiter…")
-    ]
-    TimelineTabView(timeline: sample)
+    let config = ModelConfiguration(isStoredInMemoryOnly: true)
+    let container = try! ModelContainer(
+        for: StorySessionRecord.self, StoryBeatRecord.self,
+        configurations: config
+    )
+    let session = StorySessionRecord(
+        childName: "Vihas", childAge: 5, storyMode: "onDevice",
+        originalImageData: nil, capturedImageData: nil,
+        metrics: PrivacyMetricsData(
+            objects: ["sofa", "table", "book"], scenes: ["living_room"],
+            facesDetected: 0, facesBlurred: 0, pipelineLatencyMs: 143,
+            faceDetectMs: 3, blurMs: 2, yoloMs: 135, sceneClassifyMs: 135, piiScrubMs: 0
+        )
+    )
+    session.isCompleted = true
+    session.totalBeats = 3
+    container.mainContext.insert(session)
+
+    return TimelineTabView(store: StoryTimelineStore())
+        .modelContainer(container)
 }

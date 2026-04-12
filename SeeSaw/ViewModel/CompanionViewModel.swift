@@ -31,7 +31,8 @@ final class CompanionViewModel {
 
     /// Full-screen debug preview after "Capture Scene".
     var isShowingScenePreview: Bool = false
-    var capturedImageData: Data?
+    var capturedImageData: Data?          // privacy-filtered (blurred) JPEG
+    var originalCapturedImageData: Data?  // original unblurred JPEG
     var sceneDetections: [DetectionResult] = []
 
     /// Live/final transcript from speech recognition.
@@ -57,6 +58,7 @@ final class CompanionViewModel {
     let metricsStore: PrivacyMetricsStore
     let storyMetricsStore: StoryMetricsStore
     private let onDeviceStoryService: OnDeviceStoryService
+    private let storyTimelineStore: StoryTimelineStore
 
     // MARK: - Active stream tasks (cancelled on disconnect)
 
@@ -70,6 +72,21 @@ final class CompanionViewModel {
     private var generationStartTime: CFAbsoluteTime = 0
     private var ttftMs: Double = 0
 
+    // MARK: - Timeline session tracking (in-progress session state)
+
+    /// The SwiftData record for the currently active story session.
+    private var currentSession: StorySessionRecord?
+    /// The last beat record awaiting the child's answer.
+    private var pendingBeat: StoryBeatRecord?
+    /// Global beat counter within the session (never resets, used for sequenceNumber).
+    private var currentBeatSequence = 0
+    /// The local beat index from the previous beat; used to detect context restarts.
+    private var prevLocalBeatIndex = -1
+    /// Accumulated PII count for the answer currently being captured.
+    private var latestAnswerPiiCount = 0
+    /// Whether restartWithSummary has been triggered in this session.
+    private var sessionHadRestart = false
+
     // MARK: - Init
 
     init(
@@ -81,7 +98,8 @@ final class CompanionViewModel {
         speechRecognitionService: SpeechRecognitionService,
         metricsStore: PrivacyMetricsStore,
         storyMetricsStore: StoryMetricsStore,
-        onDeviceStoryService: OnDeviceStoryService
+        onDeviceStoryService: OnDeviceStoryService,
+        storyTimelineStore: StoryTimelineStore
     ) {
         self.accessoryManager = accessoryManager
         self.privacyPipeline  = privacyPipeline
@@ -92,6 +110,7 @@ final class CompanionViewModel {
         self.metricsStore = metricsStore
         self.storyMetricsStore = storyMetricsStore
         self.onDeviceStoryService = onDeviceStoryService
+        self.storyTimelineStore = storyTimelineStore
     }
 
     // MARK: - Public actions
@@ -147,6 +166,7 @@ final class CompanionViewModel {
             await onDeviceStoryService.endSession()
             await accessoryManager.activeAccessory.disconnect()
         }
+        finalizeCurrentSession()
         cancelStreamTasks()
         storyTurnCount = 0
         sessionState = .idle
@@ -169,9 +189,10 @@ final class CompanionViewModel {
     }
 
     func dismissScenePreview() {
-        isShowingScenePreview = false
-        capturedImageData = nil
-        sceneDetections = []
+        isShowingScenePreview     = false
+        capturedImageData         = nil
+        originalCapturedImageData = nil
+        sceneDetections           = []
     }
 
     func generateStory() {
@@ -288,9 +309,10 @@ final class CompanionViewModel {
             sessionState = .processingPrivacy
             let (blurredData, detections, metrics) = try await privacyPipeline.runDebugDetection(jpegData: dataToUse)
             await metricsStore.record(metrics)
-            capturedImageData  = blurredData
-            sceneDetections    = detections
-            isShowingScenePreview = true
+            originalCapturedImageData = dataToUse
+            capturedImageData         = blurredData
+            sceneDetections           = detections
+            isShowingScenePreview     = true
             AppConfig.shared.log("runDetectionPreview: done, detectionCount=\(detections.count), blurredBytes=\(blurredData.count)")
             sessionState = .connected
         } catch {
@@ -341,6 +363,15 @@ final class CompanionViewModel {
                 preferences: UserDefaults.standard.childPreferences
             )
 
+            // Begin timeline session with captured (blurred) image + pipeline metrics
+            beginStorySession(
+                jpegData: jpegData,
+                payload: result.payload,
+                privacyMetrics: result.metrics,
+                childName: profile.name,
+                childAge: profile.age
+            )
+
             sessionState = .generatingStory
             generationStartTime = CFAbsoluteTimeGetCurrent()
             ttftMs = 0
@@ -364,6 +395,7 @@ final class CompanionViewModel {
             AppConfig.shared.log("beat[0] storyText: \(beat.storyText)")
             AppConfig.shared.log("beat[0] question: \(beat.question)")
             storyTurnCount = await onDeviceStoryService.currentTurnCount
+            recordBeat(beat, generationMs: generationMs, ttftMs: ttftMs, localIndex: 0)
 
             await storyMetricsStore.record(StoryMetricsEvent(
                 generationMode: storyMode.rawValue,
@@ -392,6 +424,7 @@ final class CompanionViewModel {
                 }
             } else {
                 await onDeviceStoryService.endSession()
+                finalizeCurrentSession()
                 storyTurnCount = 0
                 sessionState = .connected
             }
@@ -409,11 +442,15 @@ final class CompanionViewModel {
     private func continueStoryLoop() async {
         while !Task.isCancelled {
             sessionState = .listeningForAnswer
+            latestAnswerPiiCount = 0
             guard let answer = await listenForAnswer(timeoutSeconds: 15) else {
                 AppConfig.shared.log("continueStoryLoop: answer timeout, ending story")
                 await endStoryGracefully()
                 break
             }
+
+            // Record the child's answer on the beat that asked the question
+            recordAnswer(answer, piiCount: latestAnswerPiiCount)
 
             sessionState = .generatingStory
             do {
@@ -437,6 +474,7 @@ final class CompanionViewModel {
                 AppConfig.shared.log("beat[\(storyTurnCount)] storyText: \(beat.storyText)")
                 AppConfig.shared.log("beat[\(storyTurnCount)] question: \(beat.question)")
                 storyTurnCount = await onDeviceStoryService.currentTurnCount
+                recordBeat(beat, generationMs: turnMs, ttftMs: ttftMs, localIndex: storyTurnCount)
 
                 await storyMetricsStore.record(StoryMetricsEvent(
                     generationMode: storyMode.rawValue,
@@ -466,6 +504,7 @@ final class CompanionViewModel {
             }
         }
         await onDeviceStoryService.endSession()
+        finalizeCurrentSession()
         storyTurnCount = 0
         guard case .error = sessionState else {
             sessionState = .connected
@@ -485,8 +524,11 @@ final class CompanionViewModel {
                 group.addTask { [weak self] in
                     for await result in transcriptionStream {
                         if Task.isCancelled { return nil }
-                        let scrubbed = SpeechRecognitionService.scrubPII(result.text)
-                        await MainActor.run { self?.currentTranscript = scrubbed }
+                        let (scrubbed, piiCount) = PIIScrubber.scrub(result.text)
+                        await MainActor.run { [weak self] in
+                            self?.currentTranscript = scrubbed
+                            self?.latestAnswerPiiCount = piiCount
+                        }
                         if result.isFinal { return scrubbed }
                     }
                     return nil
@@ -517,6 +559,7 @@ final class CompanionViewModel {
         sessionState = .sendingAudio
         await audioService.speak(StoryBeat.endingFallback.storyText)
         await onDeviceStoryService.endSession()
+        finalizeCurrentSession()
         storyTurnCount = 0
         sessionState = .connected
     }
@@ -567,6 +610,81 @@ final class CompanionViewModel {
             AppConfig.shared.log("runCloudPipeline: error=\(error.localizedDescription)", level: .error)
             setError(error.localizedDescription)
         }
+    }
+
+    // MARK: - Timeline helpers
+
+    /// Creates and inserts a new `StorySessionRecord` at the start of a pipeline run.
+    private func beginStorySession(
+        jpegData: Data,
+        payload: ScenePayload,
+        privacyMetrics: PrivacyMetricsEvent,
+        childName: String,
+        childAge: Int
+    ) {
+        let metrics = PrivacyMetricsData(payload: payload, event: privacyMetrics)
+        let session = StorySessionRecord(
+            childName: childName,
+            childAge: childAge,
+            storyMode: storyMode.rawValue,
+            originalImageData: originalCapturedImageData,
+            capturedImageData: jpegData,
+            metrics: metrics
+        )
+        storyTimelineStore.insert(session)
+        currentSession        = session
+        currentBeatSequence   = 0
+        prevLocalBeatIndex    = -1
+        sessionHadRestart     = false
+        latestAnswerPiiCount  = 0
+    }
+
+    /// Appends a `StoryBeatRecord` for the beat that was just generated.
+    private func recordBeat(
+        _ beat: StoryBeat,
+        generationMs: Double,
+        ttftMs: Double,
+        localIndex: Int
+    ) {
+        guard let session = currentSession else { return }
+        // A context restart is detected when the local beat index drops below the
+        // previous value (restartWithSummary resets the service's turn counter to 0).
+        let isRestart = prevLocalBeatIndex >= 0 && localIndex < prevLocalBeatIndex
+        if isRestart { sessionHadRestart = true }
+        prevLocalBeatIndex = localIndex
+
+        let record = StoryBeatRecord(
+            sequenceNumber:   currentBeatSequence,
+            localBeatIndex:   localIndex,
+            isInitialBeat:    currentBeatSequence == 0,
+            isContextRestart: isRestart,
+            storyText:        beat.storyText,
+            question:         beat.question,
+            isEnding:         beat.isEnding,
+            generationMs:     generationMs,
+            ttftMs:           currentBeatSequence == 0 ? ttftMs : 0
+        )
+        storyTimelineStore.addBeat(record, to: session)
+        pendingBeat           = record
+        currentBeatSequence  += 1
+    }
+
+    /// Saves the child's spoken answer on the most recently generated beat.
+    private func recordAnswer(_ answer: String, piiCount: Int) {
+        guard let session = currentSession, let beat = pendingBeat else { return }
+        storyTimelineStore.setAnswer(answer, piiCount: piiCount, on: beat, session: session)
+    }
+
+    /// Marks the current session as complete and clears tracking state.
+    /// Safe to call multiple times — no-ops if there is no active session.
+    private func finalizeCurrentSession() {
+        guard let session = currentSession else { return }
+        storyTimelineStore.finalizeSession(session, hadContextRestart: sessionHadRestart)
+        currentSession       = nil
+        pendingBeat          = nil
+        currentBeatSequence  = 0
+        prevLocalBeatIndex   = -1
+        sessionHadRestart    = false
     }
 
     // MARK: - Helpers

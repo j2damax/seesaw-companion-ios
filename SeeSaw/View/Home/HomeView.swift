@@ -28,7 +28,7 @@ struct HomeView: View {
                     Label("Camera", systemImage: "camera.fill")
                 }
 
-            TimelineTabView(timeline: vm.timeline)
+            TimelineTabView(store: coordinator.container.storyTimelineStore)
                 .tabItem {
                     Label("Timeline", systemImage: "clock.fill")
                 }
