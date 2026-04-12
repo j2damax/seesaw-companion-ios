@@ -241,7 +241,9 @@ final class LocalDeviceAccessory: NSObject, WearableAccessory {
         engine.connect(player, to: engine.mainMixerNode, format: format)
         audioEngine = engine
         playerNode  = player
-        try? engine.start()
+        // Do NOT start the engine here. Starting eagerly holds an audio-server
+        // connection that clashes with AVSpeechSynthesizer during story narration.
+        // The engine starts lazily in playPCMData when sendAudio(_:) is called.
     }
 
     private func playPCMData(_ data: Data,

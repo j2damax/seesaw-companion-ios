@@ -20,7 +20,11 @@ actor SpeechRecognitionService {
 
     private var recognitionTask: SFSpeechRecognitionTask?
     private var recognitionRequest: SFSpeechAudioBufferRecognitionRequest?
-    private var lastTranscript: String?
+    // nonisolated(unsafe): written synchronously from the SFSpeechRecognizer callback
+    // (which runs on an unmanaged system thread) and read in stopTranscription after
+    // task cancellation. No concurrent access — the recognition task is always cancelled
+    // before stopTranscription reads this value.
+    nonisolated(unsafe) private var lastTranscript: String?
     private var streamTask: Task<Void, Never>?
 
     // MARK: - Authorization
@@ -64,7 +68,7 @@ actor SpeechRecognitionService {
                     confidence: confidence
                 )
                 resultContinuation.yield(transcription)
-                Task { [weak self] in await self?.updateLastTranscript(text) }
+                self?.lastTranscript = text   // synchronous write via nonisolated(unsafe)
                 if isFinal {
                     resultContinuation.finish()
                 }
@@ -183,9 +187,8 @@ actor SpeechRecognitionService {
         recognitionRequest?.endAudio()
     }
 
-    private func updateLastTranscript(_ text: String) {
-        lastTranscript = text
-    }
+    // updateLastTranscript removed — lastTranscript is now written synchronously
+    // from the SFSpeechRecognizer callback via nonisolated(unsafe).
 }
 
 // MARK: - PII scrubbing

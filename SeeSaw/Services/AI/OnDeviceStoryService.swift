@@ -20,12 +20,10 @@ actor OnDeviceStoryService: StoryGenerating {
     private var conversationSummary: String?
     private var currentProfile: ChildProfile?
 
-    // MARK: - Tools
-
-    /// Single source of truth for the tool set registered with every session.
-    private var storyTools: [any Tool] {
-        [AdjustDifficultyTool(), BookmarkMomentTool(), SwitchSceneTool()]
-    }
+    // Single lightweight tool re-enabled after reducing to 3-field StoryBeat.
+    // BookmarkMomentTool schema is ~65 tokens — within budget.
+    // AdjustDifficultyTool and SwitchSceneTool remain disabled (too much schema overhead).
+    private let bookmarkTool = BookmarkMomentTool()
 
     // MARK: - Public computed properties
 
@@ -72,10 +70,7 @@ actor OnDeviceStoryService: StoryGenerating {
         currentProfile = profile
 
         let systemPrompt = buildSystemPrompt(context: context, profile: profile)
-        session = LanguageModelSession(
-            tools: storyTools,
-            instructions: systemPrompt
-        )
+        session = LanguageModelSession(tools: [bookmarkTool], instructions: systemPrompt)
         turnCount = 0
         conversationSummary = nil
 
@@ -110,10 +105,7 @@ actor OnDeviceStoryService: StoryGenerating {
         currentProfile = profile
 
         let systemPrompt = buildSystemPrompt(context: context, profile: profile)
-        session = LanguageModelSession(
-            tools: storyTools,
-            instructions: systemPrompt
-        )
+        session = LanguageModelSession(tools: [bookmarkTool], instructions: systemPrompt)
         turnCount = 0
         conversationSummary = nil
 
@@ -210,11 +202,13 @@ actor OnDeviceStoryService: StoryGenerating {
     }
 
     /// Streaming variant: iterates partial beats, calls `onPartialText` for each
-    /// non-empty `storyText`, then returns the final complete `StoryBeat`.
-    /// Throws `generationFailed` when the stream completes without generating any story content.
-    /// Note: when `restartWithSummary` triggers (context overflow), it falls back
-    /// to the non-streaming `generateWithErrorRecovery` path — streaming text is
-    /// not delivered for that single recovery turn.
+    /// non-empty `storyText`, then assembles the final `StoryBeat` from the last
+    /// non-empty value of each field seen during iteration.
+    ///
+    /// Design note: `for try await` exhausts the ResponseStream. Calling
+    /// `stream.collect()` after the loop re-consumes an already-empty stream and
+    /// causes a "Failed to deserialize a Generable type" error. We therefore
+    /// accumulate partial field values during the loop instead of using collect().
     private func streamWithErrorRecovery(
         prompt: String,
         onPartialText: @Sendable @escaping (String) async -> Void
@@ -224,21 +218,39 @@ actor OnDeviceStoryService: StoryGenerating {
         }
 
         do {
-            var finalResponse: LanguageModelSession.Response<StoryBeat>?
+            // Accumulate the latest non-empty value for each field as tokens stream in.
+            // All @Generable properties are Optional during streaming (PartiallyGenerated).
+            // Each snapshot is cumulative — later snapshots supersede earlier ones.
+            // NOTE: do NOT call stream.collect() after this loop — it re-consumes the
+            // exhausted stream and throws "Failed to deserialize a Generable type".
+            var lastText      = ""
+            var lastQuestion  = ""
+            var lastIsEnding  = false
+            var snapshotCount = 0
+
+            await AppConfig.shared.log("streamWithErrorRecovery: starting stream")
             let stream = session.streamResponse(to: prompt, generating: StoryBeat.self)
             for try await snapshot in stream {
-                // `snapshot.content.storyText` is cumulative — each snapshot contains
-                // all text generated so far for that field, not just the newest tokens.
-                // On PartiallyGenerated the property is Optional; we unwrap safely.
+                snapshotCount += 1
                 if let text = snapshot.content.storyText, !text.isEmpty {
+                    lastText = text
                     await onPartialText(text)
                 }
+                if let q = snapshot.content.question, !q.isEmpty { lastQuestion = q }
+                if let e = snapshot.content.isEnding              { lastIsEnding  = e }
             }
-            finalResponse = try await stream.collect()
-            guard let response = finalResponse else {
-                throw StoryError.generationFailed("Stream completed without generating any story content.")
+
+            await AppConfig.shared.log("streamWithErrorRecovery: done, snapshots=\(snapshotCount), textLen=\(lastText.count), hasQuestion=\(!lastQuestion.isEmpty), isEnding=\(lastIsEnding)")
+
+            guard !lastText.isEmpty else {
+                throw StoryError.generationFailed("Stream completed without generating story content.")
             }
-            return response.content
+
+            return StoryBeat(
+                storyText: lastText,
+                question:  lastQuestion.isEmpty ? "What do you think happens next?" : lastQuestion,
+                isEnding:  lastIsEnding
+            )
         } catch let error as LanguageModelSession.GenerationError {
             return try await handleGenerationError(error, prompt: prompt)
         } catch let error as StoryError {
@@ -289,9 +301,7 @@ actor OnDeviceStoryService: StoryGenerating {
         endSessionInternal()
         currentProfile = profile
 
-        session = LanguageModelSession(
-            tools: storyTools,
-            instructions: """
+        session = LanguageModelSession(instructions: """
             Continue an ongoing story. Story so far: \(summary)
             \(contentRules)
             """
@@ -302,11 +312,12 @@ actor OnDeviceStoryService: StoryGenerating {
     }
 
     private func updateConversationSummary(beat: StoryBeat) {
-        let continuation = beat.suggestedContinuation
+        // Use first 120 chars of storyText as a rolling summary for context restarts.
+        let snippet = String(beat.storyText.prefix(120))
         if let existing = conversationSummary {
-            conversationSummary = "\(existing) \(continuation)"
+            conversationSummary = "\(existing) \(snippet)"
         } else {
-            conversationSummary = continuation
+            conversationSummary = snippet
         }
     }
 
@@ -345,8 +356,8 @@ actor OnDeviceStoryService: StoryGenerating {
     // MARK: - Prompt builders
 
     private let contentRules = """
-        Generate short story segments (3-5 sentences).
-        End every beat with one imaginative question.
+        Generate short story segments (2-3 sentences, max 30 words).
+        End every beat with one short question (max 10 words).
         Never mention technology, devices, or AI.
         Never include violence or inappropriate content.
         """
@@ -370,9 +381,11 @@ actor OnDeviceStoryService: StoryGenerating {
         default: difficultyGuidance = "Use age-appropriate vocabulary and sentence length for ages 6–8."
         }
 
+        let name = profile.name.isEmpty ? "your friend" : profile.name
         return """
-        You are Whisper, a warm storytelling companion for \(profile.name), \
+        You are Whisper, a warm storytelling companion for \(name), \
         aged \(profile.age).
+        Always address \(name) by name in questions — never say "you" or "the child".
         \(contentRules)
         Use detected objects: \(objects).
         Scene: \(scenes).
@@ -396,7 +409,15 @@ actor OnDeviceStoryService: StoryGenerating {
         childAnswer: String,
         isFinalTurn: Bool
     ) -> String {
-        var prompt = "The child answered: \"\(childAnswer)\". Continue the story"
+        let trimmed = childAnswer.trimmingCharacters(in: .whitespacesAndNewlines)
+        var prompt: String
+        if trimmed.isEmpty {
+            prompt = "The child was quiet. Make the next story moment more exciting to re-engage them"
+        } else if trimmed.count <= 3 {
+            prompt = "The child said: \"\(trimmed)\". Continue the story building on their response"
+        } else {
+            prompt = "The child answered: \"\(trimmed)\". Continue the story"
+        }
         if isFinalTurn {
             prompt += " and bring it to a warm, satisfying conclusion"
         }

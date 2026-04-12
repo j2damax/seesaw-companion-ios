@@ -9,7 +9,38 @@ import Foundation
 
 actor AudioService {
 
-    // MARK: - Public
+    // MARK: - Direct speech output (iPhone / speaker path)
+
+    /// Speaks `text` aloud through the device speaker and suspends the caller
+    /// until speech is fully complete. Each call creates an isolated synthesizer
+    /// instance so sequential calls (story text then question) play in order.
+    func speak(_ text: String) async {
+        guard !text.isEmpty else { return }
+        await speakOnMain(text)
+    }
+
+    @MainActor
+    private func speakOnMain(_ text: String) async {
+        let utterance = AVSpeechUtterance(string: text)
+        utterance.voice = AVSpeechSynthesisVoice(language: "en-GB")
+        utterance.rate  = AVSpeechUtteranceDefaultSpeechRate * 0.85
+        utterance.pitchMultiplier = 1.1
+
+        // `synthesizer` and `bridge` are local vars on the async frame, so neither
+        // is ARC-released before the delegate fires (the frame stays live while suspended).
+        let synthesizer = AVSpeechSynthesizer()
+        let bridge = SpeechFinishBridge()
+        synthesizer.delegate = bridge
+
+        await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
+            bridge.setCompletion { continuation.resume() }
+            synthesizer.speak(utterance)
+        }
+        // Extend lifetime explicitly — compiler must not release before continuation resumes.
+        withExtendedLifetime((synthesizer, bridge)) {}
+    }
+
+    // MARK: - PCM encode (BLE / wearable path — kept for Phase 2)
 
     func generateAndEncodeAudio(from text: String) async throws -> Data {
         AppConfig.shared.log("generateAndEncodeAudio: start, textLength=\(text.count)")
@@ -18,15 +49,10 @@ actor AudioService {
         return data
     }
 
-    // MARK: - TTS synthesis
+    // MARK: - Offline PCM synthesis
 
     @MainActor
     private func synthesizeWithAVSpeech(_ text: String) async throws -> Data {
-        // Configure audio session for playback before synthesis
-        let session = AVAudioSession.sharedInstance()
-        try? session.setCategory(.playback, mode: .default)
-        try? session.setActive(true)
-
         return try await withCheckedThrowingContinuation { continuation in
             let accumulator = AudioAccumulator()
             let utterance = AVSpeechUtterance(string: text)
@@ -74,6 +100,32 @@ private final class AudioAccumulator: @unchecked Sendable {
         synthesizer = nil
         lock.unlock()
         continuation.resume(returning: result)
+    }
+}
+
+// MARK: - Speech completion bridge
+
+/// Bridges AVSpeechSynthesizerDelegate callbacks to a CheckedContinuation.
+/// Marked @unchecked Sendable because delegate callbacks fire on the main thread
+/// (same actor as speakOnMain), and the only mutable state is set once before
+/// synthesis starts and cleared on first callback invocation.
+private final class SpeechFinishBridge: NSObject, AVSpeechSynthesizerDelegate, @unchecked Sendable {
+    private var completion: (() -> Void)?
+
+    func setCompletion(_ block: @escaping () -> Void) {
+        completion = block
+    }
+
+    func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer,
+                            didFinish utterance: AVSpeechUtterance) {
+        completion?()
+        completion = nil
+    }
+
+    func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer,
+                            didCancel utterance: AVSpeechUtterance) {
+        completion?()
+        completion = nil
     }
 }
 

@@ -65,6 +65,11 @@ final class CompanionViewModel {
     private var transcriptionStreamTask: Task<Void, Never>?
     private var storyLoopTask: Task<Void, Never>?
 
+    // TTFT (time-to-first-token) tracking per generation beat — dissertation benchmark.
+    // Reset before each streamStartStory / streamContinueTurn call.
+    private var generationStartTime: CFAbsoluteTime = 0
+    private var ttftMs: Double = 0
+
     // MARK: - Init
 
     init(
@@ -337,23 +342,32 @@ final class CompanionViewModel {
             )
 
             sessionState = .generatingStory
-            let startTime = CFAbsoluteTimeGetCurrent()
+            generationStartTime = CFAbsoluteTimeGetCurrent()
+            ttftMs = 0
             streamingStoryText = ""
             let beat = try await onDeviceStoryService.streamStartStory(
                 context: context,
                 profile: profile,
                 onPartialText: { text in
-                    await MainActor.run { self.streamingStoryText = text }
+                    await MainActor.run { [weak self] in
+                        guard let self else { return }
+                        if self.ttftMs == 0 {
+                            self.ttftMs = (CFAbsoluteTimeGetCurrent() - self.generationStartTime) * 1000
+                        }
+                        self.streamingStoryText = text
+                    }
                 }
             )
             streamingStoryText = ""
-            let generationMs = (CFAbsoluteTimeGetCurrent() - startTime) * 1000
-            AppConfig.shared.log("runOnDevicePipeline: story generated in \(Int(generationMs))ms")
+            let generationMs = (CFAbsoluteTimeGetCurrent() - generationStartTime) * 1000
+            AppConfig.shared.log("runOnDevicePipeline: story generated in \(Int(generationMs))ms, ttft=\(Int(ttftMs))ms")
+            AppConfig.shared.log("beat[0] storyText: \(beat.storyText)")
+            AppConfig.shared.log("beat[0] question: \(beat.question)")
             storyTurnCount = await onDeviceStoryService.currentTurnCount
 
             await storyMetricsStore.record(StoryMetricsEvent(
                 generationMode: storyMode.rawValue,
-                timeToFirstTokenMs: generationMs,
+                timeToFirstTokenMs: ttftMs,
                 totalGenerationMs: generationMs,
                 turnCount: storyTurnCount,
                 guardrailViolations: 0,
@@ -361,17 +375,11 @@ final class CompanionViewModel {
                 timestamp: Date().timeIntervalSince1970
             ))
 
-            sessionState = .encodingAudio
-            let storyAudio = try await audioService.generateAndEncodeAudio(
-                from: beat.storyText
-            )
+            // Speak story then question; each call suspends until the synthesizer
+            // finishes, so the story loop cannot start listening until both are done.
             sessionState = .sendingAudio
-            try await accessoryManager.activeAccessory.sendAudio(storyAudio)
-
-            let questionAudio = try await audioService.generateAndEncodeAudio(
-                from: beat.question
-            )
-            try await accessoryManager.activeAccessory.sendAudio(questionAudio)
+            await audioService.speak(beat.storyText)
+            await audioService.speak(beat.question)
 
             timeline.insert(TimelineEntry(
                 sceneObjects: result.payload.objects,
@@ -409,21 +417,30 @@ final class CompanionViewModel {
 
             sessionState = .generatingStory
             do {
-                let turnStart = CFAbsoluteTimeGetCurrent()
+                generationStartTime = CFAbsoluteTimeGetCurrent()
+                ttftMs = 0
                 streamingStoryText = ""
                 let beat = try await onDeviceStoryService.streamContinueTurn(
                     childAnswer: answer,
                     onPartialText: { text in
-                        await MainActor.run { self.streamingStoryText = text }
+                        await MainActor.run { [weak self] in
+                            guard let self else { return }
+                            if self.ttftMs == 0 {
+                                self.ttftMs = (CFAbsoluteTimeGetCurrent() - self.generationStartTime) * 1000
+                            }
+                            self.streamingStoryText = text
+                        }
                     }
                 )
                 streamingStoryText = ""
-                let turnMs = (CFAbsoluteTimeGetCurrent() - turnStart) * 1000
+                let turnMs = (CFAbsoluteTimeGetCurrent() - generationStartTime) * 1000
+                AppConfig.shared.log("beat[\(storyTurnCount)] storyText: \(beat.storyText)")
+                AppConfig.shared.log("beat[\(storyTurnCount)] question: \(beat.question)")
                 storyTurnCount = await onDeviceStoryService.currentTurnCount
 
                 await storyMetricsStore.record(StoryMetricsEvent(
                     generationMode: storyMode.rawValue,
-                    timeToFirstTokenMs: turnMs,
+                    timeToFirstTokenMs: ttftMs,
                     totalGenerationMs: turnMs,
                     turnCount: storyTurnCount,
                     guardrailViolations: 0,
@@ -431,17 +448,9 @@ final class CompanionViewModel {
                     timestamp: Date().timeIntervalSince1970
                 ))
 
-                sessionState = .encodingAudio
-                let storyAudio = try await audioService.generateAndEncodeAudio(
-                    from: beat.storyText
-                )
                 sessionState = .sendingAudio
-                try await accessoryManager.activeAccessory.sendAudio(storyAudio)
-
-                let questionAudio = try await audioService.generateAndEncodeAudio(
-                    from: beat.question
-                )
-                try await accessoryManager.activeAccessory.sendAudio(questionAudio)
+                await audioService.speak(beat.storyText)
+                await audioService.speak(beat.question)
 
                 timeline.insert(TimelineEntry(
                     sceneObjects: [],
@@ -482,9 +491,11 @@ final class CompanionViewModel {
                     }
                     return nil
                 }
-                group.addTask {
+                group.addTask { [weak self] in
                     try? await Task.sleep(for: .seconds(timeoutSeconds))
-                    return nil
+                    // On timeout return whatever partial transcript was accumulated,
+                    // so a short or interrupted utterance still drives the story forward.
+                    return await MainActor.run { self?.currentTranscript }
                 }
                 let first = await group.next() ?? nil
                 group.cancelAll()
@@ -493,6 +504,8 @@ final class CompanionViewModel {
 
             _ = await audioCaptureService.stopCapture()
             _ = await speechRecognitionService.stopTranscription()
+            let answerLen = result?.count ?? 0
+            AppConfig.shared.log("listenForAnswer: answer='\(result ?? "nil")', length=\(answerLen)")
             return result
         } catch {
             AppConfig.shared.log("listenForAnswer: error=\(error.localizedDescription)", level: .error)
@@ -501,17 +514,8 @@ final class CompanionViewModel {
     }
 
     private func endStoryGracefully() async {
-        do {
-            let endBeat = StoryBeat.endingFallback
-            sessionState = .encodingAudio
-            let audio = try await audioService.generateAndEncodeAudio(
-                from: endBeat.storyText
-            )
-            sessionState = .sendingAudio
-            try await accessoryManager.activeAccessory.sendAudio(audio)
-        } catch {
-            AppConfig.shared.log("endStoryGracefully: error=\(error.localizedDescription)", level: .error)
-        }
+        sessionState = .sendingAudio
+        await audioService.speak(StoryBeat.endingFallback.storyText)
         await onDeviceStoryService.endSession()
         storyTurnCount = 0
         sessionState = .connected
