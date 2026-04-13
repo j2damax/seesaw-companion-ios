@@ -786,11 +786,9 @@ final class CompanionViewModel {
             sessionState = .requestingStory
             let story = try await cloudService.requestStory(payload: result.payload)
 
-            sessionState = .encodingAudio
-            let audioData = try await audioService.generateAndEncodeAudio(from: story.storyText)
-
             sessionState = .sendingAudio
-            try await accessoryManager.activeAccessory.sendAudio(audioData)
+            await audioService.speak(story.storyText)
+            await audioService.speak(story.question)
 
             timeline.insert(TimelineEntry(
                 sceneObjects: result.payload.objects,
@@ -816,15 +814,11 @@ final class CompanionViewModel {
 
             sessionState = .requestingStory
             let story = try await cloudService.requestStory(payload: result.payload)
-            AppConfig.shared.log("runCloudPipeline: story received, textLength=\(story.storyText.count)")
-
-            sessionState = .encodingAudio
-            let audioData = try await audioService.generateAndEncodeAudio(from: story.storyText)
-            AppConfig.shared.log("runCloudPipeline: audio encoded, pcmBytes=\(audioData.count)")
+            AppConfig.shared.log("runCloudPipeline: story received, textLength=\(story.storyText.count), beatIndex=\(story.beatIndex)")
 
             sessionState = .sendingAudio
-            try await accessoryManager.activeAccessory.sendAudio(audioData)
-            AppConfig.shared.log("runCloudPipeline: audio sent to accessory")
+            await audioService.speak(story.storyText)
+            await audioService.speak(story.question)
 
             timeline.insert(TimelineEntry(
                 sceneObjects: result.payload.objects,
