@@ -11,13 +11,33 @@ struct ScenePayload: Codable, Sendable {
     let childAge: Int
     let childName: String
     let sessionId: String
+    let storyHistory: [StoryTurn]
+
+    init(
+        objects: [String],
+        scene: [String],
+        transcript: String?,
+        childAge: Int,
+        childName: String,
+        sessionId: String,
+        storyHistory: [StoryTurn] = []
+    ) {
+        self.objects      = objects
+        self.scene        = scene
+        self.transcript   = transcript
+        self.childAge     = childAge
+        self.childName    = childName
+        self.sessionId    = sessionId
+        self.storyHistory = storyHistory
+    }
 
     enum CodingKeys: String, CodingKey {
         case objects
         case scene
         case transcript
-        case childAge    = "child_age"
-        case childName   = "child_name"
-        case sessionId   = "session_id"
+        case childAge     = "child_age"
+        case childName    = "child_name"
+        case sessionId    = "session_id"
+        case storyHistory = "story_history"
     }
 }

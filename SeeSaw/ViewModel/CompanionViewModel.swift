@@ -806,30 +806,146 @@ final class CompanionViewModel {
 
     private func runCloudPipeline(jpegData: Data) async {
         AppConfig.shared.log("runCloudPipeline: start, jpegBytes=\(jpegData.count), childAge=\(childAge)")
+        let speechAuthorized = await speechRecognitionService.requestAuthorization()
+        if !speechAuthorized {
+            AppConfig.shared.log("runCloudPipeline: speech not authorized", level: .warning)
+        }
+
         do {
             sessionState = .processingPrivacy
             let result = try await privacyPipeline.process(jpegData: jpegData, childAge: childAge, childName: UserDefaults.standard.childName)
             await metricsStore.record(result.metrics)
             AppConfig.shared.log("runCloudPipeline: privacy done, objects=\(result.payload.objects), scene=\(result.payload.scene), latency=\(Int(result.metrics.pipelineLatencyMs))ms")
 
-            sessionState = .requestingStory
-            let story = try await cloudService.requestStory(payload: result.payload)
-            AppConfig.shared.log("runCloudPipeline: story received, textLength=\(story.storyText.count), beatIndex=\(story.beatIndex)")
+            let profile = ChildProfile(
+                name: UserDefaults.standard.childName,
+                age: childAge,
+                preferences: UserDefaults.standard.childPreferences
+            )
+            beginStorySession(
+                jpegData: jpegData,
+                payload: result.payload,
+                privacyMetrics: result.metrics,
+                childName: profile.name,
+                childAge: profile.age
+            )
+
+            sessionState = .generatingStory
+            generationStartTime = CFAbsoluteTimeGetCurrent()
+            let beat = try await cloudService.requestStory(payload: result.payload)
+            let generationMs = (CFAbsoluteTimeGetCurrent() - generationStartTime) * 1000
+            AppConfig.shared.log("runCloudPipeline: beat[0] received in \(Int(generationMs))ms, beatIndex=\(beat.beatIndex)")
+
+            storyTurnCount = beat.beatIndex + 1
+            recordBeat(
+                StoryBeat(storyText: beat.storyText, question: beat.question, isEnding: beat.isEnding),
+                generationMs: generationMs, ttftMs: 0, localIndex: beat.beatIndex
+            )
+
+            await storyMetricsStore.record(StoryMetricsEvent(
+                generationMode: storyMode.rawValue,
+                timeToFirstTokenMs: 0,
+                totalGenerationMs: generationMs,
+                turnCount: storyTurnCount,
+                guardrailViolations: 0,
+                storyTextLength: beat.storyText.count,
+                timestamp: Date().timeIntervalSince1970
+            ))
 
             sessionState = .sendingAudio
-            await audioService.speak(story.storyText)
-            await audioService.speak(story.question)
+            await audioService.speak(beat.storyText)
+            await audioService.speak(beat.question)
 
             timeline.insert(TimelineEntry(
                 sceneObjects: result.payload.objects,
-                storySnippet: String(story.storyText.prefix(120))
+                storySnippet: String(beat.storyText.prefix(120))
             ), at: 0)
 
-            sessionState = .connected
-            AppConfig.shared.log("runCloudPipeline: complete, timelineEntries=\(timeline.count)")
+            if !beat.isEnding {
+                storyLoopTask = Task { [weak self] in
+                    await self?.continueCloudLoop(basePayload: result.payload, lastBeat: beat)
+                }
+            } else {
+                finalizeCurrentSession()
+                storyTurnCount = 0
+                sessionState = .connected
+            }
         } catch {
             AppConfig.shared.log("runCloudPipeline: error=\(error.localizedDescription)", level: .error)
             setError(error.localizedDescription)
+        }
+    }
+
+    private func continueCloudLoop(basePayload: ScenePayload, lastBeat: StoryResponse) async {
+        var sessionId   = lastBeat.sessionId
+        var history     = [StoryTurn(role: "model", text: lastBeat.storyText)]
+        var currentBeat = lastBeat
+
+        while !Task.isCancelled {
+            sessionState = .listeningForAnswer
+            latestAnswerPiiCount = 0
+            guard let answer = await listenForAnswer(question: currentBeat.question) else {
+                AppConfig.shared.log("continueCloudLoop: answer timeout, ending story")
+                await endStoryGracefully()
+                break
+            }
+            recordAnswer(answer, piiCount: latestAnswerPiiCount)
+            history.append(StoryTurn(role: "user", text: answer))
+
+            sessionState = .generatingStory
+            do {
+                let continuationPayload = ScenePayload(
+                    objects:      basePayload.objects,
+                    scene:        basePayload.scene,
+                    transcript:   answer,
+                    childAge:     basePayload.childAge,
+                    childName:    basePayload.childName,
+                    sessionId:    sessionId,
+                    storyHistory: history
+                )
+
+                generationStartTime = CFAbsoluteTimeGetCurrent()
+                let beat = try await cloudService.requestStory(payload: continuationPayload)
+                let turnMs = (CFAbsoluteTimeGetCurrent() - generationStartTime) * 1000
+
+                history.append(StoryTurn(role: "model", text: beat.storyText))
+                sessionId   = beat.sessionId
+                currentBeat = beat
+                storyTurnCount = beat.beatIndex + 1
+
+                recordBeat(
+                    StoryBeat(storyText: beat.storyText, question: beat.question, isEnding: beat.isEnding),
+                    generationMs: turnMs, ttftMs: 0, localIndex: beat.beatIndex
+                )
+
+                await storyMetricsStore.record(StoryMetricsEvent(
+                    generationMode: storyMode.rawValue,
+                    timeToFirstTokenMs: 0,
+                    totalGenerationMs: turnMs,
+                    turnCount: storyTurnCount,
+                    guardrailViolations: 0,
+                    storyTextLength: beat.storyText.count,
+                    timestamp: Date().timeIntervalSince1970
+                ))
+
+                sessionState = .sendingAudio
+                await audioService.speak(beat.storyText)
+                await audioService.speak(beat.question)
+
+                timeline.insert(TimelineEntry(sceneObjects: [], storySnippet: String(beat.storyText.prefix(120))), at: 0)
+
+                if beat.isEnding { break }
+            } catch {
+                AppConfig.shared.log("continueCloudLoop: error=\(error.localizedDescription)", level: .error)
+                setError(error.localizedDescription)
+                break
+            }
+        }
+        finalizeCurrentSession()
+        storyTurnCount = 0
+        guard case .error = sessionState else {
+            sessionState = .connected
+            return
         }
     }
 
