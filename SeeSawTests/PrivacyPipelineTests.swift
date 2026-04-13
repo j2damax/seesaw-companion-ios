@@ -136,16 +136,15 @@ struct ScenePayloadPrivacyTests {
             scene: ["outdoor"],
             transcript: "hello",
             childAge: 5,
-            sessionId: "test-id",
-            query: "tell me a story",
-            timestamp: "2026-04-04T09:00:00Z"
+            childName: "Aria",
+            sessionId: "test-id"
         )
         let data = try JSONEncoder().encode(payload)
         let dict = try JSONSerialization.jsonObject(with: data) as! [String: Any]
 
         let allowedKeys: Set<String> = [
-            "objects", "scene", "transcript", "childAge",
-            "sessionId", "query", "timestamp"
+            "objects", "scene", "transcript", "child_age",
+            "child_name", "session_id", "story_history"
         ]
         #expect(Set(dict.keys) == allowedKeys)
     }
@@ -154,7 +153,7 @@ struct ScenePayloadPrivacyTests {
         let payload = ScenePayload(
             objects: ["toy"], scene: ["indoor"],
             transcript: "hi", childAge: 4,
-            sessionId: "s", query: nil, timestamp: "t"
+            childName: "Kid", sessionId: "s"
         )
         let data = try JSONEncoder().encode(payload)
         let dict = try JSONSerialization.jsonObject(with: data) as! [String: Any]
@@ -168,7 +167,7 @@ struct ScenePayloadPrivacyTests {
         let payload = ScenePayload(
             objects: ["cat"], scene: ["park"],
             transcript: "meow", childAge: 3,
-            sessionId: "s", query: nil, timestamp: "t"
+            childName: "Kid", sessionId: "s"
         )
         let data = try JSONEncoder().encode(payload)
         let jsonString = String(data: data, encoding: .utf8) ?? ""
@@ -181,7 +180,7 @@ struct ScenePayloadPrivacyTests {
         let payload = ScenePayload(
             objects: ["bear"], scene: ["room"],
             transcript: nil, childAge: 6,
-            sessionId: "s", query: nil, timestamp: "t"
+            childName: "Kid", sessionId: "s"
         )
         let data = try JSONEncoder().encode(payload)
         let jsonString = String(data: data, encoding: .utf8) ?? ""
@@ -364,7 +363,7 @@ struct PipelineResultTests {
         let payload = ScenePayload(
             objects: ["toy"], scene: ["room"],
             transcript: "hello", childAge: 5,
-            sessionId: "s", query: nil, timestamp: "t"
+            childName: "Kid", sessionId: "s"
         )
         let metrics = PrivacyMetricsEvent(
             facesDetected: 1, facesBlurred: 1,
@@ -422,12 +421,12 @@ struct PrivacyComplianceTests {
         // Simulate various pipeline outputs and verify no raw data leaks
         let payloads = [
             ScenePayload(objects: ["ball"], scene: ["outdoor"], transcript: "hi", childAge: 3,
-                         sessionId: "1", query: "story", timestamp: "t"),
+                         childName: "Kid", sessionId: "1"),
             ScenePayload(objects: [], scene: [], transcript: nil, childAge: 8,
-                         sessionId: "2", query: nil, timestamp: "t"),
+                         childName: "Kid", sessionId: "2"),
             ScenePayload(objects: ["toy", "book", "lamp"], scene: ["bedroom", "indoor", "cozy"],
                          transcript: "once upon a time", childAge: 5,
-                         sessionId: "3", query: "adventure", timestamp: "t"),
+                         childName: "Kid", sessionId: "3"),
         ]
 
         for payload in payloads {

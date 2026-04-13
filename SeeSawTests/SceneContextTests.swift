@@ -16,9 +16,8 @@ struct SceneContextTests {
             scene: ["park", "outdoor"],
             transcript: "I see a puppy",
             childAge: 5,
-            sessionId: UUID().uuidString,
-            query: nil,
-            timestamp: ISO8601DateFormatter().string(from: Date())
+            childName: "Test",
+            sessionId: UUID().uuidString
         )
 
         let context = SceneContext(from: payload)
@@ -35,9 +34,8 @@ struct SceneContextTests {
             scene: [],
             transcript: nil,
             childAge: 3,
-            sessionId: UUID().uuidString,
-            query: nil,
-            timestamp: ISO8601DateFormatter().string(from: Date())
+            childName: "Test",
+            sessionId: UUID().uuidString
         )
 
         let context = SceneContext(from: payload)
