@@ -21,6 +21,10 @@ struct SettingsTabView: View {
     @State private var selectedPreferences: Set<String> = Set(UserDefaults.standard.childPreferences)
     @State private var showSignOutConfirmation = false
 
+    // Cloud configuration
+    @State private var cloudURLString: String = UserDefaults.standard.cloudAgentURL.absoluteString
+    @State private var cloudAgentKey: String = UserDefaults.standard.cloudAgentKey
+
     // Gemma 4 download state — polled once on appear and after action
     @State private var gemmaModelState: Gemma4StoryService.ModelState = .notDownloaded
     @State private var downloadProgress: Double = 0
@@ -71,6 +75,22 @@ struct SettingsTabView: View {
             // Gemma 4 model download row — only visible when mode requires it
             if vm.storyMode == .gemma4OnDevice || vm.storyMode == .hybrid {
                 gemmaModelRow
+            }
+
+            // Cloud configuration — only visible when cloud or hybrid mode is selected
+            if vm.storyMode == .cloud || vm.storyMode == .hybrid {
+                TextField("Cloud Agent URL", text: $cloudURLString)
+                    .keyboardType(.URL)
+                    .autocorrectionDisabled()
+                    .textInputAutocapitalization(.never)
+                    .font(.caption)
+                    .onSubmit { saveCloudConfig() }
+
+                SecureField("API Key (X-SeeSaw-Key)", text: $cloudAgentKey)
+                    .autocorrectionDisabled()
+                    .textInputAutocapitalization(.never)
+                    .font(.caption)
+                    .onSubmit { saveCloudConfig() }
             }
         } header: {
             Text("Story Engine")
@@ -226,6 +246,14 @@ struct SettingsTabView: View {
         UserDefaults.standard.childName        = childName
         UserDefaults.standard.childAge         = childAge
         UserDefaults.standard.childPreferences = Array(selectedPreferences)
+        saveCloudConfig()
+    }
+
+    private func saveCloudConfig() {
+        if let url = URL(string: cloudURLString), url.scheme?.hasPrefix("http") == true {
+            UserDefaults.standard.cloudAgentURL = url
+        }
+        UserDefaults.standard.cloudAgentKey = cloudAgentKey
     }
 }
 

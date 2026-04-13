@@ -22,6 +22,11 @@ extension UserDefaults {
         set { set(newValue.absoluteString, forKey: "cloudAgentURL") }
     }
 
+    var cloudAgentKey: String {
+        get { string(forKey: "cloudAgentKey") ?? "" }
+        set { set(newValue, forKey: "cloudAgentKey") }
+    }
+
     // MARK: - Child profile
 
     var childAge: Int {

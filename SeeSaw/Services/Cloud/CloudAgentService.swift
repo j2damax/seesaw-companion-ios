@@ -29,13 +29,20 @@ actor CloudAgentService {
     }
 
     func requestStory(payload: ScenePayload) async throws -> StoryResponse {
-        let endpoint = baseURL.appendingPathComponent("story")
+        let endpoint = baseURL.appendingPathComponent("story/generate")
         var request  = URLRequest(url: endpoint)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        let body: Data = try await MainActor.run { try JSONEncoder().encode(payload) }
+        let (body, apiKey): (Data, String) = try await MainActor.run {
+            let encoded = try JSONEncoder().encode(payload)
+            let key = UserDefaults.standard.cloudAgentKey
+            return (encoded, key)
+        }
+        if !apiKey.isEmpty {
+            request.setValue(apiKey, forHTTPHeaderField: "X-SeeSaw-Key")
+        }
         request.httpBody = body
-        AppConfig.shared.log("requestStory: POST \(endpoint), bodyBytes=\(body.count), objects=\(payload.objects), scene=\(payload.scene)")
+        AppConfig.shared.log("requestStory: POST \(endpoint), bodyBytes=\(body.count), keySet=\(!apiKey.isEmpty), objects=\(payload.objects), scene=\(payload.scene)")
 
         let (data, response) = try await session.data(for: request)
 
