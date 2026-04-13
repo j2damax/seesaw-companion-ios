@@ -250,10 +250,11 @@ struct SettingsTabView: View {
     }
 
     private func saveCloudConfig() {
-        if let url = URL(string: cloudURLString), url.scheme?.hasPrefix("http") == true {
+        if let url = URL(string: cloudURLString.trimmingCharacters(in: .whitespacesAndNewlines)),
+           url.scheme?.hasPrefix("http") == true {
             UserDefaults.standard.cloudAgentURL = url
         }
-        UserDefaults.standard.cloudAgentKey = cloudAgentKey
+        UserDefaults.standard.cloudAgentKey = cloudAgentKey.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 }
 
