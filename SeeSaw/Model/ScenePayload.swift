@@ -9,7 +9,15 @@ struct ScenePayload: Codable, Sendable {
     let scene: [String]
     let transcript: String?
     let childAge: Int
+    let childName: String
     let sessionId: String
-    let query: String?
-    let timestamp: String
+
+    enum CodingKeys: String, CodingKey {
+        case objects
+        case scene
+        case transcript
+        case childAge    = "child_age"
+        case childName   = "child_name"
+        case sessionId   = "session_id"
+    }
 }

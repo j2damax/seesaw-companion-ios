@@ -62,7 +62,7 @@ actor PrivacyPipelineService {
 
     // MARK: - Public entry point
 
-    func process(jpegData: Data, childAge: Int, audioData: Data? = nil) async throws -> PipelineResult {
+    func process(jpegData: Data, childAge: Int, childName: String = "", audioData: Data? = nil) async throws -> PipelineResult {
         let pipelineStart = CFAbsoluteTimeGetCurrent()
         let signpostID = OSSignpostID(log: Self.signpostLog)
         os_signpost(.begin, log: Self.signpostLog, name: "Pipeline", signpostID: signpostID)
@@ -146,9 +146,8 @@ actor PrivacyPipelineService {
             scene: sceneLabels,
             transcript: cleanTranscript,
             childAge: childAge,
-            sessionId: UUID().uuidString,
-            query: cleanTranscript,
-            timestamp: ISO8601DateFormatter().string(from: Date())
+            childName: childName,
+            sessionId: UUID().uuidString
         )
 
         return PipelineResult(payload: payload, metrics: metrics)

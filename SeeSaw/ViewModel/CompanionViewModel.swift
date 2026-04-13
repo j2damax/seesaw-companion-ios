@@ -361,7 +361,8 @@ final class CompanionViewModel {
             sessionState = .processingPrivacy
             let result = try await privacyPipeline.process(
                 jpegData: jpegData,
-                childAge: childAge
+                childAge: childAge,
+                childName: UserDefaults.standard.childName
             )
             await metricsStore.record(result.metrics)
             AppConfig.shared.log("runOnDevicePipeline: privacy done, objects=\(result.payload.objects)")
@@ -648,7 +649,7 @@ final class CompanionViewModel {
 
         do {
             sessionState = .processingPrivacy
-            let result = try await privacyPipeline.process(jpegData: jpegData, childAge: childAge)
+            let result = try await privacyPipeline.process(jpegData: jpegData, childAge: childAge, childName: UserDefaults.standard.childName)
             await metricsStore.record(result.metrics)
 
             let context = SceneContext(from: result.payload)
@@ -779,7 +780,7 @@ final class CompanionViewModel {
         do {
             // Attempt cloud; on any error, fall through to on-device
             sessionState = .processingPrivacy
-            let result = try await privacyPipeline.process(jpegData: jpegData, childAge: childAge)
+            let result = try await privacyPipeline.process(jpegData: jpegData, childAge: childAge, childName: UserDefaults.standard.childName)
             await metricsStore.record(result.metrics)
 
             sessionState = .requestingStory
@@ -809,7 +810,7 @@ final class CompanionViewModel {
         AppConfig.shared.log("runCloudPipeline: start, jpegBytes=\(jpegData.count), childAge=\(childAge)")
         do {
             sessionState = .processingPrivacy
-            let result = try await privacyPipeline.process(jpegData: jpegData, childAge: childAge)
+            let result = try await privacyPipeline.process(jpegData: jpegData, childAge: childAge, childName: UserDefaults.standard.childName)
             await metricsStore.record(result.metrics)
             AppConfig.shared.log("runCloudPipeline: privacy done, objects=\(result.payload.objects), scene=\(result.payload.scene), latency=\(Int(result.metrics.pipelineLatencyMs))ms")
 
