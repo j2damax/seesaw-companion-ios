@@ -61,6 +61,7 @@ final class CompanionViewModel {
     let gemma4StoryService: Gemma4StoryService
     let modelDownloadManager: ModelDownloadManager
     private let storyTimelineStore: StoryTimelineStore
+    private let turnDetector = SemanticTurnDetector()
 
     // MARK: - Active stream tasks (cancelled on disconnect)
 
@@ -452,7 +453,7 @@ final class CompanionViewModel {
         while !Task.isCancelled {
             sessionState = .listeningForAnswer
             latestAnswerPiiCount = 0
-            guard let answer = await listenForAnswer(timeoutSeconds: 15) else {
+            guard let answer = await listenForAnswer(question: pendingBeat?.question ?? "") else {
                 AppConfig.shared.log("continueStoryLoop: answer timeout, ending story")
                 await endStoryGracefully()
                 break
@@ -521,7 +522,7 @@ final class CompanionViewModel {
         }
     }
 
-    private func listenForAnswer(timeoutSeconds: Int) async -> String? {
+    private func listenForAnswer(timeoutSeconds: Int = 8, question: String) async -> String? {
         do {
             try await audioCaptureService.startCapture()
             let bufferStream = await audioCaptureService.audioBufferStream
@@ -530,6 +531,7 @@ final class CompanionViewModel {
             )
 
             let result: String? = await withTaskGroup(of: String?.self) { group in
+                // Task 1: isFinal path (preserved from original — fires when STT is confident)
                 group.addTask { [weak self] in
                     for await result in transcriptionStream {
                         if Task.isCancelled { return nil }
@@ -542,11 +544,56 @@ final class CompanionViewModel {
                     }
                     return nil
                 }
+                // Task 2: hard cap (Layer 3)
                 group.addTask { [weak self] in
                     try? await Task.sleep(for: .seconds(timeoutSeconds))
+                    AppConfig.shared.log("listenForAnswer: hard cap reached (\(timeoutSeconds)s)")
                     // On timeout return whatever partial transcript was accumulated,
                     // so a short or interrupted utterance still drives the story forward.
                     return await MainActor.run { self?.currentTranscript }
+                }
+                // Task 3: semantic watchdog (Layers 1 & 2)
+                group.addTask { [weak self] in
+                    guard let self else { return nil }
+                    var lastSeen = ""
+                    var lastChangeTime = CFAbsoluteTimeGetCurrent()
+                    var heuristicFired = false
+
+                    while !Task.isCancelled {
+                        try? await Task.sleep(for: .milliseconds(200))
+                        let current = await MainActor.run { self.currentTranscript ?? "" }
+
+                        if current != lastSeen {
+                            lastSeen = current
+                            lastChangeTime = CFAbsoluteTimeGetCurrent()
+                            heuristicFired = false
+                            continue
+                        }
+                        guard !lastSeen.isEmpty else { continue }
+
+                        let silence = CFAbsoluteTimeGetCurrent() - lastChangeTime
+                        guard silence >= SemanticTurnDetector.silenceThresholdSeconds else { continue }
+
+                        // Layer 1: heuristic trailing-phrase check
+                        let incomplete = await self.turnDetector.isIncomplete(transcript: lastSeen)
+                        if !heuristicFired && incomplete {
+                            AppConfig.shared.log("listenForAnswer: Layer 1 heuristic extend, trailing phrase detected")
+                            heuristicFired = true
+                            lastChangeTime = CFAbsoluteTimeGetCurrent()
+                            continue
+                        }
+
+                        // Layer 2: Apple FM semantic completion check
+                        AppConfig.shared.log("listenForAnswer: Layer 2 semantic check starting")
+                        let done = await self.turnDetector.semanticCheck(transcript: lastSeen, question: question)
+                        if done {
+                            AppConfig.shared.log("listenForAnswer: Layer 2 complete → returning transcript")
+                            return lastSeen
+                        }
+                        // Extend silence window by semanticExtensionSeconds (implicit — reset clock)
+                        lastChangeTime = CFAbsoluteTimeGetCurrent()
+                    }
+                    return nil
                 }
                 let first = await group.next() ?? nil
                 group.cancelAll()
@@ -557,7 +604,8 @@ final class CompanionViewModel {
             _ = await speechRecognitionService.stopTranscription()
             let answerLen = result?.count ?? 0
             AppConfig.shared.log("listenForAnswer: answer='\(result ?? "nil")', length=\(answerLen)")
-            return result
+            // Convert empty-string result to nil so callers correctly invoke endStoryGracefully()
+            return result?.isEmpty == true ? nil : result
         } catch {
             AppConfig.shared.log("listenForAnswer: error=\(error.localizedDescription)", level: .error)
             return nil
@@ -675,7 +723,7 @@ final class CompanionViewModel {
         while !Task.isCancelled {
             sessionState = .listeningForAnswer
             latestAnswerPiiCount = 0
-            guard let answer = await listenForAnswer(timeoutSeconds: 15) else {
+            guard let answer = await listenForAnswer(question: pendingBeat?.question ?? "") else {
                 await endStoryGracefully()
                 break
             }
