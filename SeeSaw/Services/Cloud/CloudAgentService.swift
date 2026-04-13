@@ -18,7 +18,10 @@ actor CloudAgentService {
     init(baseURL: URL) {
         self.baseURL = baseURL
         let config = URLSessionConfiguration.default
-        config.timeoutIntervalForRequest = 15
+        // 75s covers Cloud Run cold starts (~30s) + Gemini generation (~10s) with margin.
+        // Cloud Run service timeout is 60s; iOS timeout is set higher so the server
+        // error (504) surfaces rather than a client-side timeout.
+        config.timeoutIntervalForRequest = 75
         self.session = URLSession(configuration: config)
     }
 
