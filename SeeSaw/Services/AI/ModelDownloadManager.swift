@@ -44,7 +44,7 @@ actor ModelDownloadManager: NSObject {
     // nonisolated so it can be accessed from URLSession delegate callbacks
     nonisolated let modelDestinationURL: URL = {
         FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
-            .appendingPathComponent("gemma4-1b-it-q4_k_m.gguf")
+            .appendingPathComponent("gemma2-2b-it-gpu-int8.bin")
     }()
 
     // MARK: - Init
@@ -87,22 +87,22 @@ actor ModelDownloadManager: NSObject {
                 return
             }
 
-            // Resolve download URL from UserDefaults or use default GCS path.
-            guard let sourceURL = self.resolvedSourceURL() else {
-                let error = ModelDownloadError.invalidURL
-                Task { await self.storyService.updateModelState(.failed(reason: error.localizedDescription)) }
-                continuation.yield(.failed(error))
-                continuation.finish()
-                return
-            }
-
+            // URL resolution is async (calls /model/latest), so run inside a Task.
             Task {
                 await self.storyService.updateModelState(.downloading(progress: 0))
-            }
 
-            let task = self.backgroundSession.downloadTask(with: sourceURL)
-            self.downloadTask = task
-            task.resume()
+                guard let sourceURL = await self.resolvedSourceURL() else {
+                    let error = ModelDownloadError.invalidURL
+                    await self.storyService.updateModelState(.failed(reason: error.localizedDescription))
+                    continuation.yield(.failed(error))
+                    continuation.finish()
+                    return
+                }
+
+                let task = self.backgroundSession.downloadTask(with: sourceURL)
+                self.downloadTask = task
+                task.resume()
+            }
 
             continuation.onTermination = { [weak self] _ in
                 Task { await self?.cancelDownload() }
@@ -128,14 +128,53 @@ actor ModelDownloadManager: NSObject {
 
     // MARK: - Private
 
-    private func resolvedSourceURL() -> URL? {
-        // UserDefaults override (for testing or model updates without App Store release)
-        if let custom = UserDefaults.standard.gemma4ModelURL,
+    /// Resolves the GGUF download URL.
+    ///
+    /// Strategy (in order):
+    ///   1. Call GET /model/latest with the stored API key → returns a 1-hour signed GCS URL.
+    ///      This is the standard path: the signed URL is required because the GCS bucket is private.
+    ///   2. If the cloud agent is unreachable, fall back to the UserDefaults override
+    ///      (useful for development or forcing a specific model version).
+    private func resolvedSourceURL() async -> URL? {
+        let (baseURL, apiKey): (URL?, String) = await MainActor.run {
+            (UserDefaults.standard.cloudAgentURL, UserDefaults.standard.cloudAgentKey)
+        }
+
+        // ── Path 1: signed URL from /model/latest (skipped when no URL configured) ──
+        if let baseURL {
+            let metaURL = baseURL.appendingPathComponent("model/latest")
+            var request = URLRequest(url: metaURL, timeoutInterval: 10)
+            if !apiKey.isEmpty {
+                request.setValue(apiKey, forHTTPHeaderField: "X-SeeSaw-Key")
+            }
+            if let (data, _) = try? await URLSession.shared.data(for: request),
+               let json = try? JSONDecoder().decode(ModelLatestResponse.self, from: data) {
+                AppConfig.shared.log("ModelDownloadManager: resolved signed URL from /model/latest, size=\(json.sizeBytes)")
+                return URL(string: json.downloadURL)
+            }
+        }
+
+        // ── Path 2: UserDefaults override (dev/testing only) ─────────────────
+        if let custom = await MainActor.run(body: { UserDefaults.standard.gemma4ModelURL }),
            let url = URL(string: custom) {
+            AppConfig.shared.log("ModelDownloadManager: /model/latest unreachable — using UserDefaults override", level: .warning)
             return url
         }
-        // Default: Google Cloud Storage public bucket
-        return URL(string: "https://storage.googleapis.com/seesaw-models/gemma4-1b-it-q4_k_m.gguf")
+
+        AppConfig.shared.log("ModelDownloadManager: no valid download URL resolved", level: .error)
+        return nil
+    }
+
+    // Decodable mirror of GET /model/latest response (app/routers/model.py)
+    private struct ModelLatestResponse: Decodable {
+        let downloadURL:  String
+        let sizeBytes:    Int
+        let modelVersion: String
+        enum CodingKeys: String, CodingKey {
+            case downloadURL  = "download_url"
+            case sizeBytes    = "size_bytes"
+            case modelVersion = "model_version"
+        }
     }
 
     // MARK: - Actor-isolated event helpers (called from nonisolated delegate)
@@ -221,7 +260,7 @@ enum ModelDownloadError: LocalizedError {
 
 // MARK: - UserDefaults key
 
-private extension UserDefaults {
+extension UserDefaults {
     var gemma4ModelURL: String? {
         get { string(forKey: "gemma4ModelURL") }
         set { set(newValue, forKey: "gemma4ModelURL") }

@@ -12,26 +12,37 @@ This is an MSc research prototype. The codebase prioritises instrumentation for 
 
 ## Common Commands
 
+**Important:** This project uses CocoaPods (MediaPipeTasksGenAI). Always open and build from `SeeSaw.xcworkspace`, never `SeeSaw.xcodeproj`. After any `pod install`, reopen the workspace.
+
 ```bash
-# Build (Debug)
+# Install / update pods (run after cloning or changing Podfile)
+pod install
+
+# Build (Debug) — iOS 26.2 simulator (iPhone 17)
 xcodebuild build \
+  -workspace SeeSaw.xcworkspace \
   -scheme SeeSaw \
-  -destination 'platform=iOS Simulator,name=iPhone 16' \
+  -destination 'platform=iOS Simulator,arch=arm64,id=E33D4588-A415-495B-8BEB-91B0AC534511' \
   -configuration Debug
 
 # Run all tests with coverage
 xcodebuild test \
+  -workspace SeeSaw.xcworkspace \
   -scheme SeeSaw \
-  -destination 'platform=iOS Simulator,name=iPhone 16' \
+  -destination 'platform=iOS Simulator,arch=arm64,id=E33D4588-A415-495B-8BEB-91B0AC534511' \
   -testPlan SeeSaw \
   -enableCodeCoverage YES \
   -resultBundlePath test-results/run.xcresult
 
 # Run a single test class
 xcodebuild test \
+  -workspace SeeSaw.xcworkspace \
   -scheme SeeSaw \
-  -destination 'platform=iOS Simulator,name=iPhone 16' \
+  -destination 'platform=iOS Simulator,arch=arm64,id=E33D4588-A415-495B-8BEB-91B0AC534511' \
   -only-testing:SeeSawTests/PrivacyPipelineTests
+
+# List available simulators (if destination ID needs updating after Xcode upgrade)
+xcrun simctl list devices available | grep -E "iPhone|iPad"
 
 # Export coverage report from last xcresult
 ./export_test_results.sh
@@ -66,20 +77,24 @@ Stage 6: PII scrub         → PIIScrubber regex patterns
 ### Story Generation (`OnDeviceStoryService.swift`)
 
 Uses Apple Foundation Models (`LanguageModelSession`). Key design decisions:
-- Output type `StoryBeat` is `@Generable` — Foundation Models populates it in a type-safe, constrained way
+- Output type `StoryBeat` is `@Generable` — Foundation Models populates it in a type-safe, constrained way (3 fields: `storyText`, `question`, `isEnding`)
 - Max 6 turns per session; context window exhaustion triggers summarise-and-restart
 - Guardrail violations retry with softened prompts (max 2 attempts), then fall back to `StoryBeat.safeFallback`
-- Three tools registered: `AdjustDifficultyTool`, `BookmarkMomentTool`, `SwitchSceneTool`
+- `BookmarkMomentTool` registered in initial session (tools deregistered in restart session to minimise context overhead)
+- `AdjustDifficultyTool` and `SwitchSceneTool` defined but disabled (schema overhead causes context overflow in long sessions)
 
 ### Story Generation Modes
 
 ```swift
-enum StoryGenerationMode { case onDevice, cloud, hybrid }
+enum StoryGenerationMode { case onDevice, gemma4OnDevice, cloud, hybrid }
 ```
 
-- **onDevice**: Apple FM only (zero network, zero privacy risk)
+- **onDevice**: Apple Foundation Models only (zero network, zero privacy risk)
+- **gemma4OnDevice**: MediaPipe LlmInference with Gemma 3 1B Q4_K_M GGUF (zero network, zero privacy risk)
 - **cloud**: POST `ScenePayload` to Cloud Run endpoint (`cloudAgentURL` in UserDefaults)
 - **hybrid**: on-device first, cloud enhancement if network available
+
+`gemma4OnDevice` requires the GGUF model file to be downloaded via `ModelDownloadManager` before use. The model lands at `Documents/seesaw-gemma3-1b-q4km.gguf`.
 
 ### Concurrency Model
 
@@ -124,9 +139,10 @@ All storage is `UserDefaults` (PoC scope). Typed accessors in `UserDefaults+Sett
 
 ## Testing
 
-7 unit test files in `SeeSawTests/`:
-- `PrivacyPipelineTests` — PII scrubbing correctness, metrics invariants
+Unit test files in `SeeSawTests/` (~130 tests, 0 failures):
+- `PrivacyPipelineTests` — PII scrubbing correctness, metrics invariants, privacy compliance (100-run invariant)
 - `OnDeviceStoryServiceTests` — story generation, error recovery, fallback paths
+- `Gemma4StoryServiceTests` — `Gemma4StoryService` state machine, `parseResponse` JSON and heuristic paths
 - `SceneContextTests` — payload bridging
 - `StoryBeatTests` — struct invariants and static fallbacks
 - `StoryToolsTests` — tool behaviour and UserDefaults side-effects
@@ -134,9 +150,13 @@ All storage is `UserDefaults` (PoC scope). Typed accessors in `UserDefaults+Sett
 
 `SeeSaw.xctestplan` has code coverage enabled and parallel execution enabled.
 
+Tests run without Apple Intelligence hardware or MediaPipe via protocol-driven mocks (`MockStoryService`, `MockAudioService`) and `#if canImport` guards.
+
 ## Key Reference Documents
 
-- `SeeSaw-Project-Master.md` — MSc research roadmap, research questions, benchmark design, sprint plan, dissertation chapter mapping
-- `CODEBASE_BLUEPRINT.md` — auto-generated architecture diagrams (Mermaid), data flow, class diagrams, full YOLO class list
-- `Apple Foundation Models — Implementation Plan.md` — `@Generable`/`@Guide` macro details, tool protocol, context window management
-- `Privacy Pipeline.md` — per-stage implementation details and metrics
+- `Pipeline.md` — Full implementation reference: all 4 modes, VAD 3-layer detail, sequence diagrams, configuration constants
+- `SeeSaw-Project-Master.md` — Research context, thesis statement, research questions, novel contributions, dissertation structure
+- `CODEBASE_BLUEPRINT.md` — Architecture diagrams (Mermaid), class relationships, full YOLO 44-class taxonomy
+- `Observations.md` — Empirical research log: per-run latency data, story quality notes, thesis evidence
+- `TestCoverage.md` — Latest test coverage report
+- `README.md` — Project overview and architecture summary

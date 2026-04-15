@@ -47,6 +47,11 @@ final class AppDependencyContainer {
     // MARK: - Init
 
     init() {
+        // Seed UserDefaults from AppConfig constants on first launch.
+        // Only writes when the stored value is nil/empty so runtime overrides
+        // made via the Settings UI are preserved across relaunches.
+        AppDependencyContainer.seedDefaultsFromConfig()
+
         bleService           = BLEService()
         localDeviceAccessory = LocalDeviceAccessory()
         metaGlassAccessory   = ExternalSDKAccessory(wearableType: .metaGlass)
@@ -71,6 +76,34 @@ final class AppDependencyContainer {
         modelDownloadManager     = ModelDownloadManager(storyService: gemma4StoryService)
         storyMetricsStore        = StoryMetricsStore()
         storyTimelineStore       = StoryTimelineStore()
+
+        // Restore Gemma model state from the filesystem on every launch.
+        // Documents/ is preserved across Xcode debug installs on physical devices,
+        // but Gemma4StoryService.modelState is in-memory only. Without this call
+        // the service stays .notDownloaded until the user taps "Download" in Settings.
+        let _manager = modelDownloadManager
+        Task { await _manager.checkInstalledModel() }
+    }
+
+    // MARK: - Config seeding
+
+    private static func seedDefaultsFromConfig() {
+        let defaults = UserDefaults.standard
+        if defaults.cloudAgentURL == nil,
+           !AppConfig.cloudAgentBaseURL.isEmpty,
+           AppConfig.cloudAgentBaseURL != "https://your-cloud-run-url",
+           let url = URL(string: AppConfig.cloudAgentBaseURL) {
+            defaults.cloudAgentURL = url
+        }
+        if defaults.cloudAgentKey.isEmpty, !AppConfig.cloudAgentAPIKey.isEmpty {
+            defaults.cloudAgentKey = AppConfig.cloudAgentAPIKey
+        }
+        // Always overwrite so that changing AppConfig.gemma4DirectDownloadURL
+        // (e.g. switching from q4km → q8_0) takes effect on the next launch
+        // without needing to delete the app.
+        if !AppConfig.gemma4DirectDownloadURL.isEmpty {
+            defaults.gemma4ModelURL = AppConfig.gemma4DirectDownloadURL
+        }
     }
 
     // MARK: - Factory methods

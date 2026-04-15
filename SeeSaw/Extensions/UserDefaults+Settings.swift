@@ -7,19 +7,16 @@ extension UserDefaults {
 
     // MARK: - Cloud agent
 
-    var cloudAgentURL: URL {
+    /// Returns nil when no cloud agent URL has been configured (key absent or blank).
+    /// Callers should treat nil as "cloud unavailable" rather than making a DNS request
+    /// to a placeholder hostname.
+    var cloudAgentURL: URL? {
         get {
-            let fallbackString = "https://your-cloud-run-url"
-            let raw = string(forKey: "cloudAgentURL") ?? fallbackString
-            if let url = URL(string: raw) { return url }
-            // Stored value is malformed — fall back to the hardcoded default.
-            // This is safe: fallbackString is a valid URL constant.
-            guard let fallback = URL(string: fallbackString) else {
-                return URL(fileURLWithPath: "/")  // unreachable in practice
-            }
-            return fallback
+            guard let raw = string(forKey: "cloudAgentURL"), !raw.isEmpty,
+                  raw != "https://your-cloud-run-url" else { return nil }
+            return URL(string: raw)
         }
-        set { set(newValue.absoluteString, forKey: "cloudAgentURL") }
+        set { set(newValue?.absoluteString, forKey: "cloudAgentURL") }
     }
 
     var cloudAgentKey: String {

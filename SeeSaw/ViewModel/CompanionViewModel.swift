@@ -523,7 +523,14 @@ final class CompanionViewModel {
         }
     }
 
-    private func listenForAnswer(timeoutSeconds: Int = 8, question: String) async -> String? {
+    /// - Parameters:
+    ///   - skipSemanticLayer: When `true`, Layer 2 (Apple FM semantic check) is skipped entirely.
+    ///     Pass `true` from Gemma pipelines — Apple FM is unavailable in that context and calling it
+    ///     causes an ~8-second post-hard-cap hang while the Foundation Models cancellation surfaces.
+    private func listenForAnswer(timeoutSeconds: Int = 8, question: String, skipSemanticLayer: Bool = false) async -> String? {
+        // Clear stale transcript from the previous turn so the hard-cap fallback
+        // doesn't return an old answer when the child is silent this turn.
+        currentTranscript = nil
         do {
             try await audioCaptureService.startCapture()
             let bufferStream = await audioCaptureService.audioBufferStream
@@ -585,6 +592,12 @@ final class CompanionViewModel {
                         }
 
                         // Layer 2: Apple FM semantic completion check
+                        // Skipped in Gemma mode — Apple FM is not available there and the async
+                        // cancellation takes ~8s to surface, causing a post-hard-cap freeze.
+                        if skipSemanticLayer {
+                            AppConfig.shared.log("listenForAnswer: Layer 2 skipped (Gemma mode) — returning transcript after silence")
+                            return lastSeen
+                        }
                         AppConfig.shared.log("listenForAnswer: Layer 2 semantic check starting")
                         let done = await self.turnDetector.semanticCheck(transcript: lastSeen, question: question)
                         if done {
@@ -672,10 +685,14 @@ final class CompanionViewModel {
             ttftMs = 0
             streamingStoryText = ""
 
+            AppConfig.shared.log("runGemma4Pipeline: privacy done, objects=\(result.payload.objects), scene=\(result.payload.scene)")
             let beat = try await gemma4StoryService.startStory(context: context, profile: profile)
             streamingStoryText = ""
             let generationMs = (CFAbsoluteTimeGetCurrent() - generationStartTime) * 1000
-            AppConfig.shared.log("runGemma4Pipeline: beat[0] generated in \(Int(generationMs))ms")
+            AppConfig.shared.log("runGemma4Pipeline: beat[0] generated in \(Int(generationMs))ms, ttft=\(Int(ttftMs))ms")
+            AppConfig.shared.log("beat[0] storyText: \(beat.storyText)")
+            AppConfig.shared.log("beat[0] question: \(beat.question)")
+            AppConfig.shared.log("beat[0] isEnding: \(beat.isEnding)")
             storyTurnCount = await gemma4StoryService.currentTurnCount
             recordBeat(beat, generationMs: generationMs, ttftMs: ttftMs, localIndex: 0)
 
@@ -721,14 +738,28 @@ final class CompanionViewModel {
     }
 
     private func continueGemma4Loop() async {
+        let sessionStart = CFAbsoluteTimeGetCurrent()
+        var loopIteration = 0
         while !Task.isCancelled {
+            loopIteration += 1
+            let sessionElapsed = Int((CFAbsoluteTimeGetCurrent() - sessionStart) * 1000)
+            AppConfig.shared.log("continueGemma4Loop: iteration=\(loopIteration), sessionElapsed=\(sessionElapsed)ms")
+
             sessionState = .listeningForAnswer
             latestAnswerPiiCount = 0
-            guard let answer = await listenForAnswer(question: pendingBeat?.question ?? "") else {
+            AppConfig.shared.log("continueGemma4Loop: listening (skipSemanticLayer=true)")
+            let listenStart = CFAbsoluteTimeGetCurrent()
+            // skipSemanticLayer=true: Layer 2 Apple FM check is skipped to avoid ~8s hang
+            // caused by FoundationModels cancellation delay after the hard cap fires.
+            guard let answer = await listenForAnswer(question: pendingBeat?.question ?? "", skipSemanticLayer: true) else {
+                let listenMs = Int((CFAbsoluteTimeGetCurrent() - listenStart) * 1000)
+                AppConfig.shared.log("continueGemma4Loop: no answer after \(listenMs)ms, ending story")
                 await endStoryGracefully()
                 break
             }
+            let listenMs = Int((CFAbsoluteTimeGetCurrent() - listenStart) * 1000)
             recordAnswer(answer, piiCount: latestAnswerPiiCount)
+            AppConfig.shared.log("continueGemma4Loop: answer='\(answer)', listenTime=\(listenMs)ms, piiCount=\(latestAnswerPiiCount)")
 
             sessionState = .generatingStory
             do {
@@ -738,8 +769,13 @@ final class CompanionViewModel {
                 let beat = try await gemma4StoryService.continueTurn(childAnswer: answer)
                 streamingStoryText = ""
                 let turnMs = (CFAbsoluteTimeGetCurrent() - generationStartTime) * 1000
+                let sessionElapsedNow = Int((CFAbsoluteTimeGetCurrent() - sessionStart) * 1000)
                 storyTurnCount = await gemma4StoryService.currentTurnCount
                 recordBeat(beat, generationMs: turnMs, ttftMs: ttftMs, localIndex: storyTurnCount)
+                AppConfig.shared.log("continueGemma4Loop: beat[\(storyTurnCount)] generated in \(Int(turnMs))ms, sessionElapsed=\(sessionElapsedNow)ms")
+                AppConfig.shared.log("beat[\(storyTurnCount)] storyText: \(beat.storyText)")
+                AppConfig.shared.log("beat[\(storyTurnCount)] question: \(beat.question)")
+                AppConfig.shared.log("beat[\(storyTurnCount)] isEnding: \(beat.isEnding)")
 
                 await storyMetricsStore.record(StoryMetricsEvent(
                     generationMode: storyMode.rawValue,
@@ -782,9 +818,15 @@ final class CompanionViewModel {
             sessionState = .processingPrivacy
             let result = try await privacyPipeline.process(jpegData: jpegData, childAge: childAge, childName: UserDefaults.standard.childName)
             await metricsStore.record(result.metrics)
+            AppConfig.shared.log("runHybridPipeline: privacy done, objects=\(result.payload.objects), scene=\(result.payload.scene)")
 
             sessionState = .requestingStory
             let story = try await cloudService.requestStory(payload: result.payload)
+
+            AppConfig.shared.log("runHybridPipeline: cloud succeeded")
+            AppConfig.shared.log("beat[0] storyText: \(story.storyText)")
+            AppConfig.shared.log("beat[0] question: \(story.question)")
+            AppConfig.shared.log("beat[0] isEnding: \(story.isEnding)")
 
             sessionState = .sendingAudio
             await audioService.speak(story.storyText)
@@ -795,7 +837,6 @@ final class CompanionViewModel {
                 storySnippet: String(story.storyText.prefix(120))
             ), at: 0)
             sessionState = .connected
-            AppConfig.shared.log("runHybridPipeline: cloud succeeded")
         } catch {
             AppConfig.shared.log("runHybridPipeline: cloud failed (\(error.localizedDescription)), falling back to Gemma 4", level: .warning)
             await runGemma4Pipeline(jpegData: jpegData)
@@ -835,6 +876,9 @@ final class CompanionViewModel {
             let beat = try await cloudService.requestStory(payload: result.payload)
             let generationMs = (CFAbsoluteTimeGetCurrent() - generationStartTime) * 1000
             AppConfig.shared.log("runCloudPipeline: beat[0] received in \(Int(generationMs))ms, beatIndex=\(beat.beatIndex)")
+            AppConfig.shared.log("beat[0] storyText: \(beat.storyText)")
+            AppConfig.shared.log("beat[0] question: \(beat.question)")
+            AppConfig.shared.log("beat[0] isEnding: \(beat.isEnding)")
 
             storyTurnCount = beat.beatIndex + 1
             recordBeat(
@@ -912,6 +956,11 @@ final class CompanionViewModel {
                 sessionId   = beat.sessionId
                 currentBeat = beat
                 storyTurnCount = beat.beatIndex + 1
+
+                AppConfig.shared.log("continueCloudLoop: answer='\(answer)'")
+                AppConfig.shared.log("beat[\(beat.beatIndex)] storyText: \(beat.storyText)")
+                AppConfig.shared.log("beat[\(beat.beatIndex)] question: \(beat.question)")
+                AppConfig.shared.log("beat[\(beat.beatIndex)] isEnding: \(beat.isEnding)")
 
                 recordBeat(
                     StoryBeat(storyText: beat.storyText, question: beat.question, isEnding: beat.isEnding),

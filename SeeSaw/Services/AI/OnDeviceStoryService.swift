@@ -357,7 +357,10 @@ actor OnDeviceStoryService: StoryGenerating {
 
     private let contentRules = """
         Generate short story segments (2-3 sentences, max 30 words).
-        End every beat with one short question (max 10 words).
+        End every beat with one open question directed at the child using "you" (max 10 words). Example: "What do you think happens next?"
+        Address the child as "you" in story sentences — never use their name as subject of an action.
+        Use their name only for praise or greetings: "Great idea, [name]!" or "Well done, [name]!"
+        Speak as a warm companion ("I wonder...", "Let's see!"), not as a narrator telling a story about someone.
         Never mention technology, devices, or AI.
         Never include violence or inappropriate content.
         """
@@ -381,11 +384,10 @@ actor OnDeviceStoryService: StoryGenerating {
         default: difficultyGuidance = "Use age-appropriate vocabulary and sentence length for ages 6–8."
         }
 
-        let name = profile.name.isEmpty ? "your friend" : profile.name
+        let name = profile.name.isEmpty ? "the child" : profile.name
         return """
-        You are Whisper, a warm storytelling companion for \(name), \
-        aged \(profile.age).
-        Always address \(name) by name in questions — never say "you" or "the child".
+        You are Whisper, a warm storytelling companion speaking directly with \(name), aged \(profile.age).
+        You are talking *with* \(name), not telling a story *about* them.
         \(contentRules)
         Use detected objects: \(objects).
         Scene: \(scenes).
@@ -419,7 +421,9 @@ actor OnDeviceStoryService: StoryGenerating {
             prompt = "The child answered: \"\(trimmed)\". Continue the story"
         }
         if isFinalTurn {
-            prompt += " and bring it to a warm, satisfying conclusion"
+            // Explicit override — model must close the story here.
+            // "bring it to a conclusion" was too weak; model kept asking questions.
+            prompt = "The child answered: \"\(trimmed)\". THIS IS THE FINAL BEAT. Write a warm, satisfying 2-sentence ending that closes the adventure. Set isEnding to true."
         }
         prompt += "."
         return prompt

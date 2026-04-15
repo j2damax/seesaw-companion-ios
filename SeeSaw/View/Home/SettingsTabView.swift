@@ -22,7 +22,7 @@ struct SettingsTabView: View {
     @State private var showSignOutConfirmation = false
 
     // Cloud configuration
-    @State private var cloudURLString: String = UserDefaults.standard.cloudAgentURL.absoluteString
+    @State private var cloudURLString: String = UserDefaults.standard.cloudAgentURL?.absoluteString ?? ""
     @State private var cloudAgentKey: String = UserDefaults.standard.cloudAgentKey
 
     // Gemma 4 download state — polled once on appear and after action
@@ -250,8 +250,10 @@ struct SettingsTabView: View {
     }
 
     private func saveCloudConfig() {
-        if let url = URL(string: cloudURLString.trimmingCharacters(in: .whitespacesAndNewlines)),
-           url.scheme?.hasPrefix("http") == true {
+        let trimmed = cloudURLString.trimmingCharacters(in: .whitespacesAndNewlines)
+        if let url = URL(string: trimmed),
+           (url.scheme == "http" || url.scheme == "https"),
+           !(url.host?.isEmpty ?? true) {
             UserDefaults.standard.cloudAgentURL = url
         }
         UserDefaults.standard.cloudAgentKey = cloudAgentKey.trimmingCharacters(in: .whitespacesAndNewlines)
