@@ -14,6 +14,54 @@ import Foundation
 
 @testable import SeeSaw
 
+// MARK: - AudioPlaying protocol & MockAudioService (file scope — cannot be nested in a struct)
+
+protocol AudioPlaying: Actor {
+    func speak(_ text: String) async
+    func generateAndEncodeAudio(from text: String) async throws -> Data
+}
+
+actor MockAudioService: AudioPlaying {
+
+    private(set) var speakCallCount = 0
+    private(set) var spokenTexts: [String] = []
+    private(set) var encodeCallCount = 0
+    var dataToReturn = Data()
+    var shouldThrow = false
+
+    func speak(_ text: String) async {
+        speakCallCount += 1
+        spokenTexts.append(text)
+    }
+
+    func generateAndEncodeAudio(from text: String) async throws -> Data {
+        if shouldThrow { throw AudioError.synthesisFailed }
+        encodeCallCount += 1
+        return dataToReturn
+    }
+}
+
+// MARK: - MockAudioService helpers (file scope)
+
+extension MockAudioService {
+    func setData(_ data: Data) { dataToReturn = data }
+    func setShouldThrow(_ value: Bool) { shouldThrow = value }
+    func reset() { speakCallCount = 0; spokenTexts = []; encodeCallCount = 0; shouldThrow = false }
+}
+
+
+// MARK: - All audio service suites
+
+// All audio service suites are nested under a single @Suite(.serialized) parent.
+// AVSpeechSynthesisVoice, AVSpeechUtterance, and AVAudioSession all use internal
+// dispatch_sync-based initialization. Concurrent calls from multiple Swift Tasks
+// trigger "unsafeForcedSync from Swift Concurrent context" and then EXC_GUARD
+// Mach port violations from AVFAudio.IOThread. Serializing all audio tests
+// prevents this without affecting any test's logic or assertions.
+
+@Suite("Audio Service", .serialized)
+struct AudioServiceTests {
+
 // MARK: - 1. Voice settings
 
 struct AudioServiceVoiceSettingsTests {
@@ -228,31 +276,6 @@ struct AudioErrorTests {
 
 // MARK: - 6. MockAudioService for ViewModel-level tests
 
-protocol AudioPlaying: Actor {
-    func speak(_ text: String) async
-    func generateAndEncodeAudio(from text: String) async throws -> Data
-}
-
-actor MockAudioService: AudioPlaying {
-
-    private(set) var speakCallCount = 0
-    private(set) var spokenTexts: [String] = []
-    private(set) var encodeCallCount = 0
-    var dataToReturn = Data()
-    var shouldThrow = false
-
-    func speak(_ text: String) async {
-        speakCallCount += 1
-        spokenTexts.append(text)
-    }
-
-    func generateAndEncodeAudio(from text: String) async throws -> Data {
-        if shouldThrow { throw AudioError.synthesisFailed }
-        encodeCallCount += 1
-        return dataToReturn
-    }
-}
-
 struct MockAudioServiceTests {
 
     @Test func speakRecordsCallCount() async {
@@ -314,20 +337,4 @@ struct MockAudioServiceTests {
     }
 }
 
-// MARK: - MockAudioService helpers
-
-extension MockAudioService {
-    func setData(_ data: Data) { dataToReturn = data }
-    func setShouldThrow(_ value: Bool) { shouldThrow = value }
-    func reset() { speakCallCount = 0; spokenTexts = []; encodeCallCount = 0; shouldThrow = false }
-}
-
-// MARK: - AudioError equatability
-
-extension AudioError: Equatable {
-    public static func == (lhs: AudioError, rhs: AudioError) -> Bool {
-        switch (lhs, rhs) {
-        case (.synthesisFailed, .synthesisFailed): return true
-        }
-    }
-}
+} // end AudioServiceTests
