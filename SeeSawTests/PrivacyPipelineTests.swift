@@ -197,6 +197,7 @@ struct PrivacyMetricsInvariantTests {
 
     @Test func rawDataTransmittedAlwaysFalse() {
         let metrics = PrivacyMetricsEvent(
+            generationMode: "onDevice",
             facesDetected: 3, facesBlurred: 3,
             objectsDetected: 5, tokensScrubbedFromTranscript: 2,
             rawDataTransmitted: false,
@@ -212,6 +213,7 @@ struct PrivacyMetricsInvariantTests {
     @Test func facesBlurredEqualsFacesDetected() {
         let faceCount = 5
         let metrics = PrivacyMetricsEvent(
+            generationMode: "onDevice",
             facesDetected: faceCount, facesBlurred: faceCount,
             objectsDetected: 0, tokensScrubbedFromTranscript: 0,
             rawDataTransmitted: false,
@@ -227,6 +229,7 @@ struct PrivacyMetricsInvariantTests {
 
     @Test func metricsAreCodable() throws {
         let original = PrivacyMetricsEvent(
+            generationMode: "cloud",
             facesDetected: 2, facesBlurred: 2,
             objectsDetected: 4, tokensScrubbedFromTranscript: 1,
             rawDataTransmitted: false,
@@ -250,8 +253,9 @@ struct PrivacyMetricsInvariantTests {
 
 struct PrivacyMetricsStoreTests {
 
-    private func makeEvent(latency: Double = 500, faces: Int = 0, tokens: Int = 0) -> PrivacyMetricsEvent {
+    private func makeEvent(latency: Double = 500, faces: Int = 0, tokens: Int = 0, mode: String = "onDevice") -> PrivacyMetricsEvent {
         PrivacyMetricsEvent(
+            generationMode: mode,
             facesDetected: faces, facesBlurred: faces,
             objectsDetected: 3, tokensScrubbedFromTranscript: tokens,
             rawDataTransmitted: false,
@@ -366,6 +370,7 @@ struct PipelineResultTests {
             childName: "Kid", sessionId: "s"
         )
         let metrics = PrivacyMetricsEvent(
+            generationMode: "onDevice",
             facesDetected: 1, facesBlurred: 1,
             objectsDetected: 1, tokensScrubbedFromTranscript: 0,
             rawDataTransmitted: false,
@@ -391,6 +396,7 @@ struct PrivacyComplianceTests {
         let store = PrivacyMetricsStore()
         for i in 0..<100 {
             let event = PrivacyMetricsEvent(
+                generationMode: "onDevice",
                 facesDetected: i % 3, facesBlurred: i % 3,
                 objectsDetected: i % 5, tokensScrubbedFromTranscript: i % 2,
                 rawDataTransmitted: false,

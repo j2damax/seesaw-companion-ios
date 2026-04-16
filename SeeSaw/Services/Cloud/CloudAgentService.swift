@@ -65,6 +65,120 @@ actor CloudAgentService {
         AppConfig.shared.log("requestStory: HTTP 200, responseBytes=\(data.count)")
         return try await MainActor.run { try JSONDecoder().decode(StoryResponse.self, from: data) }
     }
+
+    // MARK: - Enhancement (hybrid mode)
+
+    /// POST to /story/enhance with full context for a richer cloud beat.
+    /// On 404 (endpoint not yet deployed) falls back to /story/generate
+    /// with storyHistory injected into ScenePayload — same privacy boundary.
+    /// Returns StoryBeat directly so BackgroundStoryEnhancer stays type-safe.
+    func requestEnhancement(
+        payload: ScenePayload,
+        baseBeat: StoryBeat,
+        childAnswer: String?,
+        storyHistory: [StoryTurn],
+        turnNumber: Int
+    ) async throws -> StoryBeat {
+        guard let base = baseURL else {
+            AppConfig.shared.log("requestEnhancement: no cloud agent URL", level: .error)
+            throw CloudError.notConfigured
+        }
+
+        let maxTurns = 6
+        let req = EnhancementRequest(
+            scenePayload: payload,
+            baseBeat: baseBeat,
+            childAnswer: childAnswer,
+            storyHistory: storyHistory,
+            turnNumber: turnNumber,
+            maxTurns: maxTurns,
+            childAge: payload.childAge,
+            childName: payload.childName
+        )
+
+        let endpoint = base.appendingPathComponent("story/enhance")
+        var urlRequest = URLRequest(url: endpoint)
+        urlRequest.httpMethod = "POST"
+        urlRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        let (body, apiKey): (Data, String) = try await MainActor.run {
+            let encoded = try JSONEncoder().encode(req)
+            let key = UserDefaults.standard.cloudAgentKey
+            return (encoded, key)
+        }
+        if !apiKey.isEmpty {
+            urlRequest.setValue(apiKey, forHTTPHeaderField: "X-SeeSaw-Key")
+        }
+        urlRequest.httpBody = body
+        AppConfig.shared.log("requestEnhancement: POST \(endpoint), turn=\(turnNumber), historyLen=\(storyHistory.count)")
+
+        let (data, response) = try await session.data(for: urlRequest)
+        guard let http = response as? HTTPURLResponse else {
+            throw CloudError.invalidResponse
+        }
+
+        if http.statusCode == 200 {
+            AppConfig.shared.log("requestEnhancement: HTTP 200, responseBytes=\(data.count)")
+            return try await MainActor.run { try JSONDecoder().decode(StoryBeat.self, from: data) }
+        }
+
+        // /story/enhance not yet deployed — fall back to /story/generate with history context.
+        // child_answer goes into storyHistory (not transcript — that field is PII-scrubbed
+        // ambient speech only).
+        AppConfig.shared.log("requestEnhancement: HTTP \(http.statusCode), falling back to /story/generate", level: .warning)
+        let payloadWithHistory = ScenePayload(
+            objects: payload.objects,
+            scene: payload.scene,
+            transcript: payload.transcript,
+            childAge: payload.childAge,
+            childName: payload.childName,
+            sessionId: payload.sessionId,
+            storyHistory: storyHistory
+        )
+        let storyResponse = try await requestStory(payload: payloadWithHistory)
+        return StoryBeat(
+            storyText: storyResponse.storyText,
+            question:  storyResponse.question,
+            isEnding:  storyResponse.isEnding
+        )
+    }
+}
+
+// MARK: - Cloud enhancement protocol (testability seam)
+
+protocol CloudEnhancing: Sendable {
+    func requestEnhancement(
+        payload: ScenePayload,
+        baseBeat: StoryBeat,
+        childAnswer: String?,
+        storyHistory: [StoryTurn],
+        turnNumber: Int
+    ) async throws -> StoryBeat
+}
+
+extension CloudAgentService: CloudEnhancing {}
+
+// MARK: - Enhancement request
+
+struct EnhancementRequest: Codable {
+    let scenePayload: ScenePayload
+    let baseBeat: StoryBeat
+    let childAnswer: String?
+    let storyHistory: [StoryTurn]
+    let turnNumber: Int
+    let maxTurns: Int
+    let childAge: Int
+    let childName: String
+
+    enum CodingKeys: String, CodingKey {
+        case scenePayload = "scene_payload"
+        case baseBeat     = "base_beat"
+        case childAnswer  = "child_answer"
+        case storyHistory = "story_history"
+        case turnNumber   = "turn_number"
+        case maxTurns     = "max_turns"
+        case childAge     = "child_age"
+        case childName    = "child_name"
+    }
 }
 
 // MARK: - Errors
@@ -85,4 +199,3 @@ enum CloudError: LocalizedError, Sendable {
         }
     }
 }
-
