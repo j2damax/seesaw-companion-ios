@@ -33,6 +33,9 @@ private func makePipeline() -> PrivacyPipelineService {
 
 // MARK: - Privacy invariant tests
 
+// .serialized prevents concurrent VNClassifyImageRequest calls from saturating
+// the ANE on iOS 26 (Apple Intelligence scene classification backend).
+@Suite(.serialized)
 struct PrivacyPipelineInvariantTests {
 
     /// Core dissertation claim: rawDataTransmitted is always false.
@@ -47,7 +50,7 @@ struct PrivacyPipelineInvariantTests {
 
     /// 20-run invariant — mirrors the 100-run invariant in PrivacyMetricsInvariantTests
     /// but exercises the full pipeline code path, not just the metrics struct.
-    @Test func rawDataTransmittedNeverTrueAcross20Runs() async throws {
+    @Test(.timeLimit(.minutes(3))) func rawDataTransmittedNeverTrueAcross20Runs() async throws {
         guard let jpeg = makeSyntheticJPEG() else {
             throw TestingError("Failed to create synthetic JPEG")
         }
@@ -67,6 +70,7 @@ struct PrivacyPipelineInvariantTests {
 
 // MARK: - Payload safety tests
 
+@Suite(.serialized)
 struct PrivacyPipelinePayloadSafetyTests {
 
     /// ScenePayload must contain only label strings — no binary/base64 pixel data.
@@ -133,6 +137,7 @@ struct PrivacyPipelinePayloadSafetyTests {
 
 // MARK: - Metrics non-negativity tests
 
+@Suite(.serialized)
 struct PrivacyPipelineMetricsTests {
 
     /// All stage latencies must be non-negative.
@@ -186,6 +191,7 @@ struct PrivacyPipelineMetricsTests {
 
 // MARK: - Error handling tests
 
+@Suite(.serialized)
 struct PrivacyPipelineErrorTests {
 
     /// Empty Data must throw PipelineError.invalidImageData.
@@ -218,6 +224,7 @@ struct PrivacyPipelineErrorTests {
 
 // MARK: - PipelineResult struct tests
 
+@Suite(.serialized)
 struct PipelineResultStructTests {
 
     @Test func pipelineResultExposesBothPayloadAndMetrics() async throws {

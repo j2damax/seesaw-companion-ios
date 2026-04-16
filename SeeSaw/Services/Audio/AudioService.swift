@@ -55,6 +55,7 @@ actor AudioService {
     func speak(_ text: String) async {
         guard !text.isEmpty else { return }
         let utterances = Self.buildUtterances(for: text)
+        guard !utterances.isEmpty else { return }   // whitespace-only → nothing to speak
         await SpeechOrchestrator.shared.speakAll(utterances)
     }
 
