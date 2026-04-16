@@ -179,6 +179,9 @@ struct Gemma4ParseResponseHeuristicTests {
 
 // MARK: - Gemma4StoryService model state machine
 
+// .serialized: LlmInference initialisation is not re-entrant — concurrent inits
+// from parallel test tasks cause EXC_GUARD Mach port violations on device.
+@Suite(.serialized)
 struct Gemma4ModelStateTests {
 
     @Test func initialStateIsNotDownloaded() async {
@@ -258,12 +261,13 @@ struct Gemma4ModelStateTests {
         }
     }
 
-    @Test func startStoryThrowsModelUnavailableWhenReady() async {
-        // When model state is .ready, generate() throws .modelUnavailable because
-        // MediaPipeTasksGenAI is not compiled in (pre-pod-install).
-        // After `pod install` + `import MediaPipeTasksGenAI`, generation will succeed
-        // for a real GGUF path — at that point this test should be removed or updated
-        // to verify successful beat generation on device.
+    // Disabled: with MediaPipeTasksGenAI compiled in (pods installed), calling
+    // startStory() with a fake path triggers LlmInference(options: fakePath) which
+    // crashes the process with EXC_GUARD — MediaPipe's guarded file descriptor is
+    // violated when the model file does not exist. Manual on-device test with a
+    // real GGUF covers this acceptance criterion (T3-018).
+    @Test(.disabled("LlmInference with a fake path crashes on device — manual T3-018 covers this"))
+    func startStoryThrowsModelUnavailableWhenReady() async {
         let service = Gemma4StoryService()
         await service.updateModelState(.ready(modelPath: "/docs/model.gguf"))
         let context = SceneContext(labels: ["book"], sceneCategories: ["room"], transcript: nil, childAge: 6)
@@ -271,16 +275,13 @@ struct Gemma4ModelStateTests {
 
         do {
             _ = try await service.startStory(context: context, profile: profile)
-            // If MediaPipe IS compiled in and the path is valid, this succeeds — that's fine too.
         } catch let error as StoryError {
-            // Without MediaPipe compiled in: expects .modelUnavailable
-            // Without a real GGUF at the path: expects .generationFailed or .modelUnavailable
             #expect(error == .modelUnavailable || {
                 if case .generationFailed = error { return true }
                 return false
             }())
         } catch {
-            // Any error from a fake path is acceptable — we're not on device
+            // Any error from a fake path is acceptable
         }
     }
 
