@@ -17,7 +17,6 @@ actor PrivacyMetricsStore {
 
     func record(_ event: PrivacyMetricsEvent) {
         events.append(event)
-        AppConfig.shared.log("PrivacyMetricsStore: recorded event #\(events.count), latency=\(Int(event.pipelineLatencyMs))ms, faces=\(event.facesDetected), rawDataTransmitted=\(event.rawDataTransmitted)")
     }
 
     // MARK: - Queries
