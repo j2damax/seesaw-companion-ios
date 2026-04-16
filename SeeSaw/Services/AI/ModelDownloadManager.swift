@@ -44,7 +44,7 @@ actor ModelDownloadManager: NSObject {
     // nonisolated so it can be accessed from URLSession delegate callbacks
     nonisolated let modelDestinationURL: URL = {
         FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
-            .appendingPathComponent("gemma2-2b-it-gpu-int8.bin")
+            .appendingPathComponent("seesaw-gemma3-1b-q4km.gguf")
     }()
 
     // MARK: - Init

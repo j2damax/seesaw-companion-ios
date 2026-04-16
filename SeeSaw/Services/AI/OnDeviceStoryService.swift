@@ -396,14 +396,14 @@ actor OnDeviceStoryService: StoryGenerating {
     }
 
     private func buildInitialPrompt(context: SceneContext) -> String {
-        var prompt = "Start a new interactive story"
+        var prompt = "Write the opening beat of a second-person interactive story — use 'you' throughout, never a name"
         if !context.labels.isEmpty {
-            prompt += " featuring \(context.labels.prefix(3).joined(separator: " and "))"
+            prompt += ", featuring \(context.labels.prefix(3).joined(separator: " and "))"
         }
         if let transcript = context.transcript, !transcript.isEmpty {
             prompt += ". The child said: \"\(transcript)\""
         }
-        prompt += "."
+        prompt += ". The child is the protagonist — 'you' see, 'you' touch, 'you' discover."
         return prompt
     }
 
@@ -413,17 +413,18 @@ actor OnDeviceStoryService: StoryGenerating {
     ) -> String {
         let trimmed = childAnswer.trimmingCharacters(in: .whitespacesAndNewlines)
         var prompt: String
-        if trimmed.isEmpty {
-            prompt = "The child was quiet. Make the next story moment more exciting to re-engage them"
-        } else if trimmed.count <= 3 {
-            prompt = "The child said: \"\(trimmed)\". Continue the story building on their response"
-        } else {
-            prompt = "The child answered: \"\(trimmed)\". Continue the story"
-        }
         if isFinalTurn {
             // Explicit override — model must close the story here.
             // "bring it to a conclusion" was too weak; model kept asking questions.
-            prompt = "The child answered: \"\(trimmed)\". THIS IS THE FINAL BEAT. Write a warm, satisfying 2-sentence ending that closes the adventure. Set isEnding to true."
+            let answer = trimmed.isEmpty ? "..." : trimmed
+            return "The child answered: \"\(answer)\". THIS IS THE FINAL BEAT. Write a warm, satisfying 2-sentence ending using 'you' — the child is the hero. Set isEnding to true."
+        }
+        if trimmed.isEmpty {
+            prompt = "The child was quiet. Make the next story moment more exciting — address them as 'you' directly"
+        } else if trimmed.count <= 3 {
+            prompt = "The child said: \"\(trimmed)\". Continue in second person — 'you' are the hero, never use a name as subject"
+        } else {
+            prompt = "The child answered: \"\(trimmed)\". Continue the story addressing them as 'you'"
         }
         prompt += "."
         return prompt
