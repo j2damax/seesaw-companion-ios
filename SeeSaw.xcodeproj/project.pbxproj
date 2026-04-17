@@ -7,15 +7,17 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		C739AE0B1D83C85C563CC6A0 /* Pods_SeeSaw.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 37E2BFE97AEB412985585390 /* Pods_SeeSaw.framework */; };
+		DA08A9762F8E474D00868421 /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = DA08A9752F8E474D00868421 /* GoogleSignIn */; };
 		DA5A53DD2F80E90A00E022D9 /* FirebaseCrashlytics in Frameworks */ = {isa = PBXBuildFile; productRef = DA5A53DC2F80E90A00E022D9 /* FirebaseCrashlytics */; };
 		DAAB2A3E2F7F8CA500EF685F /* FirebaseAI in Frameworks */ = {isa = PBXBuildFile; productRef = DAAB2A3D2F7F8CA500EF685F /* FirebaseAI */; };
 		DAAB2A402F7F8CA500EF685F /* FirebaseAILogic in Frameworks */ = {isa = PBXBuildFile; productRef = DAAB2A3F2F7F8CA500EF685F /* FirebaseAILogic */; };
 		DAAB2A422F7F8CA500EF685F /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = DAAB2A412F7F8CA500EF685F /* FirebaseAnalytics */; };
 		DAAB2A442F7F8CA500EF685F /* FirebaseAnalyticsCore in Frameworks */ = {isa = PBXBuildFile; productRef = DAAB2A432F7F8CA500EF685F /* FirebaseAnalyticsCore */; };
 		DAAB2A462F7F8CA500EF685F /* FirebaseAnalyticsIdentitySupport in Frameworks */ = {isa = PBXBuildFile; productRef = DAAB2A452F7F8CA500EF685F /* FirebaseAnalyticsIdentitySupport */; };
-		DAAB2A492F7F8CD900EF685F /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = DAAB2A482F7F8CD900EF685F /* GoogleSignIn */; };
-		DAAB2A4B2F7F8CD900EF685F /* GoogleSignInSwift in Frameworks */ = {isa = PBXBuildFile; productRef = DAAB2A4A2F7F8CD900EF685F /* GoogleSignInSwift */; };
 		DAAB2A542F7F928500EF685F /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = DAAB2A532F7F928500EF685F /* FirebaseAuth */; };
+		E34AF9E10C8AFB70C05B76B5 /* Pods_SeeSawUITests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 56B1B9A20B4B5BA5F4E2690A /* Pods_SeeSawUITests.framework */; };
+		FB5CE9189BC1867B9894EE91 /* Pods_SeeSawTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F190B39A8191C337E2561F4B /* Pods_SeeSawTests.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -36,10 +38,19 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		27BC65C760CEBFEECA86CDD3 /* Pods-SeeSawTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-SeeSawTests.release.xcconfig"; path = "Target Support Files/Pods-SeeSawTests/Pods-SeeSawTests.release.xcconfig"; sourceTree = "<group>"; };
+		37E2BFE97AEB412985585390 /* Pods_SeeSaw.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_SeeSaw.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		56B1B9A20B4B5BA5F4E2690A /* Pods_SeeSawUITests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_SeeSawUITests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		A08F2C11E8A433BB5A41045D /* Pods-SeeSawUITests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-SeeSawUITests.debug.xcconfig"; path = "Target Support Files/Pods-SeeSawUITests/Pods-SeeSawUITests.debug.xcconfig"; sourceTree = "<group>"; };
+		B30B775BFA73F080370B4A65 /* Pods-SeeSaw.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-SeeSaw.debug.xcconfig"; path = "Target Support Files/Pods-SeeSaw/Pods-SeeSaw.debug.xcconfig"; sourceTree = "<group>"; };
+		C5B4C483FAE18921E5EB629D /* Pods-SeeSaw.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-SeeSaw.release.xcconfig"; path = "Target Support Files/Pods-SeeSaw/Pods-SeeSaw.release.xcconfig"; sourceTree = "<group>"; };
 		DA5A56A82F811A5C00E022D9 /* SeeSaw.xctestplan */ = {isa = PBXFileReference; lastKnownFileType = text; path = SeeSaw.xctestplan; sourceTree = "<group>"; };
 		DA8147B72F7113A3005672D3 /* SeeSaw.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SeeSaw.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		DA8147C62F7113A4005672D3 /* SeeSawTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SeeSawTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		DA8147D02F7113A4005672D3 /* SeeSawUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SeeSawUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		F190B39A8191C337E2561F4B /* Pods_SeeSawTests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_SeeSawTests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		F960FA813B5F65DA7A62A806 /* Pods-SeeSawTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-SeeSawTests.debug.xcconfig"; path = "Target Support Files/Pods-SeeSawTests/Pods-SeeSawTests.debug.xcconfig"; sourceTree = "<group>"; };
+		FF98618AA7319E70176F4DC4 /* Pods-SeeSawUITests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-SeeSawUITests.release.xcconfig"; path = "Target Support Files/Pods-SeeSawUITests/Pods-SeeSawUITests.release.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -80,13 +91,13 @@
 			files = (
 				DAAB2A402F7F8CA500EF685F /* FirebaseAILogic in Frameworks */,
 				DAAB2A462F7F8CA500EF685F /* FirebaseAnalyticsIdentitySupport in Frameworks */,
-				DAAB2A4B2F7F8CD900EF685F /* GoogleSignInSwift in Frameworks */,
 				DAAB2A3E2F7F8CA500EF685F /* FirebaseAI in Frameworks */,
 				DAAB2A422F7F8CA500EF685F /* FirebaseAnalytics in Frameworks */,
 				DAAB2A442F7F8CA500EF685F /* FirebaseAnalyticsCore in Frameworks */,
 				DA5A53DD2F80E90A00E022D9 /* FirebaseCrashlytics in Frameworks */,
-				DAAB2A492F7F8CD900EF685F /* GoogleSignIn in Frameworks */,
 				DAAB2A542F7F928500EF685F /* FirebaseAuth in Frameworks */,
+				DA08A9762F8E474D00868421 /* GoogleSignIn in Frameworks */,
+				C739AE0B1D83C85C563CC6A0 /* Pods_SeeSaw.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -94,6 +105,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				FB5CE9189BC1867B9894EE91 /* Pods_SeeSawTests.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -101,12 +113,36 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				E34AF9E10C8AFB70C05B76B5 /* Pods_SeeSawUITests.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		772E7BDB5407C30970C39719 /* Pods */ = {
+			isa = PBXGroup;
+			children = (
+				B30B775BFA73F080370B4A65 /* Pods-SeeSaw.debug.xcconfig */,
+				C5B4C483FAE18921E5EB629D /* Pods-SeeSaw.release.xcconfig */,
+				F960FA813B5F65DA7A62A806 /* Pods-SeeSawTests.debug.xcconfig */,
+				27BC65C760CEBFEECA86CDD3 /* Pods-SeeSawTests.release.xcconfig */,
+				A08F2C11E8A433BB5A41045D /* Pods-SeeSawUITests.debug.xcconfig */,
+				FF98618AA7319E70176F4DC4 /* Pods-SeeSawUITests.release.xcconfig */,
+			);
+			path = Pods;
+			sourceTree = "<group>";
+		};
+		8C10DFC7A83E7CD598A5FF63 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				37E2BFE97AEB412985585390 /* Pods_SeeSaw.framework */,
+				F190B39A8191C337E2561F4B /* Pods_SeeSawTests.framework */,
+				56B1B9A20B4B5BA5F4E2690A /* Pods_SeeSawUITests.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 		DA8147AE2F7113A3005672D3 = {
 			isa = PBXGroup;
 			children = (
@@ -114,8 +150,9 @@
 				DA8147B92F7113A3005672D3 /* SeeSaw */,
 				DA8147C92F7113A4005672D3 /* SeeSawTests */,
 				DA8147D32F7113A4005672D3 /* SeeSawUITests */,
-				DAAB2A522F7F928500EF685F /* Frameworks */,
 				DA8147B82F7113A3005672D3 /* Products */,
+				772E7BDB5407C30970C39719 /* Pods */,
+				8C10DFC7A83E7CD598A5FF63 /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
@@ -129,13 +166,6 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
-		DAAB2A522F7F928500EF685F /* Frameworks */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			name = Frameworks;
-			sourceTree = "<group>";
-		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -143,6 +173,7 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = DA8147DA2F7113A4005672D3 /* Build configuration list for PBXNativeTarget "SeeSaw" */;
 			buildPhases = (
+				C620D98D7548FDCD3E3EDA08 /* [CP] Check Pods Manifest.lock */,
 				DA8147B32F7113A3005672D3 /* Sources */,
 				DA8147B42F7113A3005672D3 /* Frameworks */,
 				DA8147B52F7113A3005672D3 /* Resources */,
@@ -162,10 +193,9 @@
 				DAAB2A412F7F8CA500EF685F /* FirebaseAnalytics */,
 				DAAB2A432F7F8CA500EF685F /* FirebaseAnalyticsCore */,
 				DAAB2A452F7F8CA500EF685F /* FirebaseAnalyticsIdentitySupport */,
-				DAAB2A482F7F8CD900EF685F /* GoogleSignIn */,
-				DAAB2A4A2F7F8CD900EF685F /* GoogleSignInSwift */,
 				DAAB2A532F7F928500EF685F /* FirebaseAuth */,
 				DA5A53DC2F80E90A00E022D9 /* FirebaseCrashlytics */,
+				DA08A9752F8E474D00868421 /* GoogleSignIn */,
 			);
 			productName = SeeSaw;
 			productReference = DA8147B72F7113A3005672D3 /* SeeSaw.app */;
@@ -175,6 +205,7 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = DA8147DD2F7113A4005672D3 /* Build configuration list for PBXNativeTarget "SeeSawTests" */;
 			buildPhases = (
+				DA44BF02AA3E16AE1590D8A9 /* [CP] Check Pods Manifest.lock */,
 				DA8147C22F7113A4005672D3 /* Sources */,
 				DA8147C32F7113A4005672D3 /* Frameworks */,
 				DA8147C42F7113A4005672D3 /* Resources */,
@@ -188,8 +219,6 @@
 				DA8147C92F7113A4005672D3 /* SeeSawTests */,
 			);
 			name = SeeSawTests;
-			packageProductDependencies = (
-			);
 			productName = SeeSawTests;
 			productReference = DA8147C62F7113A4005672D3 /* SeeSawTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
@@ -198,6 +227,7 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = DA8147E02F7113A4005672D3 /* Build configuration list for PBXNativeTarget "SeeSawUITests" */;
 			buildPhases = (
+				1EBD2FBF4420F9F37474DECE /* [CP] Check Pods Manifest.lock */,
 				DA8147CC2F7113A4005672D3 /* Sources */,
 				DA8147CD2F7113A4005672D3 /* Frameworks */,
 				DA8147CE2F7113A4005672D3 /* Resources */,
@@ -211,8 +241,6 @@
 				DA8147D32F7113A4005672D3 /* SeeSawUITests */,
 			);
 			name = SeeSawUITests;
-			packageProductDependencies = (
-			);
 			productName = SeeSawUITests;
 			productReference = DA8147D02F7113A4005672D3 /* SeeSawUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
@@ -251,7 +279,7 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				DAAB2A3C2F7F8CA500EF685F /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
-				DAAB2A472F7F8CD900EF685F /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */,
+				DA08A9742F8E473F00868421 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = DA8147B82F7113A3005672D3 /* Products */;
@@ -290,6 +318,72 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
+		1EBD2FBF4420F9F37474DECE /* [CP] Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
+				"${PODS_ROOT}/Manifest.lock",
+			);
+			name = "[CP] Check Pods Manifest.lock";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/Pods-SeeSawUITests-checkManifestLockResult.txt",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
+			showEnvVarsInLog = 0;
+		};
+		C620D98D7548FDCD3E3EDA08 /* [CP] Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
+				"${PODS_ROOT}/Manifest.lock",
+			);
+			name = "[CP] Check Pods Manifest.lock";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/Pods-SeeSaw-checkManifestLockResult.txt",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
+			showEnvVarsInLog = 0;
+		};
+		DA44BF02AA3E16AE1590D8A9 /* [CP] Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
+				"${PODS_ROOT}/Manifest.lock",
+			);
+			name = "[CP] Check Pods Manifest.lock";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/Pods-SeeSawTests-checkManifestLockResult.txt",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
+			showEnvVarsInLog = 0;
+		};
 		DA5A561B2F80E91B00E022D9 /* Firebase Crashlytics dSYM Upload */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
@@ -472,6 +566,7 @@
 		};
 		DA8147DB2F7113A4005672D3 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = B30B775BFA73F080370B4A65 /* Pods-SeeSaw.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
@@ -524,6 +619,7 @@
 		};
 		DA8147DC2F7113A4005672D3 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = C5B4C483FAE18921E5EB629D /* Pods-SeeSaw.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
@@ -576,6 +672,7 @@
 		};
 		DA8147DE2F7113A4005672D3 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = F960FA813B5F65DA7A62A806 /* Pods-SeeSawTests.debug.xcconfig */;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
@@ -602,6 +699,7 @@
 		};
 		DA8147DF2F7113A4005672D3 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 27BC65C760CEBFEECA86CDD3 /* Pods-SeeSawTests.release.xcconfig */;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
@@ -628,6 +726,7 @@
 		};
 		DA8147E12F7113A4005672D3 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = A08F2C11E8A433BB5A41045D /* Pods-SeeSawUITests.debug.xcconfig */;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
@@ -653,6 +752,7 @@
 		};
 		DA8147E22F7113A4005672D3 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = FF98618AA7319E70176F4DC4 /* Pods-SeeSawUITests.release.xcconfig */;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
@@ -718,6 +818,14 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
+		DA08A9742F8E473F00868421 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/google/GoogleSignIn-iOS";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 9.1.0;
+			};
+		};
 		DAAB2A3C2F7F8CA500EF685F /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/firebase/firebase-ios-sdk";
@@ -726,17 +834,14 @@
 				minimumVersion = 12.11.0;
 			};
 		};
-		DAAB2A472F7F8CD900EF685F /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/google/GoogleSignIn-iOS";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 9.1.0;
-			};
-		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		DA08A9752F8E474D00868421 /* GoogleSignIn */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = DA08A9742F8E473F00868421 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */;
+			productName = GoogleSignIn;
+		};
 		DA5A53DC2F80E90A00E022D9 /* FirebaseCrashlytics */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = DAAB2A3C2F7F8CA500EF685F /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
@@ -766,16 +871,6 @@
 			isa = XCSwiftPackageProductDependency;
 			package = DAAB2A3C2F7F8CA500EF685F /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
 			productName = FirebaseAnalyticsIdentitySupport;
-		};
-		DAAB2A482F7F8CD900EF685F /* GoogleSignIn */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = DAAB2A472F7F8CD900EF685F /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */;
-			productName = GoogleSignIn;
-		};
-		DAAB2A4A2F7F8CD900EF685F /* GoogleSignInSwift */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = DAAB2A472F7F8CD900EF685F /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */;
-			productName = GoogleSignInSwift;
 		};
 		DAAB2A532F7F928500EF685F /* FirebaseAuth */ = {
 			isa = XCSwiftPackageProductDependency;

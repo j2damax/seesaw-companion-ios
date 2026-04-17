@@ -79,6 +79,23 @@ struct TimelineTabView: View {
 
     @ToolbarContentBuilder
     private var toolbarContent: some ToolbarContent {
+        ToolbarItem(placement: .topBarLeading) {
+            if !sessions.isEmpty {
+                let allJSONL = sessions.map(\.trainingJSONL).filter { !$0.isEmpty }.joined(separator: "\n")
+                if !allJSONL.isEmpty {
+                    ShareLink(
+                        item: allJSONL,
+                        preview: SharePreview(
+                            "seesaw_training_all.jsonl",
+                            image: Image(systemName: "brain")
+                        )
+                    ) {
+                        Label("Export Training Data", systemImage: "brain")
+                            .font(.caption)
+                    }
+                }
+            }
+        }
         ToolbarItem(placement: .topBarTrailing) {
             if !sessions.isEmpty {
                 Button("Delete All", role: .destructive) {

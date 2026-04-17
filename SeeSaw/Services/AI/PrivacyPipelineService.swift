@@ -62,7 +62,7 @@ actor PrivacyPipelineService {
 
     // MARK: - Public entry point
 
-    func process(jpegData: Data, childAge: Int, audioData: Data? = nil) async throws -> PipelineResult {
+    func process(jpegData: Data, childAge: Int, childName: String = "", audioData: Data? = nil, generationMode: String = "onDevice") async throws -> PipelineResult {
         let pipelineStart = CFAbsoluteTimeGetCurrent()
         let signpostID = OSSignpostID(log: Self.signpostLog)
         os_signpost(.begin, log: Self.signpostLog, name: "Pipeline", signpostID: signpostID)
@@ -123,6 +123,7 @@ actor PrivacyPipelineService {
         let totalMs = (pipelineEnd - pipelineStart) * 1000
 
         let metrics = PrivacyMetricsEvent(
+            generationMode: generationMode,
             facesDetected: faceCount,
             facesBlurred: faceCount,
             objectsDetected: detectedObjects.count,
@@ -146,9 +147,8 @@ actor PrivacyPipelineService {
             scene: sceneLabels,
             transcript: cleanTranscript,
             childAge: childAge,
-            sessionId: UUID().uuidString,
-            query: cleanTranscript,
-            timestamp: ISO8601DateFormatter().string(from: Date())
+            childName: childName,
+            sessionId: UUID().uuidString
         )
 
         return PipelineResult(payload: payload, metrics: metrics)
@@ -198,7 +198,7 @@ actor PrivacyPipelineService {
 
     // MARK: - Debug detection (face-blurred image + bounding boxes for preview)
 
-    func runDebugDetection(jpegData: Data) async throws -> (blurredData: Data, detections: [DetectionResult], metrics: PrivacyMetricsEvent) {
+    func runDebugDetection(jpegData: Data, generationMode: String = "debug") async throws -> (blurredData: Data, detections: [DetectionResult], metrics: PrivacyMetricsEvent) {
         let pipelineStart = CFAbsoluteTimeGetCurrent()
         guard let rawImage = CIImage(data: jpegData) else {
             throw PipelineError.invalidImageData
@@ -234,6 +234,7 @@ actor PrivacyPipelineService {
         let totalMs = (pipelineEnd - pipelineStart) * 1000
 
         let metrics = PrivacyMetricsEvent(
+            generationMode: generationMode,
             facesDetected: faceCount,
             facesBlurred: faceCount,
             objectsDetected: detections.count,

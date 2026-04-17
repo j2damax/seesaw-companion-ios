@@ -16,7 +16,7 @@ struct SettingsView: View {
     var metricsStore: PrivacyMetricsStore
     var storyMetricsStore: StoryMetricsStore
 
-    @State private var cloudURLString: String = UserDefaults.standard.cloudAgentURL.absoluteString
+    @State private var cloudURLString: String = UserDefaults.standard.cloudAgentURL?.absoluteString ?? ""
     @State private var metricsCount = 0
     @State private var avgLatency = 0.0
     @State private var sanitisationRate = 1.0
@@ -156,7 +156,9 @@ struct SettingsView: View {
 
     private func save() {
         UserDefaults.standard.childAge = childAge
-        if let url = URL(string: cloudURLString), url.scheme?.hasPrefix("http") == true {
+        if let url = URL(string: cloudURLString),
+           (url.scheme == "http" || url.scheme == "https"),
+           !(url.host?.isEmpty ?? true) {
             UserDefaults.standard.cloudAgentURL = url
         }
     }

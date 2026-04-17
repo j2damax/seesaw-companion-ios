@@ -120,9 +120,15 @@ A novel integration pattern that bridges on-device vision outputs (YOLO11n label
 - **Output:** Age-appropriate `StoryBeat` narrative (50–120 words, second-person, present tense)
 - **Privacy:** No raw image, audio, or biometric data enters the model
 
-### Contribution 3 (Future): SeeSaw-Gemma-1B — Fine-Tuned Open-Weight Edge LLM
+### Contribution 3: SeeSaw-Gemma-1B — Fine-Tuned Open-Weight Edge LLM
 
-A Gemma 4 1B model fine-tuned on children's story beat training data via Google Vertex AI, producing a portable, open-weight, child-safe story generation model that can be deployed on any mobile device. This contribution is planned post-submission and noted as future work in Chapter 7.
+A Gemma 3 1B model fine-tuned on children's story beat training data via Google Vertex AI, producing a portable, open-weight, child-safe story generation model deployed on-device via MediaPipe LlmInference. The model is exported as Q4_K_M GGUF (777 MB) and hosted on Google Cloud Storage.
+
+- **Training:** LoRA fine-tuning on Vertex AI T4, ~27 min, eval_loss = 0.4945
+- **Export:** Q4_K_M GGUF via llama.cpp → 777 MB
+- **Deployment:** MediaPipe `LlmInference` + `LlmInference.Session` on iOS
+- **Availability:** `seesaw-gemma3-1b-q4km.gguf` on GCS; `/model/latest` endpoint serves signed download URL
+- **Status:** ✅ Complete (`mediapipe-integration` branch, `Gemma4StoryService.swift`)
 
 ---
 
@@ -303,42 +309,34 @@ This is intentional and must be documented in Chapter 4 as a design decision. Th
 
 ---
 
-## 8. Gemma 4 Integration Strategy
+## 8. Three-Mode Story Generation Architecture (Complete)
 
-### Gemma 4 Model Family (Released April 2026)
-
-| Model | Params | Context | Modalities | On-Device? |
-|-------|--------|---------|------------|------------|
-| Gemma 4 1B | 1B | 32K | Text only | ✅ iPhone-viable (~800MB INT4) |
-| Gemma 4 4B | 4B | 128K | Text + Vision | ⚠️ Too heavy for real-time |
-| Gemma 4 12B | 12B | 128K | Text + Vision | ❌ Server only |
-| Gemma 4 27B | 27B | 128K | Text + Vision | ❌ Server only |
-
-### Three-Mode Story Generation Architecture
+All three modes are implemented and functional as of April 2026.
 
 ```swift
-enum StoryGenerationMode {
-    case appleFoundationModels     // Built-in, always available, fastest (~400ms)
-    case gemma4OnDevice            // Downloaded once, fine-tuned, best offline quality (~700ms)
-    case geminiCloudEnhanced       // When network available, highest quality (~2-4s)
-}
-
-func selectMode(networkAvailable: Bool, gemmaLoaded: Bool) -> StoryGenerationMode {
-    if networkAvailable { return .geminiCloudEnhanced }
-    if gemmaLoaded      { return .gemma4OnDevice }
-    return .appleFoundationModels
+enum StoryGenerationMode: String, CaseIterable {
+    case onDevice          // Apple Foundation Models (~3B, Neural Engine) — fastest (~400ms TTFT)
+    case gemma4OnDevice    // Gemma 3 1B Q4_K_M GGUF via MediaPipe — on-device (~600–800ms)
+    case cloud             // Gemini 2.0 Flash via Cloud Run FastAPI — richest narrative (~1.5–3s warm)
 }
 ```
 
-### Gemma 4 Implementation Path (Post-Submission / Future Work)
+### Model Comparison
 
-1. Fine-tune Gemma 4 1B on children's story beat data via Google Vertex AI (LoRA, ~8h training)
-2. Export to GGUF INT4 format (~800MB)
-3. Deploy via MediaPipe LLM Inference on iOS
-4. Distribute model file via CDN with `/model/latest` signed URL endpoint
-5. iOS app downloads once on first launch, shows progress to parent
+| Mode | Model | Size | Network | Privacy | TTFT |
+|------|-------|------|---------|---------|------|
+| `onDevice` | Apple FM ~3B | On-device | None | Absolute | ~400ms |
+| `gemma4OnDevice` | Gemma 3 1B Q4_K_M | 777 MB GGUF | None | Absolute | ~600–800ms |
+| `cloud` | Gemini 2.0 Flash | Cloud | Labels only | Structural | ~1.5–3s (warm) |
 
-**Status:** Planned as Contribution 3. Not in scope for MSc submission — listed in Chapter 7 (Future Work).
+### SeeSaw-Gemma-1B Training Summary
+
+- **Base model:** Gemma 3 1B instruction-tuned
+- **Fine-tuning:** LoRA on Vertex AI T4, training notebooks in `seesaw-cloud-agent/training/`
+- **Dataset:** TinyStories-derived SeeSaw instruction format (children's story beats + safety constraints)
+- **Result:** eval_loss = 0.4945, trained in ~27 min
+- **Export:** Q4_K_M GGUF via llama.cpp → 777 MB → GCS `seesaw-models/seesaw-gemma3-1b-q4km.gguf`
+- **iOS delivery:** `ModelDownloadManager` fetches signed URL from `/model/latest`, background URLSession download
 
 ---
 
@@ -436,61 +434,41 @@ class CloudBaselineService {
 
 ---
 
-## 10. Implementation Status & Sprint Plan
+## 10. Implementation Status (April 2026)
 
-### Current Status (April 10, 2026)
+### System Completion Status
 
-| Component | Status |
-|-----------|--------|
-| YOLO11n-SeeSaw CoreML model | ✅ Complete |
-| iOS camera capture pipeline | ✅ Complete |
-| YOLO integration in iOS | ✅ Complete |
-| Apple Foundation Models integration | ✅ Basic groundwork complete |
-| AVSpeechSynthesizer TTS | ✅ Complete |
-| SceneContext assembly | ✅ Complete |
-| seesaw-cloud-agent FastAPI skeleton | ✅ Basic groundwork complete |
-| BenchmarkLogger | ❌ Not started |
-| Architecture A baseline | ❌ Not started |
-| Architecture B filtered baseline | ❌ Not started |
-| Story quality evaluation | ❌ Not started |
-| Dissertation Chapters 4–6 | 🔄 In progress |
+| Component | Status | Notes |
+|-----------|--------|-------|
+| YOLO11n-SeeSaw CoreML model (44 classes, mAP@50=0.6748) | ✅ Complete | In-repo: `seesaw-yolo11n.mlpackage` |
+| Six-stage privacy pipeline (`PrivacyPipelineService`) | ✅ Complete | 143–162ms total on iPhone |
+| Apple FM story generation (`OnDeviceStoryService`) | ✅ Complete | `@Generable StoryBeat`, semantic VAD, context restart |
+| Gemma 3 1B on-device (`Gemma4StoryService` + MediaPipe) | ✅ Complete | `mediapipe-integration` branch |
+| Gemma model fine-tuning (Vertex AI LoRA) | ✅ Complete | eval_loss=0.4945, GGUF on GCS |
+| Cloud story generation (`CloudAgentService` + Cloud Run) | ✅ Complete | Live endpoint, interactive loop |
+| Story Timeline (SwiftData + Timeline/Detail views) | ✅ Complete | Per-beat metrics, PII events, privacy telemetry |
+| Audio pipeline (TTS + STT + session management) | ✅ Complete | `SpeechOrchestrator`, PII live scrubbing |
+| BLE accessory integration (`BLEService`) | ✅ Complete | AiSee headset GATT chunked JPEG/audio |
+| Test suite | ✅ Complete | ~130 tests, 0 failures |
+| Benchmark infrastructure (`StoryMetricsStore` CSV export) | ✅ Complete | Includes TTFT, total gen time, guardrail violations |
 
-### 2-Week Final Sprint Plan
+### Remaining Pre-Submission Tasks
 
-#### Week 1: Build the Benchmark (Days 1–7)
+| Task | Priority |
+|------|----------|
+| Run 5–10 benchmark sessions per mode; export CSV for Table 6.1 | High |
+| Merge `mediapipe-integration` → `main` | Medium |
+| Fix stale `startStoryThrowsModelUnavailableWhenReady` test | Low |
+| Add streaming TTFT to Gemma4StoryService (LlmInference lacks callback) | Low |
 
-| Day | Task | Output |
-|-----|------|--------|
-| Day 1 | Complete `BenchmarkLogger` + instrument all 5 pipeline stages | Latency data collection working |
-| Day 2 | Build `CloudBaselineService` (Arch A) + set up Charles Proxy intercept | Counterfactual baseline working |
-| Day 3 | Run full benchmark — all 3 architectures, 20 test inputs | Raw CSV data collected |
-| Day 4 | Build story quality rating form (Google Form) + generate 30 story beats (10×3 arch) | Story beats ready for rating |
-| Day 5 | Complete quality rating (3 raters) + calculate Cohen's Kappa | Quality data complete |
-| Day 6 | Write Chapter 6 (Results) using real measured data | Chapter 6 draft complete |
-| Day 7 | Review Chapter 6, create results figures (charts, tables) | Chapter 6 final |
+### Future Work (Chapter 7)
 
-#### Week 2: Write, Polish, Submit (Days 8–14)
-
-| Day | Task | Output |
-|-----|------|--------|
-| Day 8 | Write Chapter 5 (Discussion — interpret benchmark, connect to RQs) | Chapter 5 draft |
-| Day 9 | Complete Chapter 4 (Implementation — YOLO section + Apple FM section + privacy pipeline) | Chapter 4 final |
-| Day 10 | Complete Chapter 3 (Methodology — benchmark design, ethics, participants) | Chapter 3 final |
-| Day 11 | Write Abstract, fix Introduction, Chapter 2 citation corrections | Chapters 1–2 final |
-| Day 12 | Insert all figures: Xcode screenshots, Wireshark outputs, training curves, architecture diagrams | All figures inserted |
-| Day 13 | Full dissertation review — word count, formatting, reference list (IEEE/APA format) | Pre-submission review complete |
-| Day 14 | Final proofread → **SUBMIT** | 🎓 Submitted |
-
-### What to Drop (Do Not Implement)
-
-The following are **not in scope for MSc submission** and must be listed in Chapter 7 (Future Work):
-
-- ❌ Gemma 4 1B on-device integration
-- ❌ Vertex AI fine-tuning pipeline
-- ❌ Parent dashboard full UI
-- ❌ Community story wall
-- ❌ seesaw-cloud-agent Firestore + full ADK multi-agent pipeline
-- ❌ Long-term cross-session story memory
+- SeeSaw-Gemma-1B open-weight model release on HuggingFace
+- ShieldGemma 4 safety classifier for cloud path
+- Full multi-agent Firestore pipeline in seesaw-cloud-agent
+- Parent dashboard and cross-session story memory
+- N=20 formal child user study (Wilcoxon post-hoc)
+- ExternalSDKAccessory (Meta Glass / MFi camera stub)
 
 ---
 

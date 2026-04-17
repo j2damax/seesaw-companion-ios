@@ -3,11 +3,22 @@
 //
 // Tests focus on argument validation, UserDefaults side-effects,
 // and StoryBookmarkStore behaviour. Tools require no LLM session.
+//
+// All suites are nested under a single @Suite(.serialized) parent.
+// BookmarkMomentTool.Arguments and SwitchSceneTool.Arguments are @Generable types.
+// The @Generable macro uses FoundationModels' type schema registration, which
+// calls internal dispatch locks on first use. Concurrent Swift Tasks hitting
+// first-use initialization simultaneously trigger "unsafeForcedSync called from
+// Swift Concurrent context" → EXC_GUARD Mach port violations. Serializing all
+// tool tests prevents this without affecting any test's logic or assertions.
 
 import Testing
 import Foundation
 
 @testable import SeeSaw
+
+@Suite("Story Tools", .serialized)
+struct StoryToolsTests {
 
 // MARK: - Difficulty-level tests (serialized — all suites share UserDefaults.standard)
 //
@@ -188,3 +199,4 @@ struct StoryBookmarkStoreTests {
     }
 }
 
+} // end StoryToolsTests

@@ -17,7 +17,6 @@ actor PrivacyMetricsStore {
 
     func record(_ event: PrivacyMetricsEvent) {
         events.append(event)
-        AppConfig.shared.log("PrivacyMetricsStore: recorded event #\(events.count), latency=\(Int(event.pipelineLatencyMs))ms, faces=\(event.facesDetected), rawDataTransmitted=\(event.rawDataTransmitted)")
     }
 
     // MARK: - Queries
@@ -56,9 +55,9 @@ actor PrivacyMetricsStore {
     // MARK: - CSV Export
 
     func exportCSV() -> String {
-        var csv = "facesDetected,facesBlurred,objectsDetected,tokensScrubbedFromTranscript,rawDataTransmitted,pipelineLatencyMs,faceDetectMs,blurMs,yoloMs,sceneClassifyMs,sttMs,piiScrubMs,timestamp\n"
+        var csv = "generationMode,facesDetected,facesBlurred,objectsDetected,tokensScrubbedFromTranscript,rawDataTransmitted,pipelineLatencyMs,faceDetectMs,blurMs,yoloMs,sceneClassifyMs,sttMs,piiScrubMs,timestamp\n"
         for e in events {
-            csv += "\(e.facesDetected),\(e.facesBlurred),\(e.objectsDetected),\(e.tokensScrubbedFromTranscript),\(e.rawDataTransmitted),\(e.pipelineLatencyMs),\(e.faceDetectMs),\(e.blurMs),\(e.yoloMs),\(e.sceneClassifyMs),\(e.sttMs),\(e.piiScrubMs),\(e.timestamp)\n"
+            csv += "\(e.generationMode),\(e.facesDetected),\(e.facesBlurred),\(e.objectsDetected),\(e.tokensScrubbedFromTranscript),\(e.rawDataTransmitted),\(e.pipelineLatencyMs),\(e.faceDetectMs),\(e.blurMs),\(e.yoloMs),\(e.sceneClassifyMs),\(e.sttMs),\(e.piiScrubMs),\(e.timestamp)\n"
         }
         return csv
     }

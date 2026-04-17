@@ -31,7 +31,10 @@ extension AppConfig {
     ) {
         guard enableLogging else { return }
 
-        let timestamp = Self.iso8601.string(from: Date())
+        // Date.ISO8601FormatStyle is a value type — thread-safe for concurrent calls.
+        // The old shared ISO8601DateFormatter was NOT thread-safe and caused EXC_GUARD
+        // crashes when multiple Swift Tasks called log() simultaneously during tests.
+        let timestamp = Date.now.ISO8601Format(.iso8601WithTimeZone())
         let fileName  = (file as NSString).lastPathComponent.replacingOccurrences(of: ".swift", with: "")
         let funcName  = function.components(separatedBy: "(").first ?? function
         let prefix    = "[\(timestamp)] [\(level.rawValue.uppercased())] [\(fileName).\(funcName):\(line)]"
@@ -47,10 +50,4 @@ extension AppConfig {
     // MARK: - Private
 
     private static let logger = Logger(subsystem: "com.seesaw.companion", category: "SeeSaw")
-
-    private static let iso8601: ISO8601DateFormatter = {
-        let f = ISO8601DateFormatter()
-        f.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-        return f
-    }()
 }

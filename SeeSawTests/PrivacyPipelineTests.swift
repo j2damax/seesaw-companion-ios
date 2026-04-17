@@ -136,16 +136,15 @@ struct ScenePayloadPrivacyTests {
             scene: ["outdoor"],
             transcript: "hello",
             childAge: 5,
-            sessionId: "test-id",
-            query: "tell me a story",
-            timestamp: "2026-04-04T09:00:00Z"
+            childName: "Aria",
+            sessionId: "test-id"
         )
         let data = try JSONEncoder().encode(payload)
         let dict = try JSONSerialization.jsonObject(with: data) as! [String: Any]
 
         let allowedKeys: Set<String> = [
-            "objects", "scene", "transcript", "childAge",
-            "sessionId", "query", "timestamp"
+            "objects", "scene", "transcript", "child_age",
+            "child_name", "session_id", "story_history"
         ]
         #expect(Set(dict.keys) == allowedKeys)
     }
@@ -154,7 +153,7 @@ struct ScenePayloadPrivacyTests {
         let payload = ScenePayload(
             objects: ["toy"], scene: ["indoor"],
             transcript: "hi", childAge: 4,
-            sessionId: "s", query: nil, timestamp: "t"
+            childName: "Kid", sessionId: "s"
         )
         let data = try JSONEncoder().encode(payload)
         let dict = try JSONSerialization.jsonObject(with: data) as! [String: Any]
@@ -168,7 +167,7 @@ struct ScenePayloadPrivacyTests {
         let payload = ScenePayload(
             objects: ["cat"], scene: ["park"],
             transcript: "meow", childAge: 3,
-            sessionId: "s", query: nil, timestamp: "t"
+            childName: "Kid", sessionId: "s"
         )
         let data = try JSONEncoder().encode(payload)
         let jsonString = String(data: data, encoding: .utf8) ?? ""
@@ -181,7 +180,7 @@ struct ScenePayloadPrivacyTests {
         let payload = ScenePayload(
             objects: ["bear"], scene: ["room"],
             transcript: nil, childAge: 6,
-            sessionId: "s", query: nil, timestamp: "t"
+            childName: "Kid", sessionId: "s"
         )
         let data = try JSONEncoder().encode(payload)
         let jsonString = String(data: data, encoding: .utf8) ?? ""
@@ -198,6 +197,7 @@ struct PrivacyMetricsInvariantTests {
 
     @Test func rawDataTransmittedAlwaysFalse() {
         let metrics = PrivacyMetricsEvent(
+            generationMode: "onDevice",
             facesDetected: 3, facesBlurred: 3,
             objectsDetected: 5, tokensScrubbedFromTranscript: 2,
             rawDataTransmitted: false,
@@ -213,6 +213,7 @@ struct PrivacyMetricsInvariantTests {
     @Test func facesBlurredEqualsFacesDetected() {
         let faceCount = 5
         let metrics = PrivacyMetricsEvent(
+            generationMode: "onDevice",
             facesDetected: faceCount, facesBlurred: faceCount,
             objectsDetected: 0, tokensScrubbedFromTranscript: 0,
             rawDataTransmitted: false,
@@ -228,6 +229,7 @@ struct PrivacyMetricsInvariantTests {
 
     @Test func metricsAreCodable() throws {
         let original = PrivacyMetricsEvent(
+            generationMode: "cloud",
             facesDetected: 2, facesBlurred: 2,
             objectsDetected: 4, tokensScrubbedFromTranscript: 1,
             rawDataTransmitted: false,
@@ -251,8 +253,9 @@ struct PrivacyMetricsInvariantTests {
 
 struct PrivacyMetricsStoreTests {
 
-    private func makeEvent(latency: Double = 500, faces: Int = 0, tokens: Int = 0) -> PrivacyMetricsEvent {
+    private func makeEvent(latency: Double = 500, faces: Int = 0, tokens: Int = 0, mode: String = "onDevice") -> PrivacyMetricsEvent {
         PrivacyMetricsEvent(
+            generationMode: mode,
             facesDetected: faces, facesBlurred: faces,
             objectsDetected: 3, tokensScrubbedFromTranscript: tokens,
             rawDataTransmitted: false,
@@ -364,9 +367,10 @@ struct PipelineResultTests {
         let payload = ScenePayload(
             objects: ["toy"], scene: ["room"],
             transcript: "hello", childAge: 5,
-            sessionId: "s", query: nil, timestamp: "t"
+            childName: "Kid", sessionId: "s"
         )
         let metrics = PrivacyMetricsEvent(
+            generationMode: "onDevice",
             facesDetected: 1, facesBlurred: 1,
             objectsDetected: 1, tokensScrubbedFromTranscript: 0,
             rawDataTransmitted: false,
@@ -392,6 +396,7 @@ struct PrivacyComplianceTests {
         let store = PrivacyMetricsStore()
         for i in 0..<100 {
             let event = PrivacyMetricsEvent(
+                generationMode: "onDevice",
                 facesDetected: i % 3, facesBlurred: i % 3,
                 objectsDetected: i % 5, tokensScrubbedFromTranscript: i % 2,
                 rawDataTransmitted: false,
@@ -422,12 +427,12 @@ struct PrivacyComplianceTests {
         // Simulate various pipeline outputs and verify no raw data leaks
         let payloads = [
             ScenePayload(objects: ["ball"], scene: ["outdoor"], transcript: "hi", childAge: 3,
-                         sessionId: "1", query: "story", timestamp: "t"),
+                         childName: "Kid", sessionId: "1"),
             ScenePayload(objects: [], scene: [], transcript: nil, childAge: 8,
-                         sessionId: "2", query: nil, timestamp: "t"),
+                         childName: "Kid", sessionId: "2"),
             ScenePayload(objects: ["toy", "book", "lamp"], scene: ["bedroom", "indoor", "cozy"],
                          transcript: "once upon a time", childAge: 5,
-                         sessionId: "3", query: "adventure", timestamp: "t"),
+                         childName: "Kid", sessionId: "3"),
         ]
 
         for payload in payloads {

@@ -17,10 +17,11 @@ struct StoryGenerationModeTests {
         }
     }
 
-    @Test func caseIterableContainsAllThreeModes() {
+    @Test func caseIterableContainsAllModes() {
         let cases = StoryGenerationMode.allCases
-        #expect(cases.count == 3)
+        #expect(cases.count == 4)
         #expect(cases.contains(.onDevice))
+        #expect(cases.contains(.gemma4OnDevice))
         #expect(cases.contains(.cloud))
         #expect(cases.contains(.hybrid))
     }
@@ -39,8 +40,16 @@ struct StoryGenerationModeTests {
 
     @Test func rawValues() {
         #expect(StoryGenerationMode.onDevice.rawValue == "onDevice")
+        #expect(StoryGenerationMode.gemma4OnDevice.rawValue == "gemma4OnDevice")
         #expect(StoryGenerationMode.cloud.rawValue == "cloud")
         #expect(StoryGenerationMode.hybrid.rawValue == "hybrid")
+    }
+
+    @Test func requiresNetworkFlags() {
+        #expect(!StoryGenerationMode.onDevice.requiresNetwork)
+        #expect(!StoryGenerationMode.gemma4OnDevice.requiresNetwork)
+        #expect(StoryGenerationMode.cloud.requiresNetwork)
+        #expect(StoryGenerationMode.hybrid.requiresNetwork)
     }
 
     @Test func invalidRawValueReturnsNil() {

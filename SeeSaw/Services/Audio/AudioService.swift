@@ -3,10 +3,16 @@
 //
 // Converts story text to audio using AVSpeechSynthesizer.
 //
-// speak() path (iPhone): delegates to SpeechOrchestrator, which reuses a single
-// AVSpeechSynthesizer to avoid IPC teardown between utterances (fixes the
-// IPCAUClient -66748 error seen when a new synthesizer was created per call).
-// Follows the AiSee BusFeedbackService pattern.
+// Voice quality improvements for child-directed storytelling (per Audio.md):
+//   • Enhanced Samantha voice — Neural Engine backed, warmer than compact default
+//   • Rate 0.40 ≈ 130 WPM — optimal for ages 3–8 (default 0.5 ≈ 170 WPM is too fast)
+//   • Pitch 1.15 — +15% warmth, signals "I am talking directly to you"
+//   • Sentence splitting with 250ms inter-sentence pauses
+//   • 450ms pre-pause before question sentences for dramatic effect
+//
+// speak() path (iPhone): builds per-sentence AVSpeechUtterances, then delegates
+// to SpeechOrchestrator which queues all utterances on a single persistent
+// AVSpeechSynthesizer and resolves when the last one completes.
 //
 // generateAndEncodeAudio() path: offline PCM synthesis via synthesizer.write(),
 // kept for Phase 2 BLE transfer to external wearables.
@@ -17,33 +23,40 @@ import UIKit
 
 actor AudioService {
 
-    // MARK: - Voice settings (exposed as internal constants for testability)
+    // MARK: - Voice configuration
 
-    /// BCP-47 language tag for the story narrator voice.
-    /// en-US matches the AiSee BusFeedbackService configuration for consistent
-    /// voice behaviour across SeeSaw and AiSee deployments.
-    static let voiceLanguage = "en-US"
+    /// Enhanced Samantha voice (Neural Engine backed, warm female character).
+    /// Falls back to language default if not installed on the device.
+    static let narratorVoiceID = "com.apple.voice.enhanced.en-US.Samantha"
 
-    /// Speech rate multiplier applied to AVSpeechUtteranceDefaultSpeechRate.
-    /// 1.0 = default rate, matching the AiSee BusFeedbackService (no slowdown).
-    static let speechRateMultiplier: Float = 1.0
+    /// 0.40 ≈ 130 WPM. Children aged 3–8 process speech best at 120–140 WPM.
+    /// AVSpeechUtteranceDefaultSpeechRate (0.5) produces ~170 WPM — too fast.
+    static let speechRate: Float = 0.40
 
-    /// Pitch multiplier — 1.0 = neutral, matching the AiSee BusFeedbackService.
-    /// Valid range: 0.5 (low) to 2.0 (high). Default is 1.0.
-    static let pitchMultiplier: Float = 1.0
+    /// +15% above neutral pitch. Signals warmth and direct engagement to children.
+    static let pitchMultiplier: Float = 1.15
 
-    /// Playback volume. 1.0 = full device volume.
     static let speakerVolume: Float = 1.0
+
+    /// Pause injected after each narration sentence to create a storytelling breath.
+    static let interSentencePauseSeconds: TimeInterval = 0.25
+
+    /// Pre-pause before a question sentence — signals "now it's your turn to think".
+    static let preQuestionPauseSeconds: TimeInterval = 0.45
+
+    /// Resolved narrator voice, cached at first use so the voice lookup and any
+    /// WARNING log fire exactly once per app launch rather than on every speak() call.
+    private static let cachedNarratorVoice: AVSpeechSynthesisVoice = resolvedNarratorVoice()
 
     // MARK: - Direct speech output (iPhone / speaker path)
 
-    /// Speaks `text` aloud through the device speaker and suspends the caller
-    /// until speech is fully complete. Empty strings are skipped immediately.
-    /// Sequential calls play in order because each `await` suspends until the
-    /// synthesizer fires `didFinish` or `didCancel`.
+    /// Speaks `text` aloud, splitting at sentence boundaries so pauses are injected
+    /// naturally between narration and before questions.
     func speak(_ text: String) async {
         guard !text.isEmpty else { return }
-        await SpeechOrchestrator.shared.speak(text)
+        let utterances = Self.buildUtterances(for: text)
+        guard !utterances.isEmpty else { return }   // whitespace-only → nothing to speak
+        await SpeechOrchestrator.shared.speakAll(utterances)
     }
 
     // MARK: - PCM encode (BLE / wearable path — Phase 2)
@@ -55,15 +68,90 @@ actor AudioService {
         return data
     }
 
-    // MARK: - Offline PCM synthesis
+    // MARK: - Utterance builder
+
+    /// Splits `text` into sentence-level `AVSpeechUtterance` objects with voice
+    /// settings and pauses calibrated for child-directed storytelling.
+    ///
+    /// - Each narration sentence gets a 250ms post-utterance pause.
+    /// - Each question sentence gets a 450ms pre-utterance pause instead —
+    ///   the pre-pause feels more dramatic and natural than a post-pause.
+    static func buildUtterances(for text: String) -> [AVSpeechUtterance] {
+        let voice = cachedNarratorVoice
+        let sentences = splitSentences(text)
+
+        return sentences.map { sentence in
+            let utterance = AVSpeechUtterance(string: sentence)
+            utterance.voice = voice
+            utterance.rate = speechRate
+            utterance.pitchMultiplier = pitchMultiplier
+            utterance.volume = speakerVolume
+
+            if sentence.trimmingCharacters(in: .whitespaces).hasSuffix("?") {
+                utterance.preUtteranceDelay  = preQuestionPauseSeconds
+            } else {
+                utterance.postUtteranceDelay = interSentencePauseSeconds
+            }
+            return utterance
+        }
+    }
+
+    /// Returns the enhanced Samantha voice, falling back to the `en-US` language
+    /// default if the enhanced voice is not downloaded on this device.
+    static func resolvedNarratorVoice() -> AVSpeechSynthesisVoice {
+        if let enhanced = AVSpeechSynthesisVoice(identifier: narratorVoiceID) {
+            return enhanced
+        }
+        AppConfig.shared.log(
+            "AudioService: enhanced voice '\(narratorVoiceID)' not available — using language default",
+            level: .warning
+        )
+        return AVSpeechSynthesisVoice(language: "en-US")
+            ?? AVSpeechSynthesisVoice(language: "en-AU")
+            ?? AVSpeechSynthesisVoice(language: "en-GB")!
+    }
+
+    /// Splits `text` at sentence boundaries (`. `, `! `, `? ` + uppercase next char).
+    ///
+    /// Requiring the next character to be uppercase avoids splitting on abbreviations
+    /// like "Mr.", "Dr.", "U.S.", which are uncommon in child-directed story text but
+    /// worth guarding against.
+    static func splitSentences(_ text: String) -> [String] {
+        var sentences: [String] = []
+        var current = ""
+        let chars = Array(text)
+        var i = 0
+
+        while i < chars.count {
+            current.append(chars[i])
+            // Split when: terminal punct + space + uppercase
+            let isBoundary = (chars[i] == "." || chars[i] == "!" || chars[i] == "?")
+                && i + 2 < chars.count
+                && chars[i + 1] == " "
+                && chars[i + 2].isUppercase
+            if isBoundary {
+                let trimmed = current.trimmingCharacters(in: .whitespaces)
+                if !trimmed.isEmpty { sentences.append(trimmed) }
+                current = ""
+                i += 2  // skip the space separator
+            } else {
+                i += 1
+            }
+        }
+        let tail = current.trimmingCharacters(in: .whitespaces)
+        if !tail.isEmpty { sentences.append(tail) }
+        return sentences
+    }
+
+    // MARK: - Offline PCM synthesis (Phase 2 BLE path)
 
     @MainActor
     private func synthesizeWithAVSpeech(_ text: String) async throws -> Data {
         return try await withCheckedThrowingContinuation { continuation in
             let accumulator = AudioAccumulator()
             let utterance = AVSpeechUtterance(string: text)
-            utterance.voice = AVSpeechSynthesisVoice(language: AudioService.voiceLanguage)
-            utterance.rate = AVSpeechUtteranceDefaultSpeechRate * AudioService.speechRateMultiplier
+            utterance.voice = AudioService.resolvedNarratorVoice()
+            utterance.rate = AudioService.speechRate
             utterance.pitchMultiplier = AudioService.pitchMultiplier
             let synthesizer = AVSpeechSynthesizer()
             accumulator.retainSynthesizer(synthesizer)
@@ -83,14 +171,18 @@ actor AudioService {
 
 /// Manages a persistent AVSpeechSynthesizer for the app lifetime.
 ///
-/// Design (from AiSee BusFeedbackService):
+/// Design:
 /// - One synthesizer instance avoids CoreAudio IPC teardown between calls,
 ///   eliminating the `IPCAUClient: can't connect to server (-66748)` warning.
-/// - AVAudioSession is re-configured before each utterance to recover from
-///   deactivations caused by the camera session or speech recognizer teardown.
-/// - ObjectIdentifier tracking prevents stale delegate callbacks from resolving
-///   the wrong continuation when a new utterance starts before the old one finishes.
-/// - Interruption + app-background observers resolve any leaked continuation.
+/// - `speakAll(_:)` accepts a pre-built utterance array and resolves a single
+///   continuation when ALL utterances complete, enabling sentence-level pauses
+///   to be baked into individual utterances without multiple async hops.
+/// - `pendingCount` tracks how many utterances remain; both `didFinish` and
+///   `didCancel` decrement it, so cancellation mid-sequence resolves cleanly.
+/// - Two `Task.yield()` calls in `speakAll` ensure that stale delegate callbacks
+///   from any previously-interrupted speech fire and discard before the new
+///   batch's state is committed.
+/// - Interruption + background observers resolve leaked continuations.
 @MainActor
 private final class SpeechOrchestrator: NSObject, AVSpeechSynthesizerDelegate, @unchecked Sendable {
 
@@ -98,7 +190,7 @@ private final class SpeechOrchestrator: NSObject, AVSpeechSynthesizerDelegate, @
 
     private let synthesizer = AVSpeechSynthesizer()
     private var speechCompletion: CheckedContinuation<Void, Never>?
-    private var currentUtterance: AVSpeechUtterance?
+    private var pendingCount = 0
 
     private override init() {
         super.init()
@@ -107,8 +199,6 @@ private final class SpeechOrchestrator: NSObject, AVSpeechSynthesizerDelegate, @
     }
 
     private func installObservers() {
-        // Resume any pending continuation if the audio session is interrupted
-        // (e.g. phone call arrives mid-story).
         NotificationCenter.default.addObserver(
             forName: AVAudioSession.interruptionNotification,
             object: AVAudioSession.sharedInstance(),
@@ -116,16 +206,13 @@ private final class SpeechOrchestrator: NSObject, AVSpeechSynthesizerDelegate, @
         ) { [weak self] _ in
             Task { @MainActor [weak self] in
                 guard let self, let pending = self.speechCompletion else { return }
-                AppConfig.shared.log("AudioService: session interrupted — resuming continuation", level: .warning)
-                pending.resume()
+                AppConfig.shared.log("AudioService: session interrupted — resolving continuation", level: .warning)
+                self.pendingCount = 0
                 self.speechCompletion = nil
-                self.currentUtterance = nil
+                pending.resume()
             }
         }
 
-        // Resume any pending continuation if the app enters background mid-speech.
-        // AVSpeechSynthesizer stops speaking when backgrounded; without this the
-        // continuation would never resume and the story loop would hang.
         NotificationCenter.default.addObserver(
             forName: UIApplication.didEnterBackgroundNotification,
             object: nil,
@@ -135,58 +222,65 @@ private final class SpeechOrchestrator: NSObject, AVSpeechSynthesizerDelegate, @
                 guard let self, let pending = self.speechCompletion else { return }
                 AppConfig.shared.log("AudioService: app backgrounded mid-speech — stopping", level: .warning)
                 self.synthesizer.stopSpeaking(at: .immediate)
-                pending.resume()
+                self.pendingCount = 0
                 self.speechCompletion = nil
-                self.currentUtterance = nil
+                pending.resume()
             }
         }
     }
 
-    func speak(_ text: String) async {
-        // Re-configure AVAudioSession each call — recovers from deactivations
-        // caused by camera session transitions or speech recognizer teardown.
+    // MARK: - Public
+
+    func speakAll(_ utterances: [AVSpeechUtterance]) async {
+        guard !utterances.isEmpty else { return }
+
         do {
             try configureSession()
         } catch {
-            AppConfig.shared.log("AudioService: session configure failed: \(error.localizedDescription)", level: .warning)
+            AppConfig.shared.log(
+                "AudioService: session configure failed: \(error.localizedDescription)",
+                level: .warning
+            )
         }
 
-        // Discard any leftover continuation from a previous cancelled call
-        // (shouldn't normally happen, but guards against stuck states).
+        // Clear any leftover continuation from a prior interrupted call.
+        // Two yield()s ensure stale delegate callbacks from the previous speech
+        // have a chance to fire (and safely no-op) before the new state is set.
         if let leftover = speechCompletion {
             AppConfig.shared.log("AudioService: clearing leftover continuation", level: .warning)
-            currentUtterance = nil
+            pendingCount = 0
             speechCompletion = nil
             leftover.resume()
             await Task.yield()
         }
 
-        // Stop any in-progress speech before starting the new utterance.
         if synthesizer.isSpeaking {
             synthesizer.stopSpeaking(at: .immediate)
-            await Task.yield()
+            await Task.yield()  // let didCancel callbacks fire and discard
         }
 
-        AppConfig.shared.log("AudioService: speaking, chars=\(text.count)")
+        let totalChars = utterances.reduce(0) { $0 + $1.speechString.count }
+        AppConfig.shared.log(
+            "AudioService: speaking \(utterances.count) sentence(s), chars=\(totalChars)"
+        )
 
-        let utterance = AVSpeechUtterance(string: text)
-        utterance.voice = AVSpeechSynthesisVoice(language: AudioService.voiceLanguage)
-        utterance.rate = AVSpeechUtteranceDefaultSpeechRate * AudioService.speechRateMultiplier
-        utterance.pitchMultiplier = AudioService.pitchMultiplier
-        utterance.volume = AudioService.speakerVolume
-
-        currentUtterance = utterance
+        pendingCount = utterances.count
         await withCheckedContinuation { continuation in
             speechCompletion = continuation
-            synthesizer.speak(utterance)
+            for utterance in utterances {
+                synthesizer.speak(utterance)
+            }
         }
 
-        AppConfig.shared.log("AudioService: speech done, chars=\(text.count)")
+        AppConfig.shared.log(
+            "AudioService: speech done, sentences=\(utterances.count), chars=\(totalChars)"
+        )
     }
+
+    // MARK: - AVAudioSession
 
     private func configureSession() throws {
         let session = AVAudioSession.sharedInstance()
-        // Only reconfigure if the category changed (e.g. another subsystem reset it).
         if session.category != .playAndRecord {
             try session.setCategory(
                 .playAndRecord,
@@ -194,35 +288,36 @@ private final class SpeechOrchestrator: NSObject, AVSpeechSynthesizerDelegate, @
                 options: [.allowBluetooth, .defaultToSpeaker]
             )
         }
-        // Re-activate each call to recover from interruptions or deactivations.
         try session.setActive(true, options: .notifyOthersOnDeactivation)
     }
 
     // MARK: - AVSpeechSynthesizerDelegate
 
-    nonisolated func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer,
-                                        didFinish utterance: AVSpeechUtterance) {
-        let finishedID = ObjectIdentifier(utterance)
+    nonisolated func speechSynthesizer(
+        _ synthesizer: AVSpeechSynthesizer,
+        didFinish utterance: AVSpeechUtterance
+    ) {
         Task { @MainActor [weak self] in
-            guard let self,
-                  let current = self.currentUtterance,
-                  ObjectIdentifier(current) == finishedID else { return }
-            self.speechCompletion?.resume()
+            guard let self else { return }
+            self.pendingCount -= 1
+            guard self.pendingCount <= 0, let completion = self.speechCompletion else { return }
+            self.pendingCount = 0
             self.speechCompletion = nil
-            self.currentUtterance = nil
+            completion.resume()
         }
     }
 
-    nonisolated func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer,
-                                        didCancel utterance: AVSpeechUtterance) {
-        let cancelledID = ObjectIdentifier(utterance)
+    nonisolated func speechSynthesizer(
+        _ synthesizer: AVSpeechSynthesizer,
+        didCancel utterance: AVSpeechUtterance
+    ) {
         Task { @MainActor [weak self] in
-            guard let self,
-                  let current = self.currentUtterance,
-                  ObjectIdentifier(current) == cancelledID else { return }
-            self.speechCompletion?.resume()
+            guard let self else { return }
+            self.pendingCount -= 1
+            guard self.pendingCount <= 0, let completion = self.speechCompletion else { return }
+            self.pendingCount = 0
             self.speechCompletion = nil
-            self.currentUtterance = nil
+            completion.resume()
         }
     }
 }

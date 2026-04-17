@@ -2,8 +2,8 @@
 // SeeSaw — Tier 2 companion app
 //
 // "Settings" tab on the home screen.
-// Contains four sections:
-//   1. Story Mode       — on-device / cloud / hybrid selector
+// Contains five sections:
+//   1. Story Engine     — mode picker + Gemma 4 model download
 //   2. Accessory Setup  — reuses AccessoryPickerView
 //   3. Child Preferences — name, age, favourite topics
 //   4. Account          — Sign Out
@@ -21,12 +21,20 @@ struct SettingsTabView: View {
     @State private var selectedPreferences: Set<String> = Set(UserDefaults.standard.childPreferences)
     @State private var showSignOutConfirmation = false
 
+    // Cloud configuration
+    @State private var cloudURLString: String = UserDefaults.standard.cloudAgentURL?.absoluteString ?? ""
+    @State private var cloudAgentKey: String = UserDefaults.standard.cloudAgentKey
+
+    // Gemma 4 download state — polled once on appear and after action
+    @State private var gemmaModelState: Gemma4StoryService.ModelState = .notDownloaded
+    @State private var downloadProgress: Double = 0
+
     // MARK: - Body
 
     var body: some View {
         NavigationStack {
             Form {
-                storyModeSection
+                storyEngineSection
                 AccessoryPickerView(accessoryManager: accessoryManager)
                 childPreferencesSection
                 accountSection
@@ -46,26 +54,135 @@ struct SettingsTabView: View {
                 Button("Sign Out", role: .destructive) { coordinator.signOut() }
                 Button("Cancel", role: .cancel) {}
             }
+            .task { await refreshGemmaState() }
         }
     }
 
-    // MARK: - Story Mode section
+    // MARK: - Story Engine section
 
-    private var storyModeSection: some View {
+    private var storyEngineSection: some View {
         Section {
-            Picker("Story Mode", selection: $vm.storyMode) {
+            Picker("Engine", selection: $vm.storyMode) {
                 ForEach(StoryGenerationMode.allCases, id: \.self) { mode in
                     Text(mode.displayName).tag(mode)
                 }
             }
-            .pickerStyle(.segmented)
 
             Text(vm.storyMode.description)
                 .font(.caption)
                 .foregroundStyle(.secondary)
+
+            // Gemma 4 model download row — only visible when mode requires it
+            if vm.storyMode == .gemma4OnDevice || vm.storyMode == .hybrid {
+                gemmaModelRow
+            }
+
+            // Cloud configuration — only visible when cloud or hybrid mode is selected
+            if vm.storyMode == .cloud || vm.storyMode == .hybrid {
+                TextField("Cloud Agent URL", text: $cloudURLString)
+                    .keyboardType(.URL)
+                    .autocorrectionDisabled()
+                    .textInputAutocapitalization(.never)
+                    .font(.caption)
+                    .onSubmit { saveCloudConfig() }
+
+                SecureField("API Key (X-SeeSaw-Key)", text: $cloudAgentKey)
+                    .autocorrectionDisabled()
+                    .textInputAutocapitalization(.never)
+                    .font(.caption)
+                    .onSubmit { saveCloudConfig() }
+            }
         } header: {
-            Text("Story Generation")
+            Text("Story Engine")
         }
+    }
+
+    @ViewBuilder
+    private var gemmaModelRow: some View {
+        switch gemmaModelState {
+        case .notDownloaded:
+            HStack {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Gemma 4 1B model")
+                        .font(.subheadline)
+                    Text("~800 MB required for on-device mode")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                Spacer()
+                Button("Download") {
+                    Task { await startDownload() }
+                }
+                .buttonStyle(.borderedProminent)
+                .controlSize(.small)
+            }
+
+        case .downloading(let progress):
+            VStack(alignment: .leading, spacing: 6) {
+                HStack {
+                    Text("Downloading Gemma 4…")
+                        .font(.subheadline)
+                    Spacer()
+                    Text("\(Int(progress * 100))%")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                ProgressView(value: progress)
+                    .tint(.teal)
+            }
+
+        case .ready:
+            HStack {
+                Label("Gemma 4 model ready", systemImage: "checkmark.circle.fill")
+                    .foregroundStyle(.green)
+                    .font(.subheadline)
+                Spacer()
+                Button("Remove", role: .destructive) {
+                    Task { await deleteModel() }
+                }
+                .font(.caption)
+                .foregroundStyle(.red)
+            }
+
+        case .failed(let reason):
+            VStack(alignment: .leading, spacing: 4) {
+                Label("Download failed", systemImage: "exclamationmark.triangle")
+                    .foregroundStyle(.orange)
+                    .font(.subheadline)
+                Text(reason)
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                Button("Retry") {
+                    Task { await startDownload() }
+                }
+                .font(.caption)
+            }
+        }
+    }
+
+    // MARK: - Gemma download actions
+
+    private func refreshGemmaState() async {
+        gemmaModelState = await vm.gemma4StoryService.currentModelState()
+    }
+
+    private func startDownload() async {
+        for await event in await vm.modelDownloadManager.downloadModel() {
+            switch event {
+            case .progress(let p):
+                gemmaModelState = .downloading(progress: p)
+                downloadProgress = p
+            case .completed(let path):
+                gemmaModelState = .ready(modelPath: path)
+            case .failed(let error):
+                gemmaModelState = .failed(reason: error.localizedDescription)
+            }
+        }
+    }
+
+    private func deleteModel() async {
+        try? await vm.modelDownloadManager.deleteModel()
+        gemmaModelState = .notDownloaded
     }
 
     // MARK: - Child Preferences section
@@ -129,6 +246,17 @@ struct SettingsTabView: View {
         UserDefaults.standard.childName        = childName
         UserDefaults.standard.childAge         = childAge
         UserDefaults.standard.childPreferences = Array(selectedPreferences)
+        saveCloudConfig()
+    }
+
+    private func saveCloudConfig() {
+        let trimmed = cloudURLString.trimmingCharacters(in: .whitespacesAndNewlines)
+        if let url = URL(string: trimmed),
+           (url.scheme == "http" || url.scheme == "https"),
+           !(url.host?.isEmpty ?? true) {
+            UserDefaults.standard.cloudAgentURL = url
+        }
+        UserDefaults.standard.cloudAgentKey = cloudAgentKey.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 }
 

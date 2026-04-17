@@ -118,6 +118,65 @@ final class StorySessionRecord {
         childName.isEmpty ? "Child" : childName
     }
 
+    /// JSONL export in Gemma 4 chat-template format for fine-tuning.
+    /// Each beat becomes one training example. Beats with no story text are skipped.
+    /// Format matches the SeeSaw instruction format documented in FINE_TUNING.md.
+    var trainingJSONL: String {
+        let ordered = orderedBeats.filter { !$0.storyText.isEmpty }
+        guard !ordered.isEmpty else { return "" }
+
+        let objectList = detectedObjects.isEmpty ? "various objects" : detectedObjects.joined(separator: ", ")
+        let sceneList  = sceneLabels.isEmpty ? "indoor scene" : sceneLabels.joined(separator: ", ")
+        let name       = displayChildName
+        let age        = childAge
+
+        var lines: [String] = []
+
+        for (index, beat) in ordered.enumerated() {
+            // Build user turn
+            let previousAnswer: String?
+            if index == 0 {
+                previousAnswer = nil
+            } else {
+                previousAnswer = ordered[index - 1].childAnswer
+            }
+
+            let userTurn: String
+            if index == 0 {
+                userTurn = "You are SeeSaw, a gentle storytelling companion for children aged 4-8. " +
+                           "Child: \(name), age \(age). Objects: \(objectList). Scene: \(sceneList). " +
+                           "Start a new interactive story."
+            } else if let answer = previousAnswer, !answer.isEmpty {
+                userTurn = "You are SeeSaw, a gentle storytelling companion for children aged 4-8. " +
+                           "Child: \(name), age \(age). Objects: \(objectList). Scene: \(sceneList). " +
+                           "Continue the story. The child answered: \"\(answer)\""
+            } else {
+                userTurn = "You are SeeSaw, a gentle storytelling companion for children aged 4-8. " +
+                           "Child: \(name), age \(age). Objects: \(objectList). Scene: \(sceneList). " +
+                           "Continue the story."
+            }
+
+            // Build model turn — JSON object matching iOS StoryBeat schema
+            let storyTextEscaped = beat.storyText
+                .replacingOccurrences(of: "\\", with: "\\\\")
+                .replacingOccurrences(of: "\"", with: "\\\"")
+            let questionEscaped = beat.question
+                .replacingOccurrences(of: "\\", with: "\\\\")
+                .replacingOccurrences(of: "\"", with: "\\\"")
+            let modelTurn = "{\"story_text\": \"\(storyTextEscaped)\", \"question\": \"\(questionEscaped)\", \"is_ending\": \(beat.isEnding)}"
+
+            let fullText = "<bos><start_of_turn>user\n\(userTurn)\n<end_of_turn>\n<start_of_turn>model\n\(modelTurn)<end_of_turn>"
+
+            // Wrap in JSONL envelope — escape the full text as a JSON string value
+            if let jsonData = try? JSONSerialization.data(withJSONObject: ["text": fullText]),
+               let jsonString = String(data: jsonData, encoding: .utf8) {
+                lines.append(jsonString)
+            }
+        }
+
+        return lines.joined(separator: "\n")
+    }
+
     /// Plain-text export of the full conversation for the native share sheet.
     var shareText: String {
         var lines: [String] = [

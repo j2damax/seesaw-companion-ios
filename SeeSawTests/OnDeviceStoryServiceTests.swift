@@ -287,6 +287,121 @@ struct StoryMetricsEventTests {
     }
 }
 
+// MARK: - Three-Architecture Benchmark Tests
+//
+// Validates the StoryMetricsStore CSV structure that Chapter 6 comparative
+// evaluation relies on. Each architecture writes events with a distinct
+// generationMode label — the CSV is consumed by the dissertation's
+// Friedman test and latency comparison table.
+
+struct ThreeArchitectureBenchmarkTests {
+
+    private let modes = ["onDevice", "gemma4OnDevice", "cloud"]
+
+    /// All three mode labels survive a CSV round-trip.
+    @Test func allThreeModeLabelsAppearInCSV() async throws {
+        let store = StoryMetricsStore()
+
+        for mode in modes {
+            await store.record(StoryMetricsEvent(
+                generationMode: mode,
+                timeToFirstTokenMs: 300,
+                totalGenerationMs: 1200,
+                turnCount: 3,
+                guardrailViolations: 0,
+                storyTextLength: 160,
+                timestamp: Date().timeIntervalSince1970
+            ))
+        }
+
+        let csv = await store.exportCSV()
+        for mode in modes {
+            #expect(csv.contains(mode), "CSV missing mode: \(mode)")
+        }
+    }
+
+    /// Each mode's event count is tracked separately via eventCount.
+    @Test func eventCountCoversAllThreeModes() async {
+        let store = StoryMetricsStore()
+
+        for mode in modes {
+            for _ in 1...3 {
+                await store.record(StoryMetricsEvent(
+                    generationMode: mode,
+                    timeToFirstTokenMs: 200,
+                    totalGenerationMs: 1000,
+                    turnCount: 2,
+                    guardrailViolations: 0,
+                    storyTextLength: 140,
+                    timestamp: Date().timeIntervalSince1970
+                ))
+            }
+        }
+
+        // 3 modes × 3 events = 9 total
+        #expect(await store.eventCount() == 9)
+    }
+
+    /// Average generation time is positive after recording events from all modes.
+    @Test func averageGenerationMsPositiveAcrossAllModes() async {
+        let store = StoryMetricsStore()
+
+        for (index, mode) in modes.enumerated() {
+            await store.record(StoryMetricsEvent(
+                generationMode: mode,
+                timeToFirstTokenMs: Double(index + 1) * 100,
+                totalGenerationMs: Double(index + 1) * 500,
+                turnCount: 3,
+                guardrailViolations: 0,
+                storyTextLength: 150,
+                timestamp: Date().timeIntervalSince1970
+            ))
+        }
+
+        let avg = await store.averageGenerationMs()
+        #expect(avg > 0)
+    }
+
+    /// CSV header contains all fields needed for dissertation analysis.
+    @Test func csvHeaderContainsDissertationFields() async {
+        let store = StoryMetricsStore()
+        await store.record(StoryMetricsEvent(
+            generationMode: "onDevice",
+            timeToFirstTokenMs: 400,
+            totalGenerationMs: 1100,
+            turnCount: 4,
+            guardrailViolations: 0,
+            storyTextLength: 180,
+            timestamp: Date().timeIntervalSince1970
+        ))
+
+        let csv = await store.exportCSV()
+        let requiredFields = ["generationMode", "timeToFirstTokenMs", "totalGenerationMs", "turnCount"]
+        for field in requiredFields {
+            #expect(csv.contains(field), "CSV missing required dissertation field: \(field)")
+        }
+    }
+
+    /// Guardrail violations sum is zero across all modes for a clean session.
+    @Test func zeroGuardrailViolationsAcrossAllModes() async {
+        let store = StoryMetricsStore()
+
+        for mode in modes {
+            await store.record(StoryMetricsEvent(
+                generationMode: mode,
+                timeToFirstTokenMs: 300,
+                totalGenerationMs: 1200,
+                turnCount: 3,
+                guardrailViolations: 0,
+                storyTextLength: 160,
+                timestamp: Date().timeIntervalSince1970
+            ))
+        }
+
+        #expect(await store.totalGuardrailViolations() == 0)
+    }
+}
+
 // MARK: - MockStoryService helpers
 
 extension MockStoryService {

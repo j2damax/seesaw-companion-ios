@@ -58,7 +58,12 @@ final class CompanionViewModel {
     let metricsStore: PrivacyMetricsStore
     let storyMetricsStore: StoryMetricsStore
     private let onDeviceStoryService: OnDeviceStoryService
+    let gemma4StoryService: Gemma4StoryService
+    let modelDownloadManager: ModelDownloadManager
     private let storyTimelineStore: StoryTimelineStore
+    private let hybridMetricsStore: HybridMetricsStore
+    private let backgroundEnhancer: BackgroundStoryEnhancer
+    private let turnDetector = SemanticTurnDetector()
 
     // MARK: - Active stream tasks (cancelled on disconnect)
 
@@ -99,7 +104,10 @@ final class CompanionViewModel {
         metricsStore: PrivacyMetricsStore,
         storyMetricsStore: StoryMetricsStore,
         onDeviceStoryService: OnDeviceStoryService,
-        storyTimelineStore: StoryTimelineStore
+        gemma4StoryService: Gemma4StoryService,
+        modelDownloadManager: ModelDownloadManager,
+        storyTimelineStore: StoryTimelineStore,
+        hybridMetricsStore: HybridMetricsStore
     ) {
         self.accessoryManager = accessoryManager
         self.privacyPipeline  = privacyPipeline
@@ -110,7 +118,11 @@ final class CompanionViewModel {
         self.metricsStore = metricsStore
         self.storyMetricsStore = storyMetricsStore
         self.onDeviceStoryService = onDeviceStoryService
+        self.gemma4StoryService = gemma4StoryService
+        self.modelDownloadManager = modelDownloadManager
         self.storyTimelineStore = storyTimelineStore
+        self.hybridMetricsStore = hybridMetricsStore
+        self.backgroundEnhancer = BackgroundStoryEnhancer(cloudService: cloudService)
     }
 
     // MARK: - Public actions
@@ -328,10 +340,13 @@ final class CompanionViewModel {
         switch storyMode {
         case .onDevice:
             await runOnDevicePipeline(jpegData: jpegData)
+        case .gemma4OnDevice:
+            await runGemma4Pipeline(jpegData: jpegData)
         case .cloud:
             await runCloudPipeline(jpegData: jpegData)
         case .hybrid:
-            await runOnDevicePipeline(jpegData: jpegData)
+            // Fallback chain: cloud → gemma4OnDevice → onDevice
+            await runHybridPipeline(jpegData: jpegData)
         }
     }
 
@@ -351,7 +366,9 @@ final class CompanionViewModel {
             sessionState = .processingPrivacy
             let result = try await privacyPipeline.process(
                 jpegData: jpegData,
-                childAge: childAge
+                childAge: childAge,
+                childName: UserDefaults.standard.childName,
+                generationMode: storyMode.rawValue
             )
             await metricsStore.record(result.metrics)
             AppConfig.shared.log("runOnDevicePipeline: privacy done, objects=\(result.payload.objects)")
@@ -443,7 +460,7 @@ final class CompanionViewModel {
         while !Task.isCancelled {
             sessionState = .listeningForAnswer
             latestAnswerPiiCount = 0
-            guard let answer = await listenForAnswer(timeoutSeconds: 15) else {
+            guard let answer = await listenForAnswer(question: pendingBeat?.question ?? "") else {
                 AppConfig.shared.log("continueStoryLoop: answer timeout, ending story")
                 await endStoryGracefully()
                 break
@@ -512,7 +529,14 @@ final class CompanionViewModel {
         }
     }
 
-    private func listenForAnswer(timeoutSeconds: Int) async -> String? {
+    /// - Parameters:
+    ///   - skipSemanticLayer: When `true`, Layer 2 (Apple FM semantic check) is skipped entirely.
+    ///     Pass `true` from Gemma pipelines — Apple FM is unavailable in that context and calling it
+    ///     causes an ~8-second post-hard-cap hang while the Foundation Models cancellation surfaces.
+    private func listenForAnswer(timeoutSeconds: Int = 8, question: String, skipSemanticLayer: Bool = false) async -> String? {
+        // Clear stale transcript from the previous turn so the hard-cap fallback
+        // doesn't return an old answer when the child is silent this turn.
+        currentTranscript = nil
         do {
             try await audioCaptureService.startCapture()
             let bufferStream = await audioCaptureService.audioBufferStream
@@ -521,6 +545,7 @@ final class CompanionViewModel {
             )
 
             let result: String? = await withTaskGroup(of: String?.self) { group in
+                // Task 1: isFinal path (preserved from original — fires when STT is confident)
                 group.addTask { [weak self] in
                     for await result in transcriptionStream {
                         if Task.isCancelled { return nil }
@@ -533,11 +558,62 @@ final class CompanionViewModel {
                     }
                     return nil
                 }
+                // Task 2: hard cap (Layer 3)
                 group.addTask { [weak self] in
                     try? await Task.sleep(for: .seconds(timeoutSeconds))
+                    AppConfig.shared.log("listenForAnswer: hard cap reached (\(timeoutSeconds)s)")
                     // On timeout return whatever partial transcript was accumulated,
                     // so a short or interrupted utterance still drives the story forward.
                     return await MainActor.run { self?.currentTranscript }
+                }
+                // Task 3: semantic watchdog (Layers 1 & 2)
+                group.addTask { [weak self] in
+                    guard let self else { return nil }
+                    var lastSeen = ""
+                    var lastChangeTime = CFAbsoluteTimeGetCurrent()
+                    var heuristicFired = false
+
+                    while !Task.isCancelled {
+                        try? await Task.sleep(for: .milliseconds(200))
+                        let current = await MainActor.run { self.currentTranscript ?? "" }
+
+                        if current != lastSeen {
+                            lastSeen = current
+                            lastChangeTime = CFAbsoluteTimeGetCurrent()
+                            heuristicFired = false
+                            continue
+                        }
+                        guard !lastSeen.isEmpty else { continue }
+
+                        let silence = CFAbsoluteTimeGetCurrent() - lastChangeTime
+                        guard silence >= SemanticTurnDetector.silenceThresholdSeconds else { continue }
+
+                        // Layer 1: heuristic trailing-phrase check
+                        let incomplete = await self.turnDetector.isIncomplete(transcript: lastSeen)
+                        if !heuristicFired && incomplete {
+                            AppConfig.shared.log("listenForAnswer: Layer 1 heuristic extend, trailing phrase detected")
+                            heuristicFired = true
+                            lastChangeTime = CFAbsoluteTimeGetCurrent()
+                            continue
+                        }
+
+                        // Layer 2: Apple FM semantic completion check
+                        // Skipped in Gemma mode — Apple FM is not available there and the async
+                        // cancellation takes ~8s to surface, causing a post-hard-cap freeze.
+                        if skipSemanticLayer {
+                            AppConfig.shared.log("listenForAnswer: Layer 2 skipped (Gemma mode) — returning transcript after silence")
+                            return lastSeen
+                        }
+                        AppConfig.shared.log("listenForAnswer: Layer 2 semantic check starting")
+                        let done = await self.turnDetector.semanticCheck(transcript: lastSeen, question: question)
+                        if done {
+                            AppConfig.shared.log("listenForAnswer: Layer 2 complete → returning transcript")
+                            return lastSeen
+                        }
+                        // Extend silence window by semanticExtensionSeconds (implicit — reset clock)
+                        lastChangeTime = CFAbsoluteTimeGetCurrent()
+                    }
+                    return nil
                 }
                 let first = await group.next() ?? nil
                 group.cancelAll()
@@ -548,7 +624,8 @@ final class CompanionViewModel {
             _ = await speechRecognitionService.stopTranscription()
             let answerLen = result?.count ?? 0
             AppConfig.shared.log("listenForAnswer: answer='\(result ?? "nil")', length=\(answerLen)")
-            return result
+            // Convert empty-string result to nil so callers correctly invoke endStoryGracefully()
+            return result?.isEmpty == true ? nil : result
         } catch {
             AppConfig.shared.log("listenForAnswer: error=\(error.localizedDescription)", level: .error)
             return nil
@@ -577,38 +654,512 @@ final class CompanionViewModel {
         }
     }
 
+    // MARK: - Gemma 4 on-device story pipeline
+
+    /// Identical flow to `runOnDevicePipeline` but uses `Gemma4StoryService`.
+    /// Falls back to `runOnDevicePipeline` silently when the model is not yet
+    /// downloaded or MediaPipe integration is pending.
+    private func runGemma4Pipeline(jpegData: Data) async {
+        AppConfig.shared.log("runGemma4Pipeline: start")
+        let speechAuthorized = await speechRecognitionService.requestAuthorization()
+        if !speechAuthorized {
+            AppConfig.shared.log("runGemma4Pipeline: speech not authorized", level: .warning)
+        }
+
+        do {
+            sessionState = .processingPrivacy
+            let result = try await privacyPipeline.process(jpegData: jpegData, childAge: childAge, childName: UserDefaults.standard.childName, generationMode: storyMode.rawValue)
+            await metricsStore.record(result.metrics)
+
+            let context = SceneContext(from: result.payload)
+            let profile = ChildProfile(
+                name: UserDefaults.standard.childName,
+                age: childAge,
+                preferences: UserDefaults.standard.childPreferences
+            )
+
+            beginStorySession(
+                jpegData: jpegData,
+                payload: result.payload,
+                privacyMetrics: result.metrics,
+                childName: profile.name,
+                childAge: profile.age
+            )
+
+            sessionState = .generatingStory
+            generationStartTime = CFAbsoluteTimeGetCurrent()
+            ttftMs = 0
+            streamingStoryText = ""
+
+            AppConfig.shared.log("runGemma4Pipeline: privacy done, objects=\(result.payload.objects), scene=\(result.payload.scene)")
+            let beat = try await gemma4StoryService.startStory(context: context, profile: profile)
+            streamingStoryText = ""
+            let generationMs = (CFAbsoluteTimeGetCurrent() - generationStartTime) * 1000
+            AppConfig.shared.log("runGemma4Pipeline: beat[0] generated in \(Int(generationMs))ms, ttft=\(Int(ttftMs))ms")
+            AppConfig.shared.log("beat[0] storyText: \(beat.storyText)")
+            AppConfig.shared.log("beat[0] question: \(beat.question)")
+            AppConfig.shared.log("beat[0] isEnding: \(beat.isEnding)")
+            storyTurnCount = await gemma4StoryService.currentTurnCount
+            recordBeat(beat, generationMs: generationMs, ttftMs: ttftMs, localIndex: 0)
+
+            await storyMetricsStore.record(StoryMetricsEvent(
+                generationMode: storyMode.rawValue,
+                timeToFirstTokenMs: ttftMs,
+                totalGenerationMs: generationMs,
+                turnCount: storyTurnCount,
+                guardrailViolations: 0,
+                storyTextLength: beat.storyText.count,
+                timestamp: Date().timeIntervalSince1970
+            ))
+
+            sessionState = .sendingAudio
+            await audioService.speak(beat.storyText)
+            await audioService.speak(beat.question)
+
+            timeline.insert(TimelineEntry(
+                sceneObjects: result.payload.objects,
+                storySnippet: String(beat.storyText.prefix(120))
+            ), at: 0)
+
+            if !beat.isEnding {
+                storyLoopTask = Task { [weak self] in
+                    await self?.continueGemma4Loop()
+                }
+            } else {
+                await gemma4StoryService.endSession()
+                finalizeCurrentSession()
+                storyTurnCount = 0
+                sessionState = .connected
+            }
+        } catch let error as StoryError where
+            error == .modelUnavailable || error == .modelDownloading {
+            AppConfig.shared.log("runGemma4Pipeline: model not ready, falling back to Apple FM", level: .warning)
+            streamingStoryText = ""
+            await runOnDevicePipeline(jpegData: jpegData)
+        } catch {
+            streamingStoryText = ""
+            AppConfig.shared.log("runGemma4Pipeline: error=\(error.localizedDescription)", level: .error)
+            setError(error.localizedDescription)
+        }
+    }
+
+    private func continueGemma4Loop() async {
+        let sessionStart = CFAbsoluteTimeGetCurrent()
+        var loopIteration = 0
+        while !Task.isCancelled {
+            loopIteration += 1
+            let sessionElapsed = Int((CFAbsoluteTimeGetCurrent() - sessionStart) * 1000)
+            AppConfig.shared.log("continueGemma4Loop: iteration=\(loopIteration), sessionElapsed=\(sessionElapsed)ms")
+
+            sessionState = .listeningForAnswer
+            latestAnswerPiiCount = 0
+            AppConfig.shared.log("continueGemma4Loop: listening (skipSemanticLayer=true)")
+            let listenStart = CFAbsoluteTimeGetCurrent()
+            // skipSemanticLayer=true: Layer 2 Apple FM check is skipped to avoid ~8s hang
+            // caused by FoundationModels cancellation delay after the hard cap fires.
+            guard let answer = await listenForAnswer(question: pendingBeat?.question ?? "", skipSemanticLayer: true) else {
+                let listenMs = Int((CFAbsoluteTimeGetCurrent() - listenStart) * 1000)
+                AppConfig.shared.log("continueGemma4Loop: no answer after \(listenMs)ms, ending story")
+                await endStoryGracefully()
+                break
+            }
+            let listenMs = Int((CFAbsoluteTimeGetCurrent() - listenStart) * 1000)
+            recordAnswer(answer, piiCount: latestAnswerPiiCount)
+            AppConfig.shared.log("continueGemma4Loop: answer='\(answer)', listenTime=\(listenMs)ms, piiCount=\(latestAnswerPiiCount)")
+
+            sessionState = .generatingStory
+            do {
+                generationStartTime = CFAbsoluteTimeGetCurrent()
+                ttftMs = 0
+                streamingStoryText = ""
+                let beat = try await gemma4StoryService.continueTurn(childAnswer: answer)
+                streamingStoryText = ""
+                let turnMs = (CFAbsoluteTimeGetCurrent() - generationStartTime) * 1000
+                let sessionElapsedNow = Int((CFAbsoluteTimeGetCurrent() - sessionStart) * 1000)
+                storyTurnCount = await gemma4StoryService.currentTurnCount
+                recordBeat(beat, generationMs: turnMs, ttftMs: ttftMs, localIndex: storyTurnCount)
+                AppConfig.shared.log("continueGemma4Loop: beat[\(storyTurnCount)] generated in \(Int(turnMs))ms, sessionElapsed=\(sessionElapsedNow)ms")
+                AppConfig.shared.log("beat[\(storyTurnCount)] storyText: \(beat.storyText)")
+                AppConfig.shared.log("beat[\(storyTurnCount)] question: \(beat.question)")
+                AppConfig.shared.log("beat[\(storyTurnCount)] isEnding: \(beat.isEnding)")
+
+                await storyMetricsStore.record(StoryMetricsEvent(
+                    generationMode: storyMode.rawValue,
+                    timeToFirstTokenMs: ttftMs,
+                    totalGenerationMs: turnMs,
+                    turnCount: storyTurnCount,
+                    guardrailViolations: 0,
+                    storyTextLength: beat.storyText.count,
+                    timestamp: Date().timeIntervalSince1970
+                ))
+
+                sessionState = .sendingAudio
+                await audioService.speak(beat.storyText)
+                await audioService.speak(beat.question)
+
+                timeline.insert(TimelineEntry(sceneObjects: [], storySnippet: String(beat.storyText.prefix(120))), at: 0)
+                if beat.isEnding { break }
+            } catch {
+                streamingStoryText = ""
+                AppConfig.shared.log("continueGemma4Loop: error=\(error.localizedDescription)", level: .error)
+                setError(error.localizedDescription)
+                break
+            }
+        }
+        await gemma4StoryService.endSession()
+        finalizeCurrentSession()
+        storyTurnCount = 0
+        guard case .error = sessionState else {
+            sessionState = .connected
+            return
+        }
+    }
+
+    // MARK: - Hybrid pipeline (local foreground + cloud background)
+
+    private func runHybridPipeline(jpegData: Data) async {
+        let speechAuthorized = await speechRecognitionService.requestAuthorization()
+        if !speechAuthorized {
+            AppConfig.shared.log("runHybridPipeline: speech not authorised", level: .warning)
+        }
+
+        do {
+            sessionState = .processingPrivacy
+            let result = try await privacyPipeline.process(
+                jpegData: jpegData,
+                childAge: childAge,
+                childName: UserDefaults.standard.childName,
+                generationMode: storyMode.rawValue
+            )
+            await metricsStore.record(result.metrics)
+            let payload = result.payload
+            AppConfig.shared.log("runHybridPipeline: privacy done, objects=\(payload.objects), scene=\(payload.scene)")
+
+            let profile = ChildProfile(
+                name: UserDefaults.standard.childName,
+                age: childAge,
+                preferences: UserDefaults.standard.childPreferences
+            )
+            beginStorySession(
+                jpegData: jpegData,
+                payload: payload,
+                privacyMetrics: result.metrics,
+                childName: profile.name,
+                childAge: profile.age
+            )
+
+            let (localService, skipSemantic) = await resolveHybridLocalService()
+
+            sessionState = .generatingStory
+            generationStartTime = CFAbsoluteTimeGetCurrent()
+            let context = SceneContext(from: payload)
+            let baseBeat = try await localService.startStory(context: context, profile: profile)
+            let localMs = (CFAbsoluteTimeGetCurrent() - generationStartTime) * 1000
+            AppConfig.shared.log("runHybridPipeline: beat[0] generated in \(Int(localMs))ms via \(localService is Gemma4StoryService ? "Gemma4" : "AppleFM")")
+
+            // Fire background cloud enhancement during speak + listen dead time
+            await backgroundEnhancer.requestEnhancement(
+                payload: payload, baseBeat: baseBeat, childAnswer: nil, turnNumber: 0
+            )
+
+            sessionState = .sendingAudio
+            await audioService.speak(baseBeat.storyText)
+            await audioService.speak(baseBeat.question)
+
+            storyTurnCount = 1
+            recordBeat(baseBeat, generationMs: localMs, ttftMs: 0, localIndex: 0)
+            await storyMetricsStore.record(StoryMetricsEvent(
+                generationMode: storyMode.rawValue,
+                timeToFirstTokenMs: 0,
+                totalGenerationMs: localMs,
+                turnCount: storyTurnCount,
+                guardrailViolations: 0,
+                storyTextLength: baseBeat.storyText.count,
+                timestamp: Date().timeIntervalSince1970
+            ))
+            await hybridMetricsStore.record(HybridBeatMetric(
+                turnNumber: 0,
+                source: localService is Gemma4StoryService ? .localGemma4 : .localOnDevice,
+                localGenerationMs: localMs,
+                cloudResponseMs: nil,
+                cloudArrivedInTime: false,
+                endingDetectedBy: nil,
+                timestamp: Date().timeIntervalSince1970
+            ))
+            timeline.insert(TimelineEntry(
+                sceneObjects: payload.objects,
+                storySnippet: String(baseBeat.storyText.prefix(120))
+            ), at: 0)
+
+            if !baseBeat.isEnding {
+                storyLoopTask = Task { [weak self] in
+                    await self?.continueHybridLoop(
+                        payload: payload,
+                        localService: localService,
+                        skipSemantic: skipSemantic
+                    )
+                }
+            } else {
+                finalizeCurrentSession()
+                storyTurnCount = 0
+                sessionState = .connected
+            }
+        } catch {
+            AppConfig.shared.log("runHybridPipeline: error=\(error.localizedDescription)", level: .error)
+            setError(error.localizedDescription)
+        }
+    }
+
+    /// Resolve which local service to use for this hybrid session.
+    /// Checked once per session — not per turn — to avoid repeated async state reads.
+    /// Returns skipSemantic=true for Gemma4: Apple FM is unavailable in that context
+    /// and calling it causes an ~8s hang while Foundation Models cancellation surfaces.
+    private func resolveHybridLocalService() async -> (service: any StoryGenerating, skipSemantic: Bool) {
+        if case .ready = await gemma4StoryService.currentModelState() {
+            return (gemma4StoryService, true)
+        }
+        return (onDeviceStoryService, false)
+    }
+
+    private func continueHybridLoop(
+        payload: ScenePayload,
+        localService: any StoryGenerating,
+        skipSemantic: Bool
+    ) async {
+        var currentBeat: StoryBeat? = nil
+
+        while !Task.isCancelled {
+            sessionState = .listeningForAnswer
+            latestAnswerPiiCount = 0
+            let question = currentBeat?.question ?? ""
+            guard let answer = await listenForAnswer(question: question, skipSemanticLayer: skipSemantic) else {
+                AppConfig.shared.log("continueHybridLoop: no answer, ending story")
+                await endStoryGracefully()
+                break
+            }
+            recordAnswer(answer, piiCount: latestAnswerPiiCount)
+
+            sessionState = .generatingStory
+            let beat: StoryBeat
+            let source: HybridSource
+            var cloudResponseMs: Double? = nil
+            let localStart = CFAbsoluteTimeGetCurrent()
+
+            if let (enhanced, cloudMs) = await backgroundEnhancer.consumeEnhancedBeat() {
+                beat = enhanced
+                source = .cloud
+                cloudResponseMs = cloudMs
+                AppConfig.shared.log("hybridLoop: turn \(storyTurnCount) cloud-enhanced (\(Int(cloudMs))ms)")
+            } else {
+                beat = (try? await localService.continueTurn(childAnswer: answer)) ?? .safeFallback
+                source = localService is Gemma4StoryService ? .localGemma4 : .localOnDevice
+                AppConfig.shared.log("hybridLoop: turn \(storyTurnCount) local fallback (\(source.rawValue))")
+            }
+            let localMs = (CFAbsoluteTimeGetCurrent() - localStart) * 1000
+            currentBeat = beat
+
+            // Fire next cloud enhancement during speak + listen dead time
+            await backgroundEnhancer.requestEnhancement(
+                payload: payload, baseBeat: beat, childAnswer: answer, turnNumber: storyTurnCount
+            )
+
+            sessionState = .sendingAudio
+            await audioService.speak(beat.storyText)
+            await audioService.speak(beat.question)
+
+            storyTurnCount += 1
+            recordBeat(
+                beat,
+                generationMs: source == .cloud ? 0 : localMs,
+                ttftMs: 0,
+                localIndex: storyTurnCount - 1
+            )
+            await storyMetricsStore.record(StoryMetricsEvent(
+                generationMode: storyMode.rawValue,
+                timeToFirstTokenMs: 0,
+                totalGenerationMs: source == .cloud ? (cloudResponseMs ?? 0) : localMs,
+                turnCount: storyTurnCount,
+                guardrailViolations: 0,
+                storyTextLength: beat.storyText.count,
+                timestamp: Date().timeIntervalSince1970
+            ))
+            await hybridMetricsStore.record(HybridBeatMetric(
+                turnNumber: storyTurnCount - 1,
+                source: source,
+                localGenerationMs: localMs,
+                cloudResponseMs: cloudResponseMs,
+                cloudArrivedInTime: source == .cloud,
+                endingDetectedBy: beat.isEnding
+                    ? (source == .cloud ? .cloudLLM : .localHeuristic) : nil,
+                timestamp: Date().timeIntervalSince1970
+            ))
+            timeline.insert(TimelineEntry(
+                sceneObjects: [],
+                storySnippet: String(beat.storyText.prefix(120))
+            ), at: 0)
+
+            if beat.isEnding { break }
+        }
+
+        await localService.endSession()
+        await backgroundEnhancer.reset()
+        finalizeCurrentSession()
+        storyTurnCount = 0
+        guard case .error = sessionState else { sessionState = .connected; return }
+    }
+
     // MARK: - Cloud story pipeline
 
     private func runCloudPipeline(jpegData: Data) async {
         AppConfig.shared.log("runCloudPipeline: start, jpegBytes=\(jpegData.count), childAge=\(childAge)")
+        let speechAuthorized = await speechRecognitionService.requestAuthorization()
+        if !speechAuthorized {
+            AppConfig.shared.log("runCloudPipeline: speech not authorized", level: .warning)
+        }
+
         do {
             sessionState = .processingPrivacy
-            let result = try await privacyPipeline.process(jpegData: jpegData, childAge: childAge)
+            let result = try await privacyPipeline.process(jpegData: jpegData, childAge: childAge, childName: UserDefaults.standard.childName, generationMode: storyMode.rawValue)
             await metricsStore.record(result.metrics)
             AppConfig.shared.log("runCloudPipeline: privacy done, objects=\(result.payload.objects), scene=\(result.payload.scene), latency=\(Int(result.metrics.pipelineLatencyMs))ms")
 
-            sessionState = .requestingStory
-            let story = try await cloudService.requestStory(payload: result.payload)
-            AppConfig.shared.log("runCloudPipeline: story received, textLength=\(story.storyText.count)")
+            let profile = ChildProfile(
+                name: UserDefaults.standard.childName,
+                age: childAge,
+                preferences: UserDefaults.standard.childPreferences
+            )
+            beginStorySession(
+                jpegData: jpegData,
+                payload: result.payload,
+                privacyMetrics: result.metrics,
+                childName: profile.name,
+                childAge: profile.age
+            )
 
-            sessionState = .encodingAudio
-            let audioData = try await audioService.generateAndEncodeAudio(from: story.storyText)
-            AppConfig.shared.log("runCloudPipeline: audio encoded, pcmBytes=\(audioData.count)")
+            sessionState = .generatingStory
+            generationStartTime = CFAbsoluteTimeGetCurrent()
+            let beat = try await cloudService.requestStory(payload: result.payload)
+            let generationMs = (CFAbsoluteTimeGetCurrent() - generationStartTime) * 1000
+            AppConfig.shared.log("runCloudPipeline: beat[0] received in \(Int(generationMs))ms, beatIndex=\(beat.beatIndex)")
+            AppConfig.shared.log("beat[0] storyText: \(beat.storyText)")
+            AppConfig.shared.log("beat[0] question: \(beat.question)")
+            AppConfig.shared.log("beat[0] isEnding: \(beat.isEnding)")
+
+            storyTurnCount = beat.beatIndex + 1
+            recordBeat(
+                StoryBeat(storyText: beat.storyText, question: beat.question, isEnding: beat.isEnding),
+                generationMs: generationMs, ttftMs: 0, localIndex: beat.beatIndex
+            )
+
+            await storyMetricsStore.record(StoryMetricsEvent(
+                generationMode: storyMode.rawValue,
+                timeToFirstTokenMs: 0,
+                totalGenerationMs: generationMs,
+                turnCount: storyTurnCount,
+                guardrailViolations: 0,
+                storyTextLength: beat.storyText.count,
+                timestamp: Date().timeIntervalSince1970
+            ))
 
             sessionState = .sendingAudio
-            try await accessoryManager.activeAccessory.sendAudio(audioData)
-            AppConfig.shared.log("runCloudPipeline: audio sent to accessory")
+            await audioService.speak(beat.storyText)
+            await audioService.speak(beat.question)
 
             timeline.insert(TimelineEntry(
                 sceneObjects: result.payload.objects,
-                storySnippet: String(story.storyText.prefix(120))
+                storySnippet: String(beat.storyText.prefix(120))
             ), at: 0)
 
-            sessionState = .connected
-            AppConfig.shared.log("runCloudPipeline: complete, timelineEntries=\(timeline.count)")
+            if !beat.isEnding {
+                storyLoopTask = Task { [weak self] in
+                    await self?.continueCloudLoop(basePayload: result.payload, lastBeat: beat)
+                }
+            } else {
+                finalizeCurrentSession()
+                storyTurnCount = 0
+                sessionState = .connected
+            }
         } catch {
             AppConfig.shared.log("runCloudPipeline: error=\(error.localizedDescription)", level: .error)
             setError(error.localizedDescription)
+        }
+    }
+
+    private func continueCloudLoop(basePayload: ScenePayload, lastBeat: StoryResponse) async {
+        var sessionId   = lastBeat.sessionId
+        var history     = [StoryTurn(role: "model", text: lastBeat.storyText)]
+        var currentBeat = lastBeat
+
+        while !Task.isCancelled {
+            sessionState = .listeningForAnswer
+            latestAnswerPiiCount = 0
+            guard let answer = await listenForAnswer(question: currentBeat.question) else {
+                AppConfig.shared.log("continueCloudLoop: answer timeout, ending story")
+                await endStoryGracefully()
+                break
+            }
+            recordAnswer(answer, piiCount: latestAnswerPiiCount)
+            history.append(StoryTurn(role: "user", text: answer))
+
+            sessionState = .generatingStory
+            do {
+                let continuationPayload = ScenePayload(
+                    objects:      basePayload.objects,
+                    scene:        basePayload.scene,
+                    transcript:   answer,
+                    childAge:     basePayload.childAge,
+                    childName:    basePayload.childName,
+                    sessionId:    sessionId,
+                    storyHistory: history
+                )
+
+                generationStartTime = CFAbsoluteTimeGetCurrent()
+                let beat = try await cloudService.requestStory(payload: continuationPayload)
+                let turnMs = (CFAbsoluteTimeGetCurrent() - generationStartTime) * 1000
+
+                history.append(StoryTurn(role: "model", text: beat.storyText))
+                sessionId   = beat.sessionId
+                currentBeat = beat
+                storyTurnCount = beat.beatIndex + 1
+
+                AppConfig.shared.log("continueCloudLoop: answer='\(answer)'")
+                AppConfig.shared.log("beat[\(beat.beatIndex)] storyText: \(beat.storyText)")
+                AppConfig.shared.log("beat[\(beat.beatIndex)] question: \(beat.question)")
+                AppConfig.shared.log("beat[\(beat.beatIndex)] isEnding: \(beat.isEnding)")
+
+                recordBeat(
+                    StoryBeat(storyText: beat.storyText, question: beat.question, isEnding: beat.isEnding),
+                    generationMs: turnMs, ttftMs: 0, localIndex: beat.beatIndex
+                )
+
+                await storyMetricsStore.record(StoryMetricsEvent(
+                    generationMode: storyMode.rawValue,
+                    timeToFirstTokenMs: 0,
+                    totalGenerationMs: turnMs,
+                    turnCount: storyTurnCount,
+                    guardrailViolations: 0,
+                    storyTextLength: beat.storyText.count,
+                    timestamp: Date().timeIntervalSince1970
+                ))
+
+                sessionState = .sendingAudio
+                await audioService.speak(beat.storyText)
+                await audioService.speak(beat.question)
+
+                timeline.insert(TimelineEntry(sceneObjects: [], storySnippet: String(beat.storyText.prefix(120))), at: 0)
+
+                if beat.isEnding { break }
+            } catch {
+                AppConfig.shared.log("continueCloudLoop: error=\(error.localizedDescription)", level: .error)
+                setError(error.localizedDescription)
+                break
+            }
+        }
+        finalizeCurrentSession()
+        storyTurnCount = 0
+        guard case .error = sessionState else {
+            sessionState = .connected
+            return
         }
     }
 

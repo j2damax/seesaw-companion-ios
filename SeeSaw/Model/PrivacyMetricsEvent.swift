@@ -5,6 +5,7 @@
 // Proves no raw data was transmitted and captures per-stage latencies.
 
 struct PrivacyMetricsEvent: Codable, Sendable {
+    let generationMode: String
     let facesDetected: Int
     let facesBlurred: Int
     let objectsDetected: Int

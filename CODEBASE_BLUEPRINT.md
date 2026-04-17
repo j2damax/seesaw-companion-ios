@@ -10,7 +10,7 @@
 
 1. **Captures** a scene image from the connected device
 2. **Processes** it through an entirely on-device privacy pipeline (face blur, object detection, scene classification, speech-to-text, PII scrubbing)
-3. **Generates** an interactive story using Apple Foundation Models (on-device LLM) or a cloud fallback
+3. **Generates** an interactive story using one of three modes: Apple Foundation Models (on-device), Gemma 3 1B via MediaPipe (on-device), or Cloud Run + Gemini 2.0 Flash
 4. **Reads aloud** the story via text-to-speech back through the connected device
 5. **Listens** for the child's verbal answer and continues the story in a multi-turn loop
 
@@ -162,11 +162,13 @@ flowchart TD
     Generate --> Pipeline[Privacy Pipeline<br/>processes image]
     Pipeline --> StoryGen{Story Mode?}
     
-    StoryGen -->|On-Device| OnDevice[Foundation Models LLM<br/>generates StoryBeat]
-    StoryGen -->|Cloud| Cloud[POST ScenePayload<br/>to cloud agent]
-    StoryGen -->|Hybrid| OnDevice
+    StoryGen -->|onDevice| OnDevice[Apple Foundation Models<br/>LanguageModelSession]
+    StoryGen -->|gemma4OnDevice| Gemma4[MediaPipe LlmInference<br/>Gemma 3 1B Q4_K_M GGUF]
+    StoryGen -->|cloud| Cloud[POST ScenePayload<br/>to Cloud Run Gemini 2.0 Flash]
+    StoryGen -->|hybrid| OnDevice
 
     OnDevice --> TTS[Text-to-Speech<br/>via AVSpeechSynthesizer]
+    Gemma4 --> TTS
     Cloud --> TTS
     TTS --> SendAudio[Send audio to<br/>connected accessory]
     SendAudio --> Listen[Listen for child's<br/>verbal answer]
@@ -662,7 +664,7 @@ classDiagram
 | **Models** | `SeeSaw/Model/` | 19 files | Value types, enums, protocols — zero business logic |
 | **Services / Accessory** | `SeeSaw/Services/Accessory/` | `AccessoryManager.swift`, `LocalDeviceAccessory.swift`, `ExternalSDKAccessory.swift` | Hardware abstraction, multi-device support |
 | **Services / BLE** | `SeeSaw/Services/BLE/` | `BLEService.swift`, `ChunkBuffer.swift` | CoreBluetooth GATT central, chunk reassembly |
-| **Services / AI** | `SeeSaw/Services/AI/` | 7 files | Privacy pipeline, LLM story generation, PII scrubbing, metrics |
+| **Services / AI** | `SeeSaw/Services/AI/` | 9 files | Privacy pipeline, LLM story generation (Apple FM + Gemma3), ModelDownloadManager, PII scrubbing, metrics |
 | **Services / Audio** | `SeeSaw/Services/Audio/` | `AudioService.swift`, `AudioCaptureService.swift`, `SpeechRecognitionService.swift` | TTS, mic capture, on-device STT |
 | **Services / Auth** | `SeeSaw/Services/Auth/` | `AuthenticationService.swift` | Apple Sign-In, Google Sign-In via Firebase |
 | **Services / Cloud** | `SeeSaw/Services/Cloud/` | `CloudAgentService.swift` | HTTPS POST to cloud story agent |
@@ -670,7 +672,7 @@ classDiagram
 | **Views** | `SeeSaw/View/` | 12 files across `Home/`, `Onboarding/`, `Shared/`, root | SwiftUI screens and components |
 | **Extensions** | `SeeSaw/Extensions/` | `UserDefaults+Settings.swift` | Typed UserDefaults accessors |
 | **ML Model** | `SeeSaw/seesaw-yolo11n.mlpackage/` | CoreML package | Custom-trained YOLO11n (44 child-safe classes) |
-| **Tests** | `SeeSawTests/` | 7 test files | Unit tests for pipeline, story, models |
+| **Tests** | `SeeSawTests/` | 9 test files | ~130 tests: privacy pipeline, story generation (all 3 modes), audio, BLE, UI state |
 
 ---
 
@@ -909,7 +911,7 @@ All persistence is via **`UserDefaults`** (PoC-appropriate):
 | `selectedWearableType` | String | "iPhone Camera + Mic" | Active accessory |
 | `hasAcceptedTerms` | Bool | false | Terms flow gate |
 | `hasCompletedOnboarding` | Bool | false | Onboarding flow gate |
-| `cloudAgentURL` | String | "https://your-cloud-run-url" | Cloud endpoint |
+| `cloudAgentURL` | String | seeded from `AppConfig.cloudAgentBaseURL` | Cloud endpoint |
 
 ---
 

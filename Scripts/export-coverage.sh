@@ -5,7 +5,7 @@
 #   ./Scripts/export-coverage.sh [path/to/result.xcresult] [output.md]
 #
 # Defaults:
-#   RESULT = /tmp/SeeSawResults.xcresult
+#   RESULT = /test-results/latest.xcresult
 #   OUTPUT = TestCoverage.md
 #
 # Prerequisites:
@@ -14,14 +14,14 @@
 #        -scheme SeeSaw \
 #        -destination 'platform=iOS Simulator,name=iPhone 16' \
 #        -testPlan SeeSaw \
-#        -resultBundlePath /tmp/SeeSawResults.xcresult
+#        -resultBundlePath /test-results/latest.xcresult
 #
 #   2. Code coverage must be enabled in SeeSaw.xctestplan
 #      (codeCoverageEnabled: true — already configured)
 
 set -euo pipefail
 
-RESULT="${1:-/tmp/SeeSawResults.xcresult}"
+RESULT="${1:-test-results/latest.xcresult}"
 OUTPUT="${2:-TestCoverage.md}"
 
 if [ ! -d "$RESULT" ]; then

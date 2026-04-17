@@ -203,6 +203,18 @@ struct StorySessionDetailView: View {
                 Image(systemName: "square.and.arrow.up")
             }
 
+            if !session.trainingJSONL.isEmpty {
+                ShareLink(
+                    item: session.trainingJSONL,
+                    preview: SharePreview(
+                        "seesaw_training_\(session.id.uuidString.prefix(8)).jsonl",
+                        image: Image(systemName: "brain")
+                    )
+                ) {
+                    Image(systemName: "brain")
+                }
+            }
+
             Menu {
                 Button(role: .destructive) {
                     store.delete(session)
