@@ -1,7 +1,5 @@
 # SeeSaw — Privacy-Preserving AI Story Companion
 
-**MSc Computer Science · University of East London · 2026**
-
 SeeSaw is a privacy-first iOS app that transforms a child's real-world environment into AI-generated interactive stories. Raw pixels and audio never leave the device — only anonymous scene labels reach any LLM.
 
 ---
@@ -117,7 +115,6 @@ SeeSawTests/        ~130 tests, 0 failures
 | `Pipeline.md` | Implementation reference — all 4 modes, VAD detail, sequence diagrams |
 | `Observations.md` | Empirical research log — per-run latency data, thesis evidence |
 | `TestCoverage.md` | Latest test coverage report |
-| `CLAUDE.md` | Claude Code session guide — commands, architecture decisions |
 
 ---
 
