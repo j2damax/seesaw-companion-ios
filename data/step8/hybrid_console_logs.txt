@@ -1,0 +1,412 @@
+12.12.0 - [FirebaseAnalytics][I-ACS023007] Analytics v.12.12.0 started
+12.12.0 - [FirebaseAnalytics][I-ACS023008] To enable debug logging set the following application argument: -FIRAnalyticsDebugEnabled (see http://goo.gl/RfcP7r)
+12.12.0 - [FirebaseAnalytics][I-ACS044002] The AdSupport Framework is not currently linked. Some features will not function properly. Learn more at http://goo.gl/9vSsPb
+12.12.0 - [FirebaseAnalytics][I-ACS800023] No pending snapshot to activate. SDK name: app_measurement
+[Firebase/Crashlytics] Version 12.12.0
+12.12.0 - [GoogleUtilities/AppDelegateSwizzler][I-SWZ001014] App Delegate does not conform to UIApplicationDelegate protocol.
+12.12.0 - [FirebaseAnalytics][I-ACS023308] Failed to initiate on-device conversion measurement for retrieving aggregate first-party data. Ads account not linked to Google Analytics.
+12.12.0 - [FirebaseAnalytics][I-ACS023012] Analytics collection enabled
+12.12.0 - [FirebaseAnalytics][I-ACS023220] Analytics screen reporting is enabled. Call Analytics.logEvent(AnalyticsEventScreenView, parameters: [...]) to log a screen view event. To disable automatic screen reporting, set the flag FirebaseAutomaticScreenReportingEnabled to NO (boolean) in the Info.plist
+numANECores: Unknown aneSubType
+[2026-04-20T04:12:46Z] [DEBUG] [PrivacyPipelineService.init:60] init: objectDetectionModel loaded=true
+<SKPaymentQueue: 0x11a605760>: Error in remote proxy while checking server queue: Error Domain=SKInternalErrorDomain Code=12 "(null)"
+Reading from public effective user settings.
+<<<< FigXPCUtilities >>>> signalled err=-17281 at <>:308
+<<<< FigCaptureSourceRemote >>>> Fig assert: "err == 0 " at bail (FigCaptureSourceRemote.m:569) - (err=-17281)
+[2026-04-20T04:12:57Z] [DEBUG] [LocalDeviceAccessory.sendCommand:143] sendCommand: command=CAPTURE
+[2026-04-20T04:12:57Z] [DEBUG] [LocalDeviceAccessory.photoOutput:284] photoOutput: capturedBytes=33163, exifOrientation=6
+[2026-04-20T04:12:57Z] [DEBUG] [CompanionViewModel.runDetectionPreview:298] runDetectionPreview: start, jpegBytes=33163
+[2026-04-20T04:12:57Z] [DEBUG] [PrivacyPipelineService.runDebugDetection:207] runDebugDetection – start: inputSize=(360.0, 480.0), modelLoaded=true
+[2026-04-20T04:12:57Z] [DEBUG] [PrivacyPipelineService.detectAndBlurFaces:160] Stage 1 – face detection: imageSize=(360.0, 480.0)
+[2026-04-20T04:12:57Z] [DEBUG] [PrivacyPipelineService.detectAndBlurFaces:166] Stage 2 – face blur: faceCount=0, skipping blur
+[2026-04-20T04:12:57Z] [DEBUG] [PrivacyPipelineService.parseDetections:308] Stage 3 – object detection (recognized): count=1, items=["toy_airplane@89%"]
+[2026-04-20T04:12:57Z] [DEBUG] [PrivacyPipelineService.detectObjectsWithBoxes:282] Stage 3 – object detection (boxes): count=1, items=["toy_airplane@89%"]
+[2026-04-20T04:12:57Z] [DEBUG] [PrivacyPipelineService.runDebugDetection:227] runDebugDetection – detections: count=1, labels=["toy_airplane"]
+[2026-04-20T04:12:57Z] [DEBUG] [PrivacyPipelineService.runDebugDetection:230] runDebugDetection – done: blurredDataBytes=41955
+[2026-04-20T04:12:57Z] [DEBUG] [CompanionViewModel.runDetectionPreview:328] runDetectionPreview: done, detectionCount=1, blurredBytes=41955
+Unknown client: SeeSaw
+[2026-04-20T04:13:01Z] [DEBUG] [CompanionViewModel.runFullPipeline:339] runFullPipeline: start, mode=hybrid, jpegBytes=41955, childAge=6
+[2026-04-20T04:13:01Z] [DEBUG] [PrivacyPipelineService.process:74] Stage 0 – input: imageSize=(480.0, 360.0), childAge=6
+[2026-04-20T04:13:01Z] [DEBUG] [PrivacyPipelineService.detectAndBlurFaces:160] Stage 1 – face detection: imageSize=(480.0, 360.0)
+[2026-04-20T04:13:01Z] [DEBUG] [PrivacyPipelineService.detectAndBlurFaces:166] Stage 2 – face blur: faceCount=0, skipping blur
+[2026-04-20T04:13:01Z] [DEBUG] [PrivacyPipelineService.parseDetections:308] Stage 3 – object detection (recognized): count=1, items=["potted_plant@96%"]
+[2026-04-20T04:13:01Z] [DEBUG] [PrivacyPipelineService.detectObjectsWithModel:272] Stage 3 – object detection: labels=["potted_plant"]
+[2026-04-20T04:13:02Z] [DEBUG] [PrivacyPipelineService.classifyScene:382] Stage 4 – scene classification: labels=["cord", "container", "cardboard_box"]
+[2026-04-20T04:13:02Z] [DEBUG] [PrivacyPipelineService.recognizeSpeech:399] Stage 5 – speech recognition: skipped: no audio data provided
+[2026-04-20T04:13:02Z] [DEBUG] [PrivacyPipelineService.process:142] Pipeline benchmark: faceDetect=10ms blur=7ms yolo=292ms scene=292ms stt=292ms piiScrub=0ms total=321ms
+[2026-04-20T04:13:02Z] [DEBUG] [PrivacyPipelineService.process:143] Stage 6 – output: objects=["potted_plant"], scene=["cord", "container", "cardboard_box"], hasTranscript=false
+[2026-04-20T04:13:02Z] [DEBUG] [CompanionViewModel.runHybridPipeline:836] runHybridPipeline: privacy done, objects=["potted_plant"], scene=["cord", "container", "cardboard_box"]
+[2026-04-20T04:13:02Z] [DEBUG] [StoryTimelineStore.insert:42] StoryTimeline: session inserted id=A6D899A4-7D1A-4885-B6E8-A1ABE825F961
+[2026-04-20T04:13:02Z] [DEBUG] [Gemma4StoryService.loadInferenceIfNeeded:145] Gemma4StoryService: loading LlmInference from /var/mobile/Containers/Data/Application/35C701F5-2873-4F16-A3D2-CD34F5C9F58C/Documents/seesaw-gemma3-1b-q4km.gguf
+I0000 00:00:1776658382.362101  343508 config_utils.cc:675] audio_model_settings is defined but the model does not support audio.
+E0000 00:00:1776658382.363341  343508 llm_engine.cc:2357] Failed to build model resources: INVALID_ARGUMENT: Unsupported or unknown file format.
+=== Source Location Trace: === 
+third_party/odml/litert_lm/runtime/util/file_format_util.cc:103
+third_party/odml/infra/genai/inference/executor/litert_executor_utils.cc:679
+I0000 00:00:1776658382.363379  343508 config_utils.cc:455] Enabling vision model caching.
+I0000 00:00:1776658382.364139  343508 config_utils.cc:675] audio_model_settings is defined but the model does not support audio.
+I0000 00:00:1776658382.365405  343508 gpu_model_info_generator.cc:32] CalculationsPrecision::F16
+I0000 00:00:1776658382.365430  343508 gpu_model_info_generator.cc:43] Prefer Texture Weights
+I0000 00:00:1776658382.365433  343508 gpu_model_info_generator.cc:47] Enable Host Mapped Pointer
+I0000 00:00:1776658382.365436  343508 gpu_model_info_generator.cc:51] Fast Tuning
+I0000 00:00:1776658382.365438  343508 gpu_model_info_generator.cc:55] No Winograd
+I0000 00:00:1776658382.365444  343508 llm_engine.cc:252] LlmConfig:  model_type: 18 text decoder: (batch_size: 1 sequence_size: 0 model_dimension: 2304 hidden_dimension: 9216 head_dimension: 256 number_of_heads: 8 number_of_kv_heads: 4 vocabulary_size: 256000 stack_size: 26 attention_mask_type: 1 lora_rank:  max_top_k: 40 cache_size: 2048 post_norm_ff: true post_norm_attention: true attention_scale_type: 2 skip_absolute_positional_embeddings: true use_optional_transformer_layers: false selectable_final_ln: std::nullopt num_local_layers_per_global: 0 sliding_window_size: std::nullopt global_rope_wavelength: std::nullopt global_rope_scaling: std::nullopt qk_norm: false ngram_vocabulary_size: std::nullopt load_ngrammer_embedding_dynamically: false per_layer_embedding_dimension: std::nullopt load_per_layer_embedding_dynamically: false kv_cache_shared_start_layer: std::nullopt activation_sparsity_stddev_multiplier: std::nullopt residual_adapter_interleave: std::nullopt residual_adapter_bottleneck_dimension: std::nullopt vision_tokens_num: 0 max_num_images: 0 audio_vocab_offset: 0 audio_vocab_extra_dim: 0 audio_input_embedding_dim: 0 audio_dual_norm_soft_and_hard_tokens: true bfloat16 fix: false int8_kv_cache: true apply_srq: false layer_skip_start: 0 num_layers_skipped: 0 matform_factor: 0 enable_external_embeddings: false)
+I0000 00:00:1776658399.122099  343508 llm_metal_runner.mm:160] Metal LLM tokens initialized.
+[2026-04-20T04:13:19Z] [DEBUG] [Gemma4StoryService.loadInferenceIfNeeded:155] Gemma4StoryService: LlmInference ready, modelLoadTime=16812ms
+I0000 00:00:1776658399.169771  343508 llm_inference_engine.cc:354] Session config: num_output_candidates: 1, topk: 40, temperature: 0.8, benchmark_info.input_token_limit: 0, benchmark_info.wait_for_input_processing: 0, has_prompt_templates: 0
+[2026-04-20T04:13:19Z] [DEBUG] [Gemma4StoryService.startNewLLMSession:171] Gemma4StoryService: new LlmInference.Session created
+[2026-04-20T04:13:19Z] [DEBUG] [Gemma4StoryService.generate:188] Gemma4StoryService: generate() turn=0, isFinal=false, promptLen=1070
+[2026-04-20T04:13:26Z] [DEBUG] [Gemma4StoryService.generate:201] Gemma4StoryService: first token at 6881ms (chunk #1)
+[2026-04-20T04:13:38Z] [DEBUG] [Gemma4StoryService.generate:209] Gemma4StoryService: generated 280 chars, ~46 words in 19079ms (2.4 words/s), ttft=6881ms, chunks=27
+[2026-04-20T04:13:38Z] [DEBUG] [Gemma4StoryService.generate:210] Gemma4StoryService: raw response: ```json
+{"story_text": "You carefully hold the pot in your hands, it's made of smooth, white ceramic. It has a little green sprout peeking out from the soil inside. You're ready to give it a drink.", "question": "What do you think the plant needs most?", "is_ending": false}
+```
+[2026-04-20T04:13:38Z] [DEBUG] [Gemma4StoryService.generate:213] Gemma4StoryService: parsed storyText: You carefully hold the pot in your hands, it's made of smooth, white ceramic. It has a little green sprout peeking out from the soil inside. You're ready to give it a drink.
+[2026-04-20T04:13:38Z] [DEBUG] [Gemma4StoryService.generate:214] Gemma4StoryService: parsed question: What do you think the plant needs most?
+[2026-04-20T04:13:38Z] [DEBUG] [Gemma4StoryService.generate:215] Gemma4StoryService: parsed isEnding: false
+[2026-04-20T04:13:38Z] [DEBUG] [CompanionViewModel.runHybridPipeline:858] runHybridPipeline: beat[0] generated in 35927ms via Gemma4
+Potential Structural Swift Concurrency Issue: unsafeForcedSync called from Swift Concurrent context.
+[2026-04-20T04:13:38Z] [WARNING] [AudioService.resolvedNarratorVoice:105] AudioService: enhanced voice 'com.apple.voice.enhanced.en-US.Samantha' not available — using language default
+Potential Structural Swift Concurrency Issue: unsafeForcedSync called from Swift Concurrent context.
+[2026-04-20T04:13:38Z] [DEBUG] [CloudAgentService.requestEnhancement:112] requestEnhancement: POST https://seesaw-cloud-agent-531853173205.europe-west1.run.app/story/enhance, turn=0, historyLen=1
+[2026-04-20T04:13:38Z] [DEBUG] [AudioService.speakAll:263] AudioService: speaking 3 sentence(s), chars=171
+          IPCAUClient.cpp:139   IPCAUClient: can't connect to server (-66748)
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+[2026-04-20T04:13:52Z] [DEBUG] [AudioService.speakAll:275] AudioService: speech done, sentences=3, chars=171
+[2026-04-20T04:13:52Z] [DEBUG] [AudioService.speakAll:263] AudioService: speaking 1 sentence(s), chars=39
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+[2026-04-20T04:13:55Z] [DEBUG] [AudioService.speakAll:275] AudioService: speech done, sentences=1, chars=39
+[2026-04-20T04:13:56Z] [DEBUG] [AudioCaptureService.startCapture:69] startCapture: recording started, sampleRate=48000.0, channels=1
+[2026-04-20T04:13:56Z] [DEBUG] [SpeechRecognitionService.startLiveTranscription:90] startLiveTranscription: started
+[2026-04-20T04:13:58Z] [DEBUG] [PIIScrubber.scrub:31] scrub: inputLength=5, tokensRedacted=0
+[2026-04-20T04:13:59Z] [DEBUG] [CompanionViewModel.listenForAnswer:604] listenForAnswer: Layer 2 skipped (Gemma mode) — returning transcript after silence
+[2026-04-20T04:13:59Z] [DEBUG] [CompanionViewModel.listenForAnswer:564] listenForAnswer: hard cap reached (8s)
+[2026-04-20T04:13:59Z] [DEBUG] [AudioCaptureService.stopCapture:90] stopCapture: recording stopped, accumulatedBytes=576000
+[2026-04-20T04:13:59Z] [DEBUG] [SpeechRecognitionService.stopTranscription:98] stopTranscription: transcript=Water
+[2026-04-20T04:13:59Z] [DEBUG] [CompanionViewModel.listenForAnswer:626] listenForAnswer: answer='Water', length=5
+[2026-04-20T04:14:00Z] [DEBUG] [Gemma4StoryService.generate:188] Gemma4StoryService: generate() turn=1, isFinal=false, promptLen=103
+[2026-04-20T04:14:02Z] [DEBUG] [Gemma4StoryService.generate:201] Gemma4StoryService: first token at 1812ms (chunk #1)
+[2026-04-20T04:14:13Z] [DEBUG] [Gemma4StoryService.generate:209] Gemma4StoryService: generated 272 chars, ~45 words in 13007ms (3.5 words/s), ttft=1812ms, chunks=25
+[2026-04-20T04:14:13Z] [DEBUG] [Gemma4StoryService.generate:210] Gemma4StoryService: raw response: ```json
+{"story_text": "You carefully pour some water from the cup into the pot. The plant seems to drink it up quickly, its leaves rustling with excitement. I wonder if it's happy to see you.", "question": "Do you think the plant is happy now?", "is_ending": false}
+```
+[2026-04-20T04:14:13Z] [DEBUG] [Gemma4StoryService.generate:213] Gemma4StoryService: parsed storyText: You carefully pour some water from the cup into the pot. The plant seems to drink it up quickly, its leaves rustling with excitement. I wonder if it's happy to see you.
+[2026-04-20T04:14:13Z] [DEBUG] [Gemma4StoryService.generate:214] Gemma4StoryService: parsed question: Do you think the plant is happy now?
+[2026-04-20T04:14:13Z] [DEBUG] [Gemma4StoryService.generate:215] Gemma4StoryService: parsed isEnding: false
+[2026-04-20T04:14:13Z] [DEBUG] [CompanionViewModel.continueHybridLoop:956] hybridLoop: turn 1 local fallback (localGemma4)
+[2026-04-20T04:14:13Z] [DEBUG] [AudioService.speakAll:263] AudioService: speaking 3 sentence(s), chars=166
+[2026-04-20T04:14:13Z] [DEBUG] [CloudAgentService.requestEnhancement:112] requestEnhancement: POST https://seesaw-cloud-agent-531853173205.europe-west1.run.app/story/enhance, turn=1, historyLen=3
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+[2026-04-20T04:14:16Z] [WARNING] [CloudAgentService.requestEnhancement:127] requestEnhancement: HTTP 404, falling back to /story/generate
+[2026-04-20T04:14:16Z] [DEBUG] [CloudAgentService.requestStory:52] requestStory: POST https://seesaw-cloud-agent-531853173205.europe-west1.run.app/story/generate, bodyBytes=383, keySet=true, objects=["potted_plant"], scene=["cord", "container", "cardboard_box"]
+[2026-04-20T04:14:16Z] [WARNING] [CloudAgentService.requestEnhancement:127] requestEnhancement: HTTP 404, falling back to /story/generate
+[2026-04-20T04:14:16Z] [DEBUG] [CloudAgentService.requestStory:52] requestStory: POST https://seesaw-cloud-agent-531853173205.europe-west1.run.app/story/generate, bodyBytes=609, keySet=true, objects=["potted_plant"], scene=["cord", "container", "cardboard_box"]
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+[2026-04-20T04:14:20Z] [DEBUG] [CloudAgentService.requestStory:65] requestStory: HTTP 200, responseBytes=415
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+[2026-04-20T04:14:22Z] [DEBUG] [CloudAgentService.requestStory:65] requestStory: HTTP 200, responseBytes=374
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+[2026-04-20T04:14:24Z] [DEBUG] [AudioService.speakAll:275] AudioService: speech done, sentences=3, chars=166
+[2026-04-20T04:14:24Z] [DEBUG] [AudioService.speakAll:263] AudioService: speaking 1 sentence(s), chars=36
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+[2026-04-20T04:14:28Z] [DEBUG] [AudioService.speakAll:275] AudioService: speech done, sentences=1, chars=36
+[2026-04-20T04:14:28Z] [DEBUG] [AudioCaptureService.startCapture:69] startCapture: recording started, sampleRate=48000.0, channels=1
+[2026-04-20T04:14:28Z] [DEBUG] [SpeechRecognitionService.startLiveTranscription:90] startLiveTranscription: started
+[2026-04-20T04:14:30Z] [DEBUG] [PIIScrubber.scrub:31] scrub: inputLength=3, tokensRedacted=0
+[2026-04-20T04:14:31Z] [DEBUG] [CompanionViewModel.listenForAnswer:604] listenForAnswer: Layer 2 skipped (Gemma mode) — returning transcript after silence
+[2026-04-20T04:14:31Z] [DEBUG] [CompanionViewModel.listenForAnswer:564] listenForAnswer: hard cap reached (8s)
+[2026-04-20T04:14:31Z] [DEBUG] [AudioCaptureService.stopCapture:90] stopCapture: recording stopped, accumulatedBytes=518400
+[2026-04-20T04:14:31Z] [DEBUG] [SpeechRecognitionService.stopTranscription:98] stopTranscription: transcript=Yes
+[2026-04-20T04:14:31Z] [DEBUG] [CompanionViewModel.listenForAnswer:626] listenForAnswer: answer='Yes', length=3
+[2026-04-20T04:14:31Z] [DEBUG] [CompanionViewModel.continueHybridLoop:952] hybridLoop: turn 2 cloud-enhanced (44198ms)
+[2026-04-20T04:14:31Z] [DEBUG] [AudioService.speakAll:263] AudioService: speaking 3 sentence(s), chars=214
+[2026-04-20T04:14:31Z] [DEBUG] [CloudAgentService.requestEnhancement:112] requestEnhancement: POST https://seesaw-cloud-agent-531853173205.europe-west1.run.app/story/enhance, turn=2, historyLen=5
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+[2026-04-20T04:14:32Z] [WARNING] [CloudAgentService.requestEnhancement:127] requestEnhancement: HTTP 404, falling back to /story/generate
+[2026-04-20T04:14:32Z] [DEBUG] [CloudAgentService.requestStory:52] requestStory: POST https://seesaw-cloud-agent-531853173205.europe-west1.run.app/story/generate, bodyBytes=881, keySet=true, objects=["potted_plant"], scene=["cord", "container", "cardboard_box"]
+[2026-04-20T04:14:35Z] [DEBUG] [CloudAgentService.requestStory:65] requestStory: HTTP 200, responseBytes=432
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+[2026-04-20T04:14:46Z] [DEBUG] [AudioService.speakAll:275] AudioService: speech done, sentences=3, chars=214
+[2026-04-20T04:14:46Z] [DEBUG] [AudioService.speakAll:263] AudioService: speaking 1 sentence(s), chars=42
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+[2026-04-20T04:14:49Z] [DEBUG] [AudioService.speakAll:275] AudioService: speech done, sentences=1, chars=42
+[2026-04-20T04:14:50Z] [DEBUG] [AudioCaptureService.startCapture:69] startCapture: recording started, sampleRate=48000.0, channels=1
+[2026-04-20T04:14:50Z] [DEBUG] [SpeechRecognitionService.startLiveTranscription:90] startLiveTranscription: started
+[2026-04-20T04:14:58Z] [DEBUG] [CompanionViewModel.listenForAnswer:564] listenForAnswer: hard cap reached (8s)
+[2026-04-20T04:14:58Z] [ERROR] [SpeechRecognitionService.startLiveTranscription:77] recognitionTask error: No speech detected
+[2026-04-20T04:14:58Z] [DEBUG] [AudioCaptureService.stopCapture:90] stopCapture: recording stopped, accumulatedBytes=1555200
+[2026-04-20T04:14:58Z] [DEBUG] [SpeechRecognitionService.stopTranscription:98] stopTranscription: transcript=nil
+[2026-04-20T04:14:58Z] [DEBUG] [CompanionViewModel.listenForAnswer:626] listenForAnswer: answer='nil', length=0
+[2026-04-20T04:14:58Z] [DEBUG] [CompanionViewModel.continueHybridLoop:936] continueHybridLoop: no answer, ending story
+[2026-04-20T04:14:58Z] [DEBUG] [AudioService.speakAll:263] AudioService: speaking 2 sentence(s), chars=126
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+[2026-04-20T04:15:06Z] [DEBUG] [AudioService.speakAll:275] AudioService: speech done, sentences=2, chars=126
+[2026-04-20T04:15:06Z] [DEBUG] [StoryTimelineStore.finalizeSession:50] StoryTimeline: session finalised beats=3, restart=false
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+[2026-04-20T04:15:14Z] [DEBUG] [LocalDeviceAccessory.sendCommand:143] sendCommand: command=CAPTURE
+[2026-04-20T04:15:14Z] [DEBUG] [LocalDeviceAccessory.photoOutput:284] photoOutput: capturedBytes=62405, exifOrientation=6
+[2026-04-20T04:15:14Z] [DEBUG] [CompanionViewModel.runDetectionPreview:298] runDetectionPreview: start, jpegBytes=62405
+[2026-04-20T04:15:14Z] [DEBUG] [PrivacyPipelineService.runDebugDetection:207] runDebugDetection – start: inputSize=(360.0, 480.0), modelLoaded=true
+[2026-04-20T04:15:14Z] [DEBUG] [PrivacyPipelineService.detectAndBlurFaces:160] Stage 1 – face detection: imageSize=(360.0, 480.0)
+[2026-04-20T04:15:14Z] [DEBUG] [PrivacyPipelineService.detectAndBlurFaces:166] Stage 2 – face blur: faceCount=0, skipping blur
+[2026-04-20T04:15:14Z] [DEBUG] [PrivacyPipelineService.parseDetections:308] Stage 3 – object detection (recognized): count=3, items=["photo_frame@99%", "window@96%", "window@92%"]
+[2026-04-20T04:15:14Z] [DEBUG] [PrivacyPipelineService.detectObjectsWithBoxes:282] Stage 3 – object detection (boxes): count=3, items=["photo_frame@99%", "window@96%", "window@92%"]
+[2026-04-20T04:15:14Z] [DEBUG] [PrivacyPipelineService.runDebugDetection:227] runDebugDetection – detections: count=3, labels=["photo_frame", "window", "window"]
+[2026-04-20T04:15:14Z] [DEBUG] [PrivacyPipelineService.runDebugDetection:230] runDebugDetection – done: blurredDataBytes=62340
+[2026-04-20T04:15:14Z] [DEBUG] [CompanionViewModel.runDetectionPreview:328] runDetectionPreview: done, detectionCount=3, blurredBytes=62340
+[2026-04-20T04:15:16Z] [DEBUG] [CompanionViewModel.runFullPipeline:339] runFullPipeline: start, mode=hybrid, jpegBytes=62340, childAge=6
+[2026-04-20T04:15:16Z] [DEBUG] [PrivacyPipelineService.process:74] Stage 0 – input: imageSize=(480.0, 360.0), childAge=6
+[2026-04-20T04:15:16Z] [DEBUG] [PrivacyPipelineService.detectAndBlurFaces:160] Stage 1 – face detection: imageSize=(480.0, 360.0)
+[2026-04-20T04:15:16Z] [DEBUG] [PrivacyPipelineService.detectAndBlurFaces:166] Stage 2 – face blur: faceCount=0, skipping blur
+[2026-04-20T04:15:16Z] [DEBUG] [PrivacyPipelineService.parseDetections:308] Stage 3 – object detection (recognized): count=4, items=["photo_frame@98%", "sofa@98%", "sofa@97%", "potted_plant@95%"]
+[2026-04-20T04:15:16Z] [DEBUG] [PrivacyPipelineService.detectObjectsWithModel:272] Stage 3 – object detection: labels=["photo_frame", "sofa", "sofa", "potted_plant"]
+[2026-04-20T04:15:16Z] [DEBUG] [PrivacyPipelineService.classifyScene:382] Stage 4 – scene classification: labels=["structure", "conveyance", "portal"]
+[2026-04-20T04:15:16Z] [DEBUG] [PrivacyPipelineService.recognizeSpeech:399] Stage 5 – speech recognition: skipped: no audio data provided
+[2026-04-20T04:15:16Z] [DEBUG] [PrivacyPipelineService.process:142] Pipeline benchmark: faceDetect=12ms blur=8ms yolo=76ms scene=76ms stt=76ms piiScrub=0ms total=113ms
+[2026-04-20T04:15:16Z] [DEBUG] [PrivacyPipelineService.process:143] Stage 6 – output: objects=["photo_frame", "sofa", "sofa", "potted_plant"], scene=["structure", "conveyance", "portal"], hasTranscript=false
+[2026-04-20T04:15:16Z] [DEBUG] [CompanionViewModel.runHybridPipeline:836] runHybridPipeline: privacy done, objects=["photo_frame", "sofa", "sofa", "potted_plant"], scene=["structure", "conveyance", "portal"]
+[2026-04-20T04:15:16Z] [DEBUG] [StoryTimelineStore.insert:42] StoryTimeline: session inserted id=F7EDF94D-ACB6-4979-9B42-5D6CB78A717E
+I0000 00:00:1776658516.370070  345522 llm_inference_engine.cc:354] Session config: num_output_candidates: 1, topk: 40, temperature: 0.8, benchmark_info.input_token_limit: 0, benchmark_info.wait_for_input_processing: 0, has_prompt_templates: 0
+[2026-04-20T04:15:16Z] [DEBUG] [Gemma4StoryService.startNewLLMSession:171] Gemma4StoryService: new LlmInference.Session created
+[2026-04-20T04:15:16Z] [DEBUG] [Gemma4StoryService.generate:188] Gemma4StoryService: generate() turn=0, isFinal=false, promptLen=1111
+[2026-04-20T04:15:18Z] [DEBUG] [Gemma4StoryService.generate:201] Gemma4StoryService: first token at 1981ms (chunk #1)
+[2026-04-20T04:15:30Z] [DEBUG] [Gemma4StoryService.generate:209] Gemma4StoryService: generated 294 chars, ~48 words in 14260ms (3.4 words/s), ttft=1981ms, chunks=27
+[2026-04-20T04:15:30Z] [DEBUG] [Gemma4StoryService.generate:210] Gemma4StoryService: raw response: ```json
+{"story_text": "You peeked into a curious photo frame.  It showed a bright, sunny day, with you and your favorite stuffed animal playing in a meadow. You sat down on the comfy sofa, ready for a story.", "question": "What do you think is happening in the photo?", "is_ending": false}
+```
+[2026-04-20T04:15:30Z] [DEBUG] [Gemma4StoryService.generate:213] Gemma4StoryService: parsed storyText: You peeked into a curious photo frame.  It showed a bright, sunny day, with you and your favorite stuffed animal playing in a meadow. You sat down on the comfy sofa, ready for a story.
+[2026-04-20T04:15:30Z] [DEBUG] [Gemma4StoryService.generate:214] Gemma4StoryService: parsed question: What do you think is happening in the photo?
+[2026-04-20T04:15:30Z] [DEBUG] [Gemma4StoryService.generate:215] Gemma4StoryService: parsed isEnding: false
+[2026-04-20T04:15:30Z] [DEBUG] [CompanionViewModel.runHybridPipeline:858] runHybridPipeline: beat[0] generated in 14275ms via Gemma4
+[2026-04-20T04:15:30Z] [DEBUG] [AudioService.speakAll:263] AudioService: speaking 2 sentence(s), chars=183
+[2026-04-20T04:15:30Z] [DEBUG] [CloudAgentService.requestEnhancement:112] requestEnhancement: POST https://seesaw-cloud-agent-531853173205.europe-west1.run.app/story/enhance, turn=0, historyLen=1
+nw_path_necp_check_for_updates Failed to copy updated result (22)
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+[2026-04-20T04:15:32Z] [WARNING] [CloudAgentService.requestEnhancement:127] requestEnhancement: HTTP 404, falling back to /story/generate
+[2026-04-20T04:15:32Z] [DEBUG] [CloudAgentService.requestStory:52] requestStory: POST https://seesaw-cloud-agent-531853173205.europe-west1.run.app/story/generate, bodyBytes=421, keySet=true, objects=["photo_frame", "sofa", "sofa", "potted_plant"], scene=["structure", "conveyance", "portal"]
+[2026-04-20T04:15:36Z] [DEBUG] [CloudAgentService.requestStory:65] requestStory: HTTP 200, responseBytes=427
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+[2026-04-20T04:15:42Z] [DEBUG] [AudioService.speakAll:275] AudioService: speech done, sentences=2, chars=183
+[2026-04-20T04:15:42Z] [DEBUG] [AudioService.speakAll:263] AudioService: speaking 1 sentence(s), chars=44
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+[2026-04-20T04:15:46Z] [DEBUG] [AudioService.speakAll:275] AudioService: speech done, sentences=1, chars=44
+[2026-04-20T04:15:46Z] [DEBUG] [AudioCaptureService.startCapture:69] startCapture: recording started, sampleRate=48000.0, channels=1
+[2026-04-20T04:15:46Z] [DEBUG] [SpeechRecognitionService.startLiveTranscription:90] startLiveTranscription: started
+[2026-04-20T04:15:49Z] [DEBUG] [PIIScrubber.scrub:31] scrub: inputLength=5, tokensRedacted=0
+[2026-04-20T04:15:50Z] [DEBUG] [PIIScrubber.scrub:31] scrub: inputLength=9, tokensRedacted=0
+[2026-04-20T04:15:51Z] [DEBUG] [PIIScrubber.scrub:31] scrub: inputLength=17, tokensRedacted=0
+[2026-04-20T04:15:51Z] [DEBUG] [PIIScrubber.scrub:31] scrub: inputLength=20, tokensRedacted=0
+[2026-04-20T04:15:52Z] [DEBUG] [PIIScrubber.scrub:31] scrub: inputLength=24, tokensRedacted=0
+[2026-04-20T04:15:52Z] [DEBUG] [PIIScrubber.scrub:31] scrub: inputLength=34, tokensRedacted=0
+[2026-04-20T04:15:52Z] [DEBUG] [PIIScrubber.scrub:31] scrub: inputLength=34, tokensRedacted=0
+[2026-04-20T04:15:53Z] [DEBUG] [CompanionViewModel.listenForAnswer:604] listenForAnswer: Layer 2 skipped (Gemma mode) — returning transcript after silence
+[2026-04-20T04:15:53Z] [DEBUG] [CompanionViewModel.listenForAnswer:564] listenForAnswer: hard cap reached (8s)
+[2026-04-20T04:15:53Z] [DEBUG] [AudioCaptureService.stopCapture:90] stopCapture: recording stopped, accumulatedBytes=1344000
+[2026-04-20T04:15:53Z] [DEBUG] [SpeechRecognitionService.stopTranscription:98] stopTranscription: transcript=There's a kid sitting in the chair
+[2026-04-20T04:15:53Z] [DEBUG] [CompanionViewModel.listenForAnswer:626] listenForAnswer: answer='There's a kid sitting in the chair', length=34
+[2026-04-20T04:15:53Z] [DEBUG] [CompanionViewModel.continueHybridLoop:952] hybridLoop: turn 1 cloud-enhanced (6147ms)
+[2026-04-20T04:15:53Z] [DEBUG] [AudioService.speakAll:263] AudioService: speaking 3 sentence(s), chars=248
+[2026-04-20T04:15:53Z] [DEBUG] [CloudAgentService.requestEnhancement:112] requestEnhancement: POST https://seesaw-cloud-agent-531853173205.europe-west1.run.app/story/enhance, turn=1, historyLen=3
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+[2026-04-20T04:15:54Z] [WARNING] [CloudAgentService.requestEnhancement:127] requestEnhancement: HTTP 404, falling back to /story/generate
+[2026-04-20T04:15:54Z] [DEBUG] [CloudAgentService.requestStory:52] requestStory: POST https://seesaw-cloud-agent-531853173205.europe-west1.run.app/story/generate, bodyBytes=758, keySet=true, objects=["photo_frame", "sofa", "sofa", "potted_plant"], scene=["structure", "conveyance", "portal"]
+[2026-04-20T04:15:59Z] [DEBUG] [CloudAgentService.requestStory:65] requestStory: HTTP 200, responseBytes=487
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+[2026-04-20T04:16:09Z] [DEBUG] [AudioService.speakAll:275] AudioService: speech done, sentences=3, chars=248
+[2026-04-20T04:16:09Z] [DEBUG] [AudioService.speakAll:263] AudioService: speaking 1 sentence(s), chars=61
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+[2026-04-20T04:16:14Z] [DEBUG] [AudioService.speakAll:275] AudioService: speech done, sentences=1, chars=61
+[2026-04-20T04:16:14Z] [DEBUG] [AudioCaptureService.startCapture:69] startCapture: recording started, sampleRate=48000.0, channels=1
+[2026-04-20T04:16:14Z] [DEBUG] [SpeechRecognitionService.startLiveTranscription:90] startLiveTranscription: started
+[2026-04-20T04:16:17Z] [DEBUG] [PIIScrubber.scrub:31] scrub: inputLength=5, tokensRedacted=0
+[2026-04-20T04:16:17Z] [DEBUG] [PIIScrubber.scrub:31] scrub: inputLength=7, tokensRedacted=0
+[2026-04-20T04:16:17Z] [DEBUG] [PIIScrubber.scrub:31] scrub: inputLength=9, tokensRedacted=0
+[2026-04-20T04:16:17Z] [DEBUG] [PIIScrubber.scrub:31] scrub: inputLength=16, tokensRedacted=0
+[2026-04-20T04:16:17Z] [DEBUG] [PIIScrubber.scrub:31] scrub: inputLength=22, tokensRedacted=0
+[2026-04-20T04:16:19Z] [DEBUG] [CompanionViewModel.listenForAnswer:604] listenForAnswer: Layer 2 skipped (Gemma mode) — returning transcript after silence
+[2026-04-20T04:16:19Z] [DEBUG] [CompanionViewModel.listenForAnswer:564] listenForAnswer: hard cap reached (8s)
+[2026-04-20T04:16:19Z] [DEBUG] [AudioCaptureService.stopCapture:90] stopCapture: recording stopped, accumulatedBytes=806400
+[2026-04-20T04:16:19Z] [DEBUG] [SpeechRecognitionService.stopTranscription:98] stopTranscription: transcript=There's a hidden world
+[2026-04-20T04:16:19Z] [DEBUG] [CompanionViewModel.listenForAnswer:626] listenForAnswer: answer='There's a hidden world', length=22
+[2026-04-20T04:16:19Z] [DEBUG] [CompanionViewModel.continueHybridLoop:952] hybridLoop: turn 2 cloud-enhanced (5663ms)
+[2026-04-20T04:16:19Z] [DEBUG] [AudioService.speakAll:263] AudioService: speaking 2 sentence(s), chars=307
+[2026-04-20T04:16:19Z] [DEBUG] [CloudAgentService.requestEnhancement:112] requestEnhancement: POST https://seesaw-cloud-agent-531853173205.europe-west1.run.app/story/enhance, turn=2, historyLen=5
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+[2026-04-20T04:16:20Z] [WARNING] [CloudAgentService.requestEnhancement:127] requestEnhancement: HTTP 404, falling back to /story/generate
+[2026-04-20T04:16:20Z] [DEBUG] [CloudAgentService.requestStory:52] requestStory: POST https://seesaw-cloud-agent-531853173205.europe-west1.run.app/story/generate, bodyBytes=1141, keySet=true, objects=["photo_frame", "sofa", "sofa", "potted_plant"], scene=["structure", "conveyance", "portal"]
+[2026-04-20T04:16:23Z] [DEBUG] [CloudAgentService.requestStory:65] requestStory: HTTP 200, responseBytes=417
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+[2026-04-20T04:16:37Z] [DEBUG] [AudioService.speakAll:275] AudioService: speech done, sentences=2, chars=307
+[2026-04-20T04:16:37Z] [DEBUG] [AudioService.speakAll:263] AudioService: speaking 1 sentence(s), chars=63
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+[2026-04-20T04:16:42Z] [DEBUG] [AudioService.speakAll:275] AudioService: speech done, sentences=1, chars=63
+[2026-04-20T04:16:42Z] [DEBUG] [AudioCaptureService.startCapture:69] startCapture: recording started, sampleRate=48000.0, channels=1
+[2026-04-20T04:16:42Z] [DEBUG] [SpeechRecognitionService.startLiveTranscription:90] startLiveTranscription: started
+[2026-04-20T04:16:50Z] [DEBUG] [CompanionViewModel.listenForAnswer:564] listenForAnswer: hard cap reached (8s)
+[2026-04-20T04:16:50Z] [DEBUG] [AudioCaptureService.stopCapture:90] stopCapture: recording stopped, accumulatedBytes=1536000
+[2026-04-20T04:16:50Z] [ERROR] [SpeechRecognitionService.startLiveTranscription:77] recognitionTask error: No speech detected
+[2026-04-20T04:16:50Z] [DEBUG] [SpeechRecognitionService.stopTranscription:98] stopTranscription: transcript=nil
+[2026-04-20T04:16:50Z] [DEBUG] [CompanionViewModel.listenForAnswer:626] listenForAnswer: answer='nil', length=0
+[2026-04-20T04:16:50Z] [DEBUG] [CompanionViewModel.continueHybridLoop:936] continueHybridLoop: no answer, ending story
+[2026-04-20T04:16:50Z] [DEBUG] [AudioService.speakAll:263] AudioService: speaking 2 sentence(s), chars=126
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+[2026-04-20T04:16:58Z] [DEBUG] [AudioService.speakAll:275] AudioService: speech done, sentences=2, chars=126
+[2026-04-20T04:16:58Z] [DEBUG] [StoryTimelineStore.finalizeSession:50] StoryTimeline: session finalised beats=3, restart=false
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+[2026-04-20T04:17:00Z] [DEBUG] [LocalDeviceAccessory.sendCommand:143] sendCommand: command=CAPTURE
+[2026-04-20T04:17:01Z] [DEBUG] [LocalDeviceAccessory.photoOutput:284] photoOutput: capturedBytes=37830, exifOrientation=6
+[2026-04-20T04:17:01Z] [DEBUG] [CompanionViewModel.runDetectionPreview:298] runDetectionPreview: start, jpegBytes=37830
+[2026-04-20T04:17:01Z] [DEBUG] [PrivacyPipelineService.runDebugDetection:207] runDebugDetection – start: inputSize=(360.0, 480.0), modelLoaded=true
+[2026-04-20T04:17:01Z] [DEBUG] [PrivacyPipelineService.detectAndBlurFaces:160] Stage 1 – face detection: imageSize=(360.0, 480.0)
+[2026-04-20T04:17:01Z] [DEBUG] [PrivacyPipelineService.detectAndBlurFaces:166] Stage 2 – face blur: faceCount=0, skipping blur
+[2026-04-20T04:17:01Z] [DEBUG] [PrivacyPipelineService.parseDetections:308] Stage 3 – object detection (recognized): count=4, items=["wardrobe@73%", "window@95%", "potted_plant@99%", "lamp@98%"]
+[2026-04-20T04:17:01Z] [DEBUG] [PrivacyPipelineService.detectObjectsWithBoxes:282] Stage 3 – object detection (boxes): count=4, items=["wardrobe@73%", "window@95%", "potted_plant@99%", "lamp@98%"]
+[2026-04-20T04:17:01Z] [DEBUG] [PrivacyPipelineService.runDebugDetection:227] runDebugDetection – detections: count=4, labels=["wardrobe", "window", "potted_plant", "lamp"]
+[2026-04-20T04:17:01Z] [DEBUG] [PrivacyPipelineService.runDebugDetection:230] runDebugDetection – done: blurredDataBytes=48052
+[2026-04-20T04:17:01Z] [DEBUG] [CompanionViewModel.runDetectionPreview:328] runDetectionPreview: done, detectionCount=4, blurredBytes=48052
+[2026-04-20T04:17:03Z] [DEBUG] [CompanionViewModel.runFullPipeline:339] runFullPipeline: start, mode=hybrid, jpegBytes=48052, childAge=6
+[2026-04-20T04:17:03Z] [DEBUG] [PrivacyPipelineService.process:74] Stage 0 – input: imageSize=(480.0, 360.0), childAge=6
+[2026-04-20T04:17:03Z] [DEBUG] [PrivacyPipelineService.detectAndBlurFaces:160] Stage 1 – face detection: imageSize=(480.0, 360.0)
+[2026-04-20T04:17:03Z] [DEBUG] [PrivacyPipelineService.detectAndBlurFaces:166] Stage 2 – face blur: faceCount=0, skipping blur
+[2026-04-20T04:17:03Z] [DEBUG] [PrivacyPipelineService.parseDetections:308] Stage 3 – object detection (recognized): count=1, items=["cupboard@81%"]
+[2026-04-20T04:17:03Z] [DEBUG] [PrivacyPipelineService.detectObjectsWithModel:272] Stage 3 – object detection: labels=["cupboard"]
+[2026-04-20T04:17:03Z] [DEBUG] [PrivacyPipelineService.classifyScene:382] Stage 4 – scene classification: labels=["structure", "wood_processed", "furniture"]
+[2026-04-20T04:17:03Z] [DEBUG] [PrivacyPipelineService.recognizeSpeech:399] Stage 5 – speech recognition: skipped: no audio data provided
+[2026-04-20T04:17:03Z] [DEBUG] [PrivacyPipelineService.process:142] Pipeline benchmark: faceDetect=9ms blur=6ms yolo=43ms scene=43ms stt=43ms piiScrub=0ms total=66ms
+[2026-04-20T04:17:03Z] [DEBUG] [PrivacyPipelineService.process:143] Stage 6 – output: objects=["cupboard"], scene=["structure", "wood_processed", "furniture"], hasTranscript=false
+[2026-04-20T04:17:03Z] [DEBUG] [CompanionViewModel.runHybridPipeline:836] runHybridPipeline: privacy done, objects=["cupboard"], scene=["structure", "wood_processed", "furniture"]
+[2026-04-20T04:17:03Z] [DEBUG] [StoryTimelineStore.insert:42] StoryTimeline: session inserted id=07170F31-4D11-4CC4-BFA8-954F3015478F
+I0000 00:00:1776658623.401750  346893 llm_inference_engine.cc:354] Session config: num_output_candidates: 1, topk: 40, temperature: 0.8, benchmark_info.input_token_limit: 0, benchmark_info.wait_for_input_processing: 0, has_prompt_templates: 0
+[2026-04-20T04:17:03Z] [DEBUG] [Gemma4StoryService.startNewLLMSession:171] Gemma4StoryService: new LlmInference.Session created
+[2026-04-20T04:17:03Z] [DEBUG] [Gemma4StoryService.generate:188] Gemma4StoryService: generate() turn=0, isFinal=false, promptLen=1068
+[2026-04-20T04:17:04Z] [DEBUG] [Gemma4StoryService.generate:201] Gemma4StoryService: first token at 821ms (chunk #1)
+[2026-04-20T04:17:16Z] [DEBUG] [Gemma4StoryService.generate:209] Gemma4StoryService: generated 262 chars, ~40 words in 12696ms (3.2 words/s), ttft=821ms, chunks=26
+[2026-04-20T04:17:16Z] [DEBUG] [Gemma4StoryService.generate:210] Gemma4StoryService: raw response: ```json
+{"story_text": "You tiptoe into the cupboard, its door creaking softly.  It's full of things you don't recognize.  You're about to reach out when you spot a shiny red button.", "question": "What do you think the button might do?", "is_ending": false}
+```
+[2026-04-20T04:17:16Z] [DEBUG] [Gemma4StoryService.generate:213] Gemma4StoryService: parsed storyText: You tiptoe into the cupboard, its door creaking softly.  It's full of things you don't recognize.  You're about to reach out when you spot a shiny red button.
+[2026-04-20T04:17:16Z] [DEBUG] [Gemma4StoryService.generate:214] Gemma4StoryService: parsed question: What do you think the button might do?
+[2026-04-20T04:17:16Z] [DEBUG] [Gemma4StoryService.generate:215] Gemma4StoryService: parsed isEnding: false
+[2026-04-20T04:17:16Z] [DEBUG] [CompanionViewModel.runHybridPipeline:858] runHybridPipeline: beat[0] generated in 12710ms via Gemma4
+[2026-04-20T04:17:16Z] [DEBUG] [AudioService.speakAll:263] AudioService: speaking 1 sentence(s), chars=158
+[2026-04-20T04:17:16Z] [DEBUG] [CloudAgentService.requestEnhancement:112] requestEnhancement: POST https://seesaw-cloud-agent-531853173205.europe-west1.run.app/story/enhance, turn=0, historyLen=1
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+[2026-04-20T04:17:17Z] [WARNING] [CloudAgentService.requestEnhancement:127] requestEnhancement: HTTP 404, falling back to /story/generate
+[2026-04-20T04:17:17Z] [DEBUG] [CloudAgentService.requestStory:52] requestStory: POST https://seesaw-cloud-agent-531853173205.europe-west1.run.app/story/generate, bodyBytes=370, keySet=true, objects=["cupboard"], scene=["structure", "wood_processed", "furniture"]
+[2026-04-20T04:17:21Z] [DEBUG] [CloudAgentService.requestStory:65] requestStory: HTTP 200, responseBytes=383
+[2026-04-20T04:17:25Z] [DEBUG] [AudioService.speakAll:275] AudioService: speech done, sentences=1, chars=158
+[2026-04-20T04:17:25Z] [DEBUG] [AudioService.speakAll:263] AudioService: speaking 1 sentence(s), chars=38
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+[2026-04-20T04:17:28Z] [DEBUG] [AudioService.speakAll:275] AudioService: speech done, sentences=1, chars=38
+[2026-04-20T04:17:29Z] [DEBUG] [AudioCaptureService.startCapture:69] startCapture: recording started, sampleRate=48000.0, channels=1
+[2026-04-20T04:17:29Z] [DEBUG] [SpeechRecognitionService.startLiveTranscription:90] startLiveTranscription: started
+[2026-04-20T04:17:33Z] [DEBUG] [PIIScrubber.scrub:31] scrub: inputLength=3, tokensRedacted=0
+[2026-04-20T04:17:33Z] [DEBUG] [PIIScrubber.scrub:31] scrub: inputLength=12, tokensRedacted=0
+[2026-04-20T04:17:33Z] [DEBUG] [PIIScrubber.scrub:31] scrub: inputLength=13, tokensRedacted=0
+[2026-04-20T04:17:34Z] [DEBUG] [CompanionViewModel.listenForAnswer:594] listenForAnswer: Layer 1 heuristic extend, trailing phrase detected
+[2026-04-20T04:17:34Z] [DEBUG] [PIIScrubber.scrub:31] scrub: inputLength=13, tokensRedacted=0
+[2026-04-20T04:17:35Z] [DEBUG] [CompanionViewModel.listenForAnswer:604] listenForAnswer: Layer 2 skipped (Gemma mode) — returning transcript after silence
+[2026-04-20T04:17:35Z] [DEBUG] [CompanionViewModel.listenForAnswer:564] listenForAnswer: hard cap reached (8s)
+[2026-04-20T04:17:35Z] [DEBUG] [AudioCaptureService.stopCapture:90] stopCapture: recording stopped, accumulatedBytes=1209600
+[2026-04-20T04:17:35Z] [DEBUG] [SpeechRecognitionService.stopTranscription:98] stopTranscription: transcript=
+[2026-04-20T04:17:35Z] [DEBUG] [CompanionViewModel.listenForAnswer:626] listenForAnswer: answer='Open the door', length=13
+[2026-04-20T04:17:35Z] [DEBUG] [CompanionViewModel.continueHybridLoop:952] hybridLoop: turn 1 cloud-enhanced (5402ms)
+[2026-04-20T04:17:35Z] [DEBUG] [CloudAgentService.requestEnhancement:112] requestEnhancement: POST https://seesaw-cloud-agent-531853173205.europe-west1.run.app/story/enhance, turn=1, historyLen=3
+[2026-04-20T04:17:35Z] [DEBUG] [AudioService.speakAll:263] AudioService: speaking 3 sentence(s), chars=226
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+[2026-04-20T04:17:36Z] [WARNING] [CloudAgentService.requestEnhancement:127] requestEnhancement: HTTP 404, falling back to /story/generate
+[2026-04-20T04:17:36Z] [DEBUG] [CloudAgentService.requestStory:52] requestStory: POST https://seesaw-cloud-agent-531853173205.europe-west1.run.app/story/generate, bodyBytes=664, keySet=true, objects=["cupboard"], scene=["structure", "wood_processed", "furniture"]
+[2026-04-20T04:17:38Z] [DEBUG] [CloudAgentService.requestStory:65] requestStory: HTTP 200, responseBytes=414
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+[2026-04-20T04:17:50Z] [DEBUG] [AudioService.speakAll:275] AudioService: speech done, sentences=3, chars=226
+[2026-04-20T04:17:50Z] [DEBUG] [AudioService.speakAll:263] AudioService: speaking 1 sentence(s), chars=39
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+[2026-04-20T04:17:53Z] [DEBUG] [AudioService.speakAll:275] AudioService: speech done, sentences=1, chars=39
+[2026-04-20T04:17:54Z] [DEBUG] [AudioCaptureService.startCapture:69] startCapture: recording started, sampleRate=48000.0, channels=1
+[2026-04-20T04:17:54Z] [DEBUG] [SpeechRecognitionService.startLiveTranscription:90] startLiveTranscription: started
+[2026-04-20T04:17:57Z] [DEBUG] [PIIScrubber.scrub:31] scrub: inputLength=9, tokensRedacted=0
+[2026-04-20T04:17:58Z] [DEBUG] [PIIScrubber.scrub:31] scrub: inputLength=15, tokensRedacted=0
+[2026-04-20T04:17:59Z] [DEBUG] [CompanionViewModel.listenForAnswer:604] listenForAnswer: Layer 2 skipped (Gemma mode) — returning transcript after silence
+[2026-04-20T04:17:59Z] [DEBUG] [CompanionViewModel.listenForAnswer:564] listenForAnswer: hard cap reached (8s)
+[2026-04-20T04:17:59Z] [DEBUG] [AudioCaptureService.stopCapture:90] stopCapture: recording stopped, accumulatedBytes=1017600
+[2026-04-20T04:17:59Z] [DEBUG] [SpeechRecognitionService.stopTranscription:98] stopTranscription: transcript=Different world
+[2026-04-20T04:17:59Z] [DEBUG] [CompanionViewModel.listenForAnswer:626] listenForAnswer: answer='Different world', length=15
+[2026-04-20T04:17:59Z] [DEBUG] [CompanionViewModel.continueHybridLoop:952] hybridLoop: turn 2 cloud-enhanced (3055ms)
+[2026-04-20T04:17:59Z] [DEBUG] [AudioService.speakAll:263] AudioService: speaking 3 sentence(s), chars=236
+[2026-04-20T04:17:59Z] [DEBUG] [CloudAgentService.requestEnhancement:112] requestEnhancement: POST https://seesaw-cloud-agent-531853173205.europe-west1.run.app/story/enhance, turn=2, historyLen=5
+[2026-04-20T04:18:00Z] [WARNING] [CloudAgentService.requestEnhancement:127] requestEnhancement: HTTP 404, falling back to /story/generate
+[2026-04-20T04:18:00Z] [DEBUG] [CloudAgentService.requestStory:52] requestStory: POST https://seesaw-cloud-agent-531853173205.europe-west1.run.app/story/generate, bodyBytes=970, keySet=true, objects=["cupboard"], scene=["structure", "wood_processed", "furniture"]
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+[2026-04-20T04:18:03Z] [DEBUG] [CloudAgentService.requestStory:65] requestStory: HTTP 200, responseBytes=438
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+[2026-04-20T04:18:15Z] [DEBUG] [AudioService.speakAll:275] AudioService: speech done, sentences=3, chars=236
+[2026-04-20T04:18:15Z] [DEBUG] [AudioService.speakAll:263] AudioService: speaking 1 sentence(s), chars=60
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+[2026-04-20T04:18:20Z] [DEBUG] [AudioService.speakAll:275] AudioService: speech done, sentences=1, chars=60
+[2026-04-20T04:18:20Z] [DEBUG] [AudioCaptureService.startCapture:69] startCapture: recording started, sampleRate=48000.0, channels=1
+[2026-04-20T04:18:20Z] [DEBUG] [SpeechRecognitionService.startLiveTranscription:90] startLiveTranscription: started
+[2026-04-20T04:18:28Z] [DEBUG] [CompanionViewModel.listenForAnswer:564] listenForAnswer: hard cap reached (8s)
+[2026-04-20T04:18:28Z] [ERROR] [SpeechRecognitionService.startLiveTranscription:77] recognitionTask error: No speech detected
+[2026-04-20T04:18:28Z] [DEBUG] [AudioCaptureService.stopCapture:90] stopCapture: recording stopped, accumulatedBytes=1536000
+[2026-04-20T04:18:28Z] [DEBUG] [SpeechRecognitionService.stopTranscription:98] stopTranscription: transcript=Different world
+[2026-04-20T04:18:28Z] [DEBUG] [CompanionViewModel.listenForAnswer:626] listenForAnswer: answer='nil', length=0
+[2026-04-20T04:18:28Z] [DEBUG] [CompanionViewModel.continueHybridLoop:936] continueHybridLoop: no answer, ending story
+[2026-04-20T04:18:28Z] [DEBUG] [AudioService.speakAll:263] AudioService: speaking 2 sentence(s), chars=126
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+[2026-04-20T04:18:36Z] [DEBUG] [AudioService.speakAll:275] AudioService: speech done, sentences=2, chars=126
+[2026-04-20T04:18:36Z] [DEBUG] [StoryTimelineStore.finalizeSession:50] StoryTimeline: session finalised beats=3, restart=false
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+[2026-04-20T04:18:38Z] [DEBUG] [LocalDeviceAccessory.sendCommand:143] sendCommand: command=CAPTURE
+[2026-04-20T04:18:38Z] [DEBUG] [LocalDeviceAccessory.photoOutput:284] photoOutput: capturedBytes=46934, exifOrientation=6
+[2026-04-20T04:18:38Z] [DEBUG] [CompanionViewModel.runDetectionPreview:298] runDetectionPreview: start, jpegBytes=46934
+[2026-04-20T04:18:38Z] [DEBUG] [PrivacyPipelineService.runDebugDetection:207] runDebugDetection – start: inputSize=(360.0, 480.0), modelLoaded=true
+[2026-04-20T04:18:38Z] [DEBUG] [PrivacyPipelineService.detectAndBlurFaces:160] Stage 1 – face detection: imageSize=(360.0, 480.0)
+[2026-04-20T04:18:38Z] [DEBUG] [PrivacyPipelineService.detectAndBlurFaces:166] Stage 2 – face blur: faceCount=0, skipping blur
+[2026-04-20T04:18:38Z] [DEBUG] [PrivacyPipelineService.parseDetections:308] Stage 3 – object detection (recognized): count=2, items=["bed@96%", "table@83%"]
+[2026-04-20T04:18:38Z] [DEBUG] [PrivacyPipelineService.detectObjectsWithBoxes:282] Stage 3 – object detection (boxes): count=2, items=["bed@96%", "table@83%"]
+[2026-04-20T04:18:38Z] [DEBUG] [PrivacyPipelineService.runDebugDetection:227] runDebugDetection – detections: count=2, labels=["bed", "table"]
+[2026-04-20T04:18:38Z] [DEBUG] [PrivacyPipelineService.runDebugDetection:230] runDebugDetection – done: blurredDataBytes=60321
+[2026-04-20T04:18:38Z] [DEBUG] [CompanionViewModel.runDetectionPreview:328] runDetectionPreview: done, detectionCount=2, blurredBytes=60321

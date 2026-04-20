@@ -1,0 +1,497 @@
+12.12.0 - [FirebaseAnalytics][I-ACS023007] Analytics v.12.12.0 started
+12.12.0 - [FirebaseAnalytics][I-ACS023008] To enable debug logging set the following application argument: -FIRAnalyticsDebugEnabled (see http://goo.gl/RfcP7r)
+12.12.0 - [FirebaseAnalytics][I-ACS044002] The AdSupport Framework is not currently linked. Some features will not function properly. Learn more at http://goo.gl/9vSsPb
+12.12.0 - [GoogleUtilities/AppDelegateSwizzler][I-SWZ001014] App Delegate does not conform to UIApplicationDelegate protocol.
+12.12.0 - [FirebaseAnalytics][I-ACS800023] No pending snapshot to activate. SDK name: app_measurement
+[Firebase/Crashlytics] Version 12.12.0
+12.12.0 - [FirebaseAnalytics][I-ACS023012] Analytics collection enabled
+12.12.0 - [FirebaseAnalytics][I-ACS023220] Analytics screen reporting is enabled. Call Analytics.logEvent(AnalyticsEventScreenView, parameters: [...]) to log a screen view event. To disable automatic screen reporting, set the flag FirebaseAutomaticScreenReportingEnabled to NO (boolean) in the Info.plist
+numANECores: Unknown aneSubType
+[2026-04-20T03:47:35Z] [DEBUG] [PrivacyPipelineService.init:60] init: objectDetectionModel loaded=true
+<SKPaymentQueue: 0x120605760>: Error in remote proxy while checking server queue: Error Domain=SKInternalErrorDomain Code=12 "(null)"
+Reading from public effective user settings.
+<<<< FigXPCUtilities >>>> signalled err=-17281 at <>:308
+<<<< FigCaptureSourceRemote >>>> Fig assert: "err == 0 " at bail (FigCaptureSourceRemote.m:569) - (err=-17281)
+Unknown client: SeeSaw
+[2026-04-20T03:48:10Z] [DEBUG] [LocalDeviceAccessory.sendCommand:143] sendCommand: command=CAPTURE
+[2026-04-20T03:48:10Z] [DEBUG] [LocalDeviceAccessory.photoOutput:284] photoOutput: capturedBytes=26180, exifOrientation=6
+[2026-04-20T03:48:10Z] [DEBUG] [CompanionViewModel.runDetectionPreview:298] runDetectionPreview: start, jpegBytes=26180
+[2026-04-20T03:48:10Z] [DEBUG] [PrivacyPipelineService.runDebugDetection:207] runDebugDetection – start: inputSize=(360.0, 480.0), modelLoaded=true
+[2026-04-20T03:48:10Z] [DEBUG] [PrivacyPipelineService.detectAndBlurFaces:160] Stage 1 – face detection: imageSize=(360.0, 480.0)
+[2026-04-20T03:48:10Z] [DEBUG] [PrivacyPipelineService.detectAndBlurFaces:166] Stage 2 – face blur: faceCount=0, skipping blur
+[2026-04-20T03:48:10Z] [DEBUG] [PrivacyPipelineService.parseDetections:308] Stage 3 – object detection (recognized): count=4, items=["window@97%", "table@96%", "toy_airplane@96%", "chair@95%"]
+[2026-04-20T03:48:10Z] [DEBUG] [PrivacyPipelineService.detectObjectsWithBoxes:282] Stage 3 – object detection (boxes): count=4, items=["window@97%", "table@96%", "toy_airplane@96%", "chair@95%"]
+[2026-04-20T03:48:10Z] [DEBUG] [PrivacyPipelineService.runDebugDetection:227] runDebugDetection – detections: count=4, labels=["window", "table", "toy_airplane", "chair"]
+[2026-04-20T03:48:10Z] [DEBUG] [PrivacyPipelineService.runDebugDetection:230] runDebugDetection – done: blurredDataBytes=33505
+[2026-04-20T03:48:10Z] [DEBUG] [CompanionViewModel.runDetectionPreview:328] runDetectionPreview: done, detectionCount=4, blurredBytes=33505
+[2026-04-20T03:48:13Z] [DEBUG] [CompanionViewModel.runFullPipeline:339] runFullPipeline: start, mode=gemma4OnDevice, jpegBytes=33505, childAge=6
+[2026-04-20T03:48:13Z] [DEBUG] [CompanionViewModel.runGemma4Pipeline:663] runGemma4Pipeline: start
+[2026-04-20T03:48:13Z] [DEBUG] [PrivacyPipelineService.process:74] Stage 0 – input: imageSize=(480.0, 360.0), childAge=6
+[2026-04-20T03:48:13Z] [DEBUG] [PrivacyPipelineService.detectAndBlurFaces:160] Stage 1 – face detection: imageSize=(480.0, 360.0)
+[2026-04-20T03:48:13Z] [DEBUG] [PrivacyPipelineService.detectAndBlurFaces:166] Stage 2 – face blur: faceCount=0, skipping blur
+[2026-04-20T03:48:13Z] [DEBUG] [PrivacyPipelineService.parseDetections:308] Stage 3 – object detection (recognized): count=2, items=["table@91%", "toy_airplane@93%"]
+[2026-04-20T03:48:13Z] [DEBUG] [PrivacyPipelineService.detectObjectsWithModel:272] Stage 3 – object detection: labels=["table", "toy_airplane"]
+[2026-04-20T03:48:14Z] [DEBUG] [PrivacyPipelineService.classifyScene:382] Stage 4 – scene classification: labels=["machine", "consumer_electronics", "computer"]
+[2026-04-20T03:48:14Z] [DEBUG] [PrivacyPipelineService.recognizeSpeech:399] Stage 5 – speech recognition: skipped: no audio data provided
+[2026-04-20T03:48:14Z] [DEBUG] [PrivacyPipelineService.process:142] Pipeline benchmark: faceDetect=9ms blur=6ms yolo=308ms scene=308ms stt=308ms piiScrub=0ms total=336ms
+[2026-04-20T03:48:14Z] [DEBUG] [PrivacyPipelineService.process:143] Stage 6 – output: objects=["table", "toy_airplane"], scene=["machine", "consumer_electronics", "computer"], hasTranscript=false
+[2026-04-20T03:48:14Z] [DEBUG] [StoryTimelineStore.insert:42] StoryTimeline: session inserted id=8B8B12B8-B1A5-4C27-8C9D-7962F0A0E7E0
+[2026-04-20T03:48:14Z] [DEBUG] [CompanionViewModel.runGemma4Pipeline:694] runGemma4Pipeline: privacy done, objects=["table", "toy_airplane"], scene=["machine", "consumer_electronics", "computer"]
+[2026-04-20T03:48:14Z] [DEBUG] [Gemma4StoryService.loadInferenceIfNeeded:145] Gemma4StoryService: loading LlmInference from /var/mobile/Containers/Data/Application/52758765-765E-4249-845B-6F6DA0F455DC/Documents/seesaw-gemma3-1b-q4km.gguf
+I0000 00:00:1776656894.362219  324847 config_utils.cc:675] audio_model_settings is defined but the model does not support audio.
+E0000 00:00:1776656894.365935  324847 llm_engine.cc:2357] Failed to build model resources: INVALID_ARGUMENT: Unsupported or unknown file format.
+=== Source Location Trace: === 
+third_party/odml/litert_lm/runtime/util/file_format_util.cc:103
+third_party/odml/infra/genai/inference/executor/litert_executor_utils.cc:679
+I0000 00:00:1776656894.365996  324847 config_utils.cc:455] Enabling vision model caching.
+I0000 00:00:1776656894.369409  324847 config_utils.cc:675] audio_model_settings is defined but the model does not support audio.
+I0000 00:00:1776656894.379818  324847 gpu_model_info_generator.cc:32] CalculationsPrecision::F16
+I0000 00:00:1776656894.379845  324847 gpu_model_info_generator.cc:43] Prefer Texture Weights
+I0000 00:00:1776656894.379849  324847 gpu_model_info_generator.cc:47] Enable Host Mapped Pointer
+I0000 00:00:1776656894.379851  324847 gpu_model_info_generator.cc:51] Fast Tuning
+I0000 00:00:1776656894.379854  324847 gpu_model_info_generator.cc:55] No Winograd
+I0000 00:00:1776656894.379863  324847 llm_engine.cc:252] LlmConfig:  model_type: 18 text decoder: (batch_size: 1 sequence_size: 0 model_dimension: 2304 hidden_dimension: 9216 head_dimension: 256 number_of_heads: 8 number_of_kv_heads: 4 vocabulary_size: 256000 stack_size: 26 attention_mask_type: 1 lora_rank:  max_top_k: 40 cache_size: 2048 post_norm_ff: true post_norm_attention: true attention_scale_type: 2 skip_absolute_positional_embeddings: true use_optional_transformer_layers: false selectable_final_ln: std::nullopt num_local_layers_per_global: 0 sliding_window_size: std::nullopt global_rope_wavelength: std::nullopt global_rope_scaling: std::nullopt qk_norm: false ngram_vocabulary_size: std::nullopt load_ngrammer_embedding_dynamically: false per_layer_embedding_dimension: std::nullopt load_per_layer_embedding_dynamically: false kv_cache_shared_start_layer: std::nullopt activation_sparsity_stddev_multiplier: std::nullopt residual_adapter_interleave: std::nullopt residual_adapter_bottleneck_dimension: std::nullopt vision_tokens_num: 0 max_num_images: 0 audio_vocab_offset: 0 audio_vocab_extra_dim: 0 audio_input_embedding_dim: 0 audio_dual_norm_soft_and_hard_tokens: true bfloat16 fix: false int8_kv_cache: true apply_srq: false layer_skip_start: 0 num_layers_skipped: 0 matform_factor: 0 enable_external_embeddings: false)
+I0000 00:00:1776656910.599873  324847 llm_metal_runner.mm:160] Metal LLM tokens initialized.
+[2026-04-20T03:48:30Z] [DEBUG] [Gemma4StoryService.loadInferenceIfNeeded:155] Gemma4StoryService: LlmInference ready, modelLoadTime=16312ms
+I0000 00:00:1776656910.670851  324847 llm_inference_engine.cc:354] Session config: num_output_candidates: 1, topk: 40, temperature: 0.8, benchmark_info.input_token_limit: 0, benchmark_info.wait_for_input_processing: 0, has_prompt_templates: 0
+[2026-04-20T03:48:30Z] [DEBUG] [Gemma4StoryService.startNewLLMSession:171] Gemma4StoryService: new LlmInference.Session created
+[2026-04-20T03:48:30Z] [DEBUG] [Gemma4StoryService.generate:188] Gemma4StoryService: generate() turn=0, isFinal=false, promptLen=1096
+[2026-04-20T03:48:37Z] [DEBUG] [Gemma4StoryService.generate:201] Gemma4StoryService: first token at 6804ms (chunk #1)
+[2026-04-20T03:48:48Z] [DEBUG] [Gemma4StoryService.generate:209] Gemma4StoryService: generated 244 chars, ~44 words in 17991ms (2.4 words/s), ttft=6804ms, chunks=25
+[2026-04-20T03:48:48Z] [DEBUG] [Gemma4StoryService.generate:210] Gemma4StoryService: raw response: ```json
+{"story_text": "You are looking at the shiny table. It has a little red dot on it.  You think you see a tiny airplane hidden in the dot. Do you want to look closer? ", "question": "Do you want to look closer?", "is_ending": false}
+```
+[2026-04-20T03:48:48Z] [DEBUG] [Gemma4StoryService.generate:213] Gemma4StoryService: parsed storyText: You are looking at the shiny table. It has a little red dot on it.  You think you see a tiny airplane hidden in the dot. Do you want to look closer?
+[2026-04-20T03:48:48Z] [DEBUG] [Gemma4StoryService.generate:214] Gemma4StoryService: parsed question: Do you want to look closer?
+[2026-04-20T03:48:48Z] [DEBUG] [Gemma4StoryService.generate:215] Gemma4StoryService: parsed isEnding: false
+[2026-04-20T03:48:48Z] [DEBUG] [CompanionViewModel.runGemma4Pipeline:698] runGemma4Pipeline: beat[0] generated in 34516ms, ttft=0ms
+[2026-04-20T03:48:48Z] [DEBUG] [CompanionViewModel.runGemma4Pipeline:699] beat[0] storyText: You are looking at the shiny table. It has a little red dot on it.  You think you see a tiny airplane hidden in the dot. Do you want to look closer?
+[2026-04-20T03:48:48Z] [DEBUG] [CompanionViewModel.runGemma4Pipeline:700] beat[0] question: Do you want to look closer?
+[2026-04-20T03:48:48Z] [DEBUG] [CompanionViewModel.runGemma4Pipeline:701] beat[0] isEnding: false
+Potential Structural Swift Concurrency Issue: unsafeForcedSync called from Swift Concurrent context.
+[2026-04-20T03:48:49Z] [WARNING] [AudioService.resolvedNarratorVoice:105] AudioService: enhanced voice 'com.apple.voice.enhanced.en-US.Samantha' not available — using language default
+Potential Structural Swift Concurrency Issue: unsafeForcedSync called from Swift Concurrent context.
+[2026-04-20T03:48:49Z] [DEBUG] [AudioService.speakAll:263] AudioService: speaking 3 sentence(s), chars=146
+          IPCAUClient.cpp:139   IPCAUClient: can't connect to server (-66748)
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+[2026-04-20T03:49:02Z] [DEBUG] [AudioService.speakAll:275] AudioService: speech done, sentences=3, chars=146
+[2026-04-20T03:49:02Z] [DEBUG] [AudioService.speakAll:263] AudioService: speaking 1 sentence(s), chars=27
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+[2026-04-20T03:49:04Z] [DEBUG] [AudioService.speakAll:275] AudioService: speech done, sentences=1, chars=27
+[2026-04-20T03:49:04Z] [DEBUG] [CompanionViewModel.continueGemma4Loop:752] continueGemma4Loop: iteration=1, sessionElapsed=0ms
+[2026-04-20T03:49:04Z] [DEBUG] [CompanionViewModel.continueGemma4Loop:756] continueGemma4Loop: listening (skipSemanticLayer=true)
+[2026-04-20T03:49:05Z] [DEBUG] [AudioCaptureService.startCapture:69] startCapture: recording started, sampleRate=48000.0, channels=1
+[2026-04-20T03:49:05Z] [DEBUG] [SpeechRecognitionService.startLiveTranscription:90] startLiveTranscription: started
+[2026-04-20T03:49:06Z] [DEBUG] [PIIScrubber.scrub:31] scrub: inputLength=3, tokensRedacted=0
+[2026-04-20T03:49:07Z] [DEBUG] [CompanionViewModel.listenForAnswer:604] listenForAnswer: Layer 2 skipped (Gemma mode) — returning transcript after silence
+[2026-04-20T03:49:07Z] [DEBUG] [CompanionViewModel.listenForAnswer:564] listenForAnswer: hard cap reached (8s)
+[2026-04-20T03:49:07Z] [DEBUG] [AudioCaptureService.stopCapture:90] stopCapture: recording stopped, accumulatedBytes=460800
+[2026-04-20T03:49:07Z] [DEBUG] [SpeechRecognitionService.stopTranscription:98] stopTranscription: transcript=Yes
+[2026-04-20T03:49:07Z] [DEBUG] [CompanionViewModel.listenForAnswer:626] listenForAnswer: answer='Yes', length=3
+[2026-04-20T03:49:07Z] [DEBUG] [CompanionViewModel.continueGemma4Loop:768] continueGemma4Loop: answer='Yes', listenTime=2946ms, piiCount=0
+[2026-04-20T03:49:07Z] [DEBUG] [Gemma4StoryService.generate:188] Gemma4StoryService: generate() turn=1, isFinal=false, promptLen=101
+[2026-04-20T03:49:09Z] [DEBUG] [Gemma4StoryService.generate:201] Gemma4StoryService: first token at 1971ms (chunk #1)
+[2026-04-20T03:49:22Z] [DEBUG] [Gemma4StoryService.generate:209] Gemma4StoryService: generated 297 chars, ~52 words in 14305ms (3.6 words/s), ttft=1971ms, chunks=28
+[2026-04-20T03:49:22Z] [DEBUG] [Gemma4StoryService.generate:210] Gemma4StoryService: raw response: ```json
+{"story_text": "You squint your eyes and carefully look at the red dot.  It seems like... a tiny airplane! You wiggle your fingers and try to see it better. What do you think the airplane wants to do? ", "question": "What do you think the airplane wants to do? ", "is_ending": false}
+```
+[2026-04-20T03:49:22Z] [DEBUG] [Gemma4StoryService.generate:213] Gemma4StoryService: parsed storyText: You squint your eyes and carefully look at the red dot.  It seems like... a tiny airplane! You wiggle your fingers and try to see it better. What do you think the airplane wants to do?
+[2026-04-20T03:49:22Z] [DEBUG] [Gemma4StoryService.generate:214] Gemma4StoryService: parsed question: What do you think the airplane wants to do?
+[2026-04-20T03:49:22Z] [DEBUG] [Gemma4StoryService.generate:215] Gemma4StoryService: parsed isEnding: false
+[2026-04-20T03:49:22Z] [DEBUG] [CompanionViewModel.continueGemma4Loop:781] continueGemma4Loop: beat[1] generated in 14328ms, sessionElapsed=17470ms
+[2026-04-20T03:49:22Z] [DEBUG] [CompanionViewModel.continueGemma4Loop:782] beat[1] storyText: You squint your eyes and carefully look at the red dot.  It seems like... a tiny airplane! You wiggle your fingers and try to see it better. What do you think the airplane wants to do?
+[2026-04-20T03:49:22Z] [DEBUG] [CompanionViewModel.continueGemma4Loop:783] beat[1] question: What do you think the airplane wants to do?
+[2026-04-20T03:49:22Z] [DEBUG] [CompanionViewModel.continueGemma4Loop:784] beat[1] isEnding: false
+[2026-04-20T03:49:22Z] [DEBUG] [AudioService.speakAll:263] AudioService: speaking 3 sentence(s), chars=182
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+[2026-04-20T03:49:35Z] [DEBUG] [AudioService.speakAll:275] AudioService: speech done, sentences=3, chars=182
+[2026-04-20T03:49:35Z] [DEBUG] [AudioService.speakAll:263] AudioService: speaking 1 sentence(s), chars=43
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+[2026-04-20T03:49:38Z] [DEBUG] [AudioService.speakAll:275] AudioService: speech done, sentences=1, chars=43
+[2026-04-20T03:49:38Z] [DEBUG] [CompanionViewModel.continueGemma4Loop:752] continueGemma4Loop: iteration=2, sessionElapsed=33762ms
+[2026-04-20T03:49:38Z] [DEBUG] [CompanionViewModel.continueGemma4Loop:756] continueGemma4Loop: listening (skipSemanticLayer=true)
+[2026-04-20T03:49:38Z] [DEBUG] [AudioCaptureService.startCapture:69] startCapture: recording started, sampleRate=48000.0, channels=1
+[2026-04-20T03:49:38Z] [DEBUG] [SpeechRecognitionService.startLiveTranscription:90] startLiveTranscription: started
+[2026-04-20T03:49:42Z] [DEBUG] [PIIScrubber.scrub:31] scrub: inputLength=4, tokensRedacted=0
+[2026-04-20T03:49:42Z] [DEBUG] [PIIScrubber.scrub:31] scrub: inputLength=7, tokensRedacted=0
+[2026-04-20T03:49:42Z] [DEBUG] [PIIScrubber.scrub:31] scrub: inputLength=13, tokensRedacted=0
+[2026-04-20T03:49:43Z] [DEBUG] [PIIScrubber.scrub:31] scrub: inputLength=16, tokensRedacted=0
+[2026-04-20T03:49:43Z] [DEBUG] [PIIScrubber.scrub:31] scrub: inputLength=20, tokensRedacted=0
+[2026-04-20T03:49:44Z] [DEBUG] [PIIScrubber.scrub:31] scrub: inputLength=23, tokensRedacted=0
+[2026-04-20T03:49:44Z] [DEBUG] [PIIScrubber.scrub:31] scrub: inputLength=27, tokensRedacted=0
+[2026-04-20T03:49:44Z] [DEBUG] [PIIScrubber.scrub:31] scrub: inputLength=31, tokensRedacted=0
+[2026-04-20T03:49:45Z] [DEBUG] [CompanionViewModel.listenForAnswer:604] listenForAnswer: Layer 2 skipped (Gemma mode) — returning transcript after silence
+[2026-04-20T03:49:45Z] [DEBUG] [CompanionViewModel.listenForAnswer:564] listenForAnswer: hard cap reached (8s)
+[2026-04-20T03:49:45Z] [DEBUG] [AudioCaptureService.stopCapture:90] stopCapture: recording stopped, accumulatedBytes=1305600
+[2026-04-20T03:49:45Z] [DEBUG] [SpeechRecognitionService.stopTranscription:98] stopTranscription: transcript=Airlane wants to fly in the sky
+[2026-04-20T03:49:45Z] [DEBUG] [CompanionViewModel.listenForAnswer:626] listenForAnswer: answer='Airlane wants to fly in the sky', length=31
+[2026-04-20T03:49:45Z] [DEBUG] [CompanionViewModel.continueGemma4Loop:768] continueGemma4Loop: answer='Airlane wants to fly in the sky', listenTime=7271ms, piiCount=0
+[2026-04-20T03:49:45Z] [DEBUG] [Gemma4StoryService.generate:188] Gemma4StoryService: generate() turn=2, isFinal=false, promptLen=129
+[2026-04-20T03:49:45Z] [ERROR] [SpeechRecognitionService.startLiveTranscription:77] recognitionTask error: No speech detected
+[2026-04-20T03:49:46Z] [DEBUG] [Gemma4StoryService.generate:201] Gemma4StoryService: first token at 860ms (chunk #1)
+[2026-04-20T03:49:59Z] [DEBUG] [Gemma4StoryService.generate:209] Gemma4StoryService: generated 288 chars, ~48 words in 13583ms (3.5 words/s), ttft=860ms, chunks=28
+[2026-04-20T03:49:59Z] [DEBUG] [Gemma4StoryService.generate:210] Gemma4StoryService: raw response: ```json
+{"story_text": "That's a great idea! You open your toy airplane and spread its wings. You imagine it soaring high above the table.  "You" think the airplane is about to take off, what will it fly over first?", "question": "What will it fly over first?" , "is_ending": false}
+```
+[2026-04-20T03:49:59Z] [DEBUG] [Gemma4StoryService.generate:213] Gemma4StoryService: parsed storyText: ```json
+{"story_text": "That's a great idea. You open your toy airplane and spread its wings. You imagine it soaring high above the table. " , "is_ending": false}
+```
+[2026-04-20T03:49:59Z] [DEBUG] [Gemma4StoryService.generate:214] Gemma4StoryService: parsed question: ", "question": "What will it fly over first?
+[2026-04-20T03:49:59Z] [DEBUG] [Gemma4StoryService.generate:215] Gemma4StoryService: parsed isEnding: false
+[2026-04-20T03:49:59Z] [DEBUG] [CompanionViewModel.continueGemma4Loop:781] continueGemma4Loop: beat[2] generated in 13614ms, sessionElapsed=54655ms
+[2026-04-20T03:49:59Z] [DEBUG] [CompanionViewModel.continueGemma4Loop:782] beat[2] storyText: ```json
+{"story_text": "That's a great idea. You open your toy airplane and spread its wings. You imagine it soaring high above the table. " , "is_ending": false}
+```
+[2026-04-20T03:49:59Z] [DEBUG] [CompanionViewModel.continueGemma4Loop:783] beat[2] question: ", "question": "What will it fly over first?
+[2026-04-20T03:49:59Z] [DEBUG] [CompanionViewModel.continueGemma4Loop:784] beat[2] isEnding: false
+[2026-04-20T03:49:59Z] [DEBUG] [AudioService.speakAll:263] AudioService: speaking 3 sentence(s), chars=164
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+[2026-04-20T03:50:11Z] [DEBUG] [AudioService.speakAll:275] AudioService: speech done, sentences=3, chars=164
+[2026-04-20T03:50:11Z] [DEBUG] [AudioService.speakAll:263] AudioService: speaking 1 sentence(s), chars=44
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+[2026-04-20T03:50:15Z] [DEBUG] [AudioService.speakAll:275] AudioService: speech done, sentences=1, chars=44
+[2026-04-20T03:50:15Z] [DEBUG] [CompanionViewModel.continueGemma4Loop:752] continueGemma4Loop: iteration=3, sessionElapsed=70921ms
+[2026-04-20T03:50:15Z] [DEBUG] [CompanionViewModel.continueGemma4Loop:756] continueGemma4Loop: listening (skipSemanticLayer=true)
+[2026-04-20T03:50:16Z] [DEBUG] [AudioCaptureService.startCapture:69] startCapture: recording started, sampleRate=48000.0, channels=1
+[2026-04-20T03:50:16Z] [DEBUG] [SpeechRecognitionService.startLiveTranscription:90] startLiveTranscription: started
+[2026-04-20T03:50:19Z] [DEBUG] [PIIScrubber.scrub:31] scrub: inputLength=3, tokensRedacted=0
+[2026-04-20T03:50:20Z] [DEBUG] [CompanionViewModel.listenForAnswer:604] listenForAnswer: Layer 2 skipped (Gemma mode) — returning transcript after silence
+[2026-04-20T03:50:20Z] [DEBUG] [CompanionViewModel.listenForAnswer:564] listenForAnswer: hard cap reached (8s)
+[2026-04-20T03:50:20Z] [DEBUG] [AudioCaptureService.stopCapture:90] stopCapture: recording stopped, accumulatedBytes=806400
+[2026-04-20T03:50:20Z] [DEBUG] [SpeechRecognitionService.stopTranscription:98] stopTranscription: transcript=Yes
+[2026-04-20T03:50:20Z] [DEBUG] [CompanionViewModel.listenForAnswer:626] listenForAnswer: answer='Yes', length=3
+[2026-04-20T03:50:20Z] [DEBUG] [CompanionViewModel.continueGemma4Loop:768] continueGemma4Loop: answer='Yes', listenTime=4653ms, piiCount=0
+[2026-04-20T03:50:20Z] [DEBUG] [Gemma4StoryService.generate:188] Gemma4StoryService: generate() turn=3, isFinal=false, promptLen=101
+[2026-04-20T03:50:21Z] [DEBUG] [Gemma4StoryService.generate:201] Gemma4StoryService: first token at 746ms (chunk #1)
+[2026-04-20T03:50:33Z] [DEBUG] [Gemma4StoryService.generate:209] Gemma4StoryService: generated 292 chars, ~46 words in 12796ms (3.6 words/s), ttft=746ms, chunks=27
+[2026-04-20T03:50:33Z] [DEBUG] [Gemma4StoryService.generate:210] Gemma4StoryService: raw response: ```json
+{"story_text": "You and your airplane friend are having a big adventure!  You start imagining you are soaring high above the table.  Do you want to tell me about your airplane's journey? ", "question": "Do you want to tell me about your airplane's journey?", "is_ending": false}
+```
+[2026-04-20T03:50:33Z] [DEBUG] [Gemma4StoryService.generate:213] Gemma4StoryService: parsed storyText: You and your airplane friend are having a big adventure!  You start imagining you are soaring high above the table.  Do you want to tell me about your airplane's journey?
+[2026-04-20T03:50:33Z] [DEBUG] [Gemma4StoryService.generate:214] Gemma4StoryService: parsed question: Do you want to tell me about your airplane's journey?
+[2026-04-20T03:50:33Z] [DEBUG] [Gemma4StoryService.generate:215] Gemma4StoryService: parsed isEnding: false
+[2026-04-20T03:50:33Z] [DEBUG] [CompanionViewModel.continueGemma4Loop:781] continueGemma4Loop: beat[3] generated in 12812ms, sessionElapsed=88394ms
+[2026-04-20T03:50:33Z] [DEBUG] [CompanionViewModel.continueGemma4Loop:782] beat[3] storyText: You and your airplane friend are having a big adventure!  You start imagining you are soaring high above the table.  Do you want to tell me about your airplane's journey?
+[2026-04-20T03:50:33Z] [DEBUG] [CompanionViewModel.continueGemma4Loop:783] beat[3] question: Do you want to tell me about your airplane's journey?
+[2026-04-20T03:50:33Z] [DEBUG] [CompanionViewModel.continueGemma4Loop:784] beat[3] isEnding: false
+[2026-04-20T03:50:33Z] [DEBUG] [AudioService.speakAll:263] AudioService: speaking 1 sentence(s), chars=170
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+[2026-04-20T03:50:43Z] [DEBUG] [AudioService.speakAll:275] AudioService: speech done, sentences=1, chars=170
+[2026-04-20T03:50:43Z] [DEBUG] [AudioService.speakAll:263] AudioService: speaking 1 sentence(s), chars=53
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+[2026-04-20T03:50:47Z] [DEBUG] [AudioService.speakAll:275] AudioService: speech done, sentences=1, chars=53
+[2026-04-20T03:50:47Z] [DEBUG] [CompanionViewModel.continueGemma4Loop:752] continueGemma4Loop: iteration=4, sessionElapsed=102650ms
+[2026-04-20T03:50:47Z] [DEBUG] [CompanionViewModel.continueGemma4Loop:756] continueGemma4Loop: listening (skipSemanticLayer=true)
+[2026-04-20T03:50:47Z] [DEBUG] [AudioCaptureService.startCapture:69] startCapture: recording started, sampleRate=48000.0, channels=1
+[2026-04-20T03:50:47Z] [DEBUG] [SpeechRecognitionService.startLiveTranscription:90] startLiveTranscription: started
+[2026-04-20T03:50:49Z] [DEBUG] [PIIScrubber.scrub:31] scrub: inputLength=3, tokensRedacted=0
+[2026-04-20T03:50:50Z] [DEBUG] [CompanionViewModel.listenForAnswer:604] listenForAnswer: Layer 2 skipped (Gemma mode) — returning transcript after silence
+[2026-04-20T03:50:50Z] [DEBUG] [CompanionViewModel.listenForAnswer:564] listenForAnswer: hard cap reached (8s)
+[2026-04-20T03:50:51Z] [DEBUG] [AudioCaptureService.stopCapture:90] stopCapture: recording stopped, accumulatedBytes=614400
+[2026-04-20T03:50:51Z] [DEBUG] [SpeechRecognitionService.stopTranscription:98] stopTranscription: transcript=Yes
+[2026-04-20T03:50:51Z] [DEBUG] [CompanionViewModel.listenForAnswer:626] listenForAnswer: answer='Yes', length=3
+[2026-04-20T03:50:51Z] [DEBUG] [CompanionViewModel.continueGemma4Loop:768] continueGemma4Loop: answer='Yes', listenTime=3618ms, piiCount=0
+[2026-04-20T03:50:51Z] [DEBUG] [Gemma4StoryService.generate:188] Gemma4StoryService: generate() turn=4, isFinal=false, promptLen=101
+[2026-04-20T03:50:52Z] [DEBUG] [Gemma4StoryService.generate:201] Gemma4StoryService: first token at 799ms (chunk #1)
+[2026-04-20T03:51:02Z] [DEBUG] [Gemma4StoryService.generate:209] Gemma4StoryService: generated 249 chars, ~39 words in 11559ms (3.4 words/s), ttft=799ms, chunks=24
+[2026-04-20T03:51:02Z] [DEBUG] [Gemma4StoryService.generate:210] Gemma4StoryService: raw response: ```json
+{"story_text": "Okay,  your airplane's journey begins! It starts by soaring over a bright red ball.  What do you think the airplane sees in the ball?", "question": "What do you think the airplane sees in the ball?", "is_ending": false}
+```
+[2026-04-20T03:51:02Z] [DEBUG] [Gemma4StoryService.generate:213] Gemma4StoryService: parsed storyText: Okay,  your airplane's journey begins! It starts by soaring over a bright red ball.  What do you think the airplane sees in the ball?
+[2026-04-20T03:51:02Z] [DEBUG] [Gemma4StoryService.generate:214] Gemma4StoryService: parsed question: What do you think the airplane sees in the ball?
+[2026-04-20T03:51:02Z] [DEBUG] [Gemma4StoryService.generate:215] Gemma4StoryService: parsed isEnding: false
+[2026-04-20T03:51:02Z] [DEBUG] [CompanionViewModel.continueGemma4Loop:781] continueGemma4Loop: beat[4] generated in 11573ms, sessionElapsed=117848ms
+[2026-04-20T03:51:02Z] [DEBUG] [CompanionViewModel.continueGemma4Loop:782] beat[4] storyText: Okay,  your airplane's journey begins! It starts by soaring over a bright red ball.  What do you think the airplane sees in the ball?
+[2026-04-20T03:51:02Z] [DEBUG] [CompanionViewModel.continueGemma4Loop:783] beat[4] question: What do you think the airplane sees in the ball?
+[2026-04-20T03:51:02Z] [DEBUG] [CompanionViewModel.continueGemma4Loop:784] beat[4] isEnding: false
+[2026-04-20T03:51:02Z] [DEBUG] [AudioService.speakAll:263] AudioService: speaking 2 sentence(s), chars=132
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+[2026-04-20T03:51:12Z] [DEBUG] [AudioService.speakAll:275] AudioService: speech done, sentences=2, chars=132
+[2026-04-20T03:51:12Z] [DEBUG] [AudioService.speakAll:263] AudioService: speaking 1 sentence(s), chars=48
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+[2026-04-20T03:51:15Z] [DEBUG] [AudioService.speakAll:275] AudioService: speech done, sentences=1, chars=48
+[2026-04-20T03:51:15Z] [DEBUG] [CompanionViewModel.continueGemma4Loop:752] continueGemma4Loop: iteration=5, sessionElapsed=131132ms
+[2026-04-20T03:51:15Z] [DEBUG] [CompanionViewModel.continueGemma4Loop:756] continueGemma4Loop: listening (skipSemanticLayer=true)
+[2026-04-20T03:51:16Z] [DEBUG] [AudioCaptureService.startCapture:69] startCapture: recording started, sampleRate=48000.0, channels=1
+[2026-04-20T03:51:16Z] [DEBUG] [SpeechRecognitionService.startLiveTranscription:90] startLiveTranscription: started
+[2026-04-20T03:51:24Z] [DEBUG] [CompanionViewModel.listenForAnswer:564] listenForAnswer: hard cap reached (8s)
+[2026-04-20T03:51:24Z] [ERROR] [SpeechRecognitionService.startLiveTranscription:77] recognitionTask error: No speech detected
+[2026-04-20T03:51:24Z] [DEBUG] [AudioCaptureService.stopCapture:90] stopCapture: recording stopped, accumulatedBytes=1536000
+[2026-04-20T03:51:24Z] [DEBUG] [SpeechRecognitionService.stopTranscription:98] stopTranscription: transcript=nil
+[2026-04-20T03:51:24Z] [DEBUG] [CompanionViewModel.listenForAnswer:626] listenForAnswer: answer='nil', length=0
+[2026-04-20T03:51:24Z] [DEBUG] [CompanionViewModel.continueGemma4Loop:762] continueGemma4Loop: no answer after 8519ms, ending story
+[2026-04-20T03:51:24Z] [DEBUG] [AudioService.speakAll:263] AudioService: speaking 2 sentence(s), chars=126
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+[2026-04-20T03:51:32Z] [DEBUG] [AudioService.speakAll:275] AudioService: speech done, sentences=2, chars=126
+[2026-04-20T03:51:32Z] [DEBUG] [StoryTimelineStore.finalizeSession:50] StoryTimeline: session finalised beats=5, restart=false
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+[2026-04-20T03:51:37Z] [DEBUG] [LocalDeviceAccessory.sendCommand:143] sendCommand: command=CAPTURE
+[2026-04-20T03:51:37Z] [DEBUG] [LocalDeviceAccessory.photoOutput:284] photoOutput: capturedBytes=55484, exifOrientation=6
+[2026-04-20T03:51:37Z] [DEBUG] [CompanionViewModel.runDetectionPreview:298] runDetectionPreview: start, jpegBytes=55484
+[2026-04-20T03:51:37Z] [DEBUG] [PrivacyPipelineService.runDebugDetection:207] runDebugDetection – start: inputSize=(360.0, 480.0), modelLoaded=true
+[2026-04-20T03:51:37Z] [DEBUG] [PrivacyPipelineService.detectAndBlurFaces:160] Stage 1 – face detection: imageSize=(360.0, 480.0)
+[2026-04-20T03:51:37Z] [DEBUG] [PrivacyPipelineService.detectAndBlurFaces:166] Stage 2 – face blur: faceCount=0, skipping blur
+[2026-04-20T03:51:37Z] [DEBUG] [PrivacyPipelineService.parseDetections:308] Stage 3 – object detection (recognized): count=4, items=["photo_frame@98%", "window@97%", "photo_frame@96%", "window@94%"]
+[2026-04-20T03:51:37Z] [DEBUG] [PrivacyPipelineService.detectObjectsWithBoxes:282] Stage 3 – object detection (boxes): count=4, items=["photo_frame@98%", "window@97%", "photo_frame@96%", "window@94%"]
+[2026-04-20T03:51:37Z] [DEBUG] [PrivacyPipelineService.runDebugDetection:227] runDebugDetection – detections: count=4, labels=["photo_frame", "window", "photo_frame", "window"]
+[2026-04-20T03:51:37Z] [DEBUG] [PrivacyPipelineService.runDebugDetection:230] runDebugDetection – done: blurredDataBytes=55557
+[2026-04-20T03:51:37Z] [DEBUG] [CompanionViewModel.runDetectionPreview:328] runDetectionPreview: done, detectionCount=4, blurredBytes=55557
+[2026-04-20T03:51:39Z] [DEBUG] [CompanionViewModel.runFullPipeline:339] runFullPipeline: start, mode=gemma4OnDevice, jpegBytes=55557, childAge=6
+[2026-04-20T03:51:39Z] [DEBUG] [CompanionViewModel.runGemma4Pipeline:663] runGemma4Pipeline: start
+[2026-04-20T03:51:39Z] [DEBUG] [PrivacyPipelineService.process:74] Stage 0 – input: imageSize=(480.0, 360.0), childAge=6
+[2026-04-20T03:51:39Z] [DEBUG] [PrivacyPipelineService.detectAndBlurFaces:160] Stage 1 – face detection: imageSize=(480.0, 360.0)
+[2026-04-20T03:51:39Z] [DEBUG] [PrivacyPipelineService.detectAndBlurFaces:166] Stage 2 – face blur: faceCount=0, skipping blur
+[2026-04-20T03:51:39Z] [DEBUG] [PrivacyPipelineService.parseDetections:308] Stage 3 – object detection (recognized): count=2, items=["sofa@98%", "photo_frame@99%"]
+[2026-04-20T03:51:39Z] [DEBUG] [PrivacyPipelineService.detectObjectsWithModel:272] Stage 3 – object detection: labels=["sofa", "photo_frame"]
+[2026-04-20T03:51:39Z] [DEBUG] [PrivacyPipelineService.classifyScene:382] Stage 4 – scene classification: labels=["structure", "conveyance", "portal"]
+[2026-04-20T03:51:39Z] [DEBUG] [PrivacyPipelineService.recognizeSpeech:399] Stage 5 – speech recognition: skipped: no audio data provided
+[2026-04-20T03:51:39Z] [DEBUG] [PrivacyPipelineService.process:142] Pipeline benchmark: faceDetect=14ms blur=9ms yolo=79ms scene=79ms stt=79ms piiScrub=0ms total=118ms
+[2026-04-20T03:51:39Z] [DEBUG] [PrivacyPipelineService.process:143] Stage 6 – output: objects=["sofa", "photo_frame"], scene=["structure", "conveyance", "portal"], hasTranscript=false
+[2026-04-20T03:51:39Z] [DEBUG] [StoryTimelineStore.insert:42] StoryTimeline: session inserted id=C10C93DE-537E-4599-8F8D-597D715AE374
+[2026-04-20T03:51:39Z] [DEBUG] [CompanionViewModel.runGemma4Pipeline:694] runGemma4Pipeline: privacy done, objects=["sofa", "photo_frame"], scene=["structure", "conveyance", "portal"]
+I0000 00:00:1776657099.885151  327920 llm_inference_engine.cc:354] Session config: num_output_candidates: 1, topk: 40, temperature: 0.8, benchmark_info.input_token_limit: 0, benchmark_info.wait_for_input_processing: 0, has_prompt_templates: 0
+[2026-04-20T03:51:39Z] [DEBUG] [Gemma4StoryService.startNewLLMSession:171] Gemma4StoryService: new LlmInference.Session created
+[2026-04-20T03:51:39Z] [DEBUG] [Gemma4StoryService.generate:188] Gemma4StoryService: generate() turn=0, isFinal=false, promptLen=1082
+[2026-04-20T03:51:42Z] [DEBUG] [Gemma4StoryService.generate:201] Gemma4StoryService: first token at 2701ms (chunk #1)
+12.12.0 - [FirebaseAnalytics][I-ACS023308] Failed to initiate on-device conversion measurement for retrieving aggregate first-party data. Ads account not linked to Google Analytics.
+[2026-04-20T03:51:55Z] [DEBUG] [Gemma4StoryService.generate:209] Gemma4StoryService: generated 302 chars, ~53 words in 15584ms (3.4 words/s), ttft=2701ms, chunks=28
+[2026-04-20T03:51:55Z] [DEBUG] [Gemma4StoryService.generate:210] Gemma4StoryService: raw response: ```json
+{"story_text": "You are curled up on the sofa, a soft, fuzzy blanket around you.  You notice a picture in a frame on the coffee table, a sparkly castle in the middle. You wonder what kind of castle it is.", "question": "What do you think the castle might be made of?", "is_ending": false}
+```
+[2026-04-20T03:51:55Z] [DEBUG] [Gemma4StoryService.generate:213] Gemma4StoryService: parsed storyText: You are curled up on the sofa, a soft, fuzzy blanket around you.  You notice a picture in a frame on the coffee table, a sparkly castle in the middle. You wonder what kind of castle it is.
+[2026-04-20T03:51:55Z] [DEBUG] [Gemma4StoryService.generate:214] Gemma4StoryService: parsed question: What do you think the castle might be made of?
+[2026-04-20T03:51:55Z] [DEBUG] [Gemma4StoryService.generate:215] Gemma4StoryService: parsed isEnding: false
+[2026-04-20T03:51:55Z] [DEBUG] [CompanionViewModel.runGemma4Pipeline:698] runGemma4Pipeline: beat[0] generated in 15602ms, ttft=0ms
+[2026-04-20T03:51:55Z] [DEBUG] [CompanionViewModel.runGemma4Pipeline:699] beat[0] storyText: You are curled up on the sofa, a soft, fuzzy blanket around you.  You notice a picture in a frame on the coffee table, a sparkly castle in the middle. You wonder what kind of castle it is.
+[2026-04-20T03:51:55Z] [DEBUG] [CompanionViewModel.runGemma4Pipeline:700] beat[0] question: What do you think the castle might be made of?
+[2026-04-20T03:51:55Z] [DEBUG] [CompanionViewModel.runGemma4Pipeline:701] beat[0] isEnding: false
+[2026-04-20T03:51:55Z] [DEBUG] [AudioService.speakAll:263] AudioService: speaking 2 sentence(s), chars=187
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+[2026-04-20T03:52:08Z] [DEBUG] [AudioService.speakAll:275] AudioService: speech done, sentences=2, chars=187
+[2026-04-20T03:52:08Z] [DEBUG] [AudioService.speakAll:263] AudioService: speaking 1 sentence(s), chars=46
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+[2026-04-20T03:52:11Z] [DEBUG] [AudioService.speakAll:275] AudioService: speech done, sentences=1, chars=46
+[2026-04-20T03:52:11Z] [DEBUG] [CompanionViewModel.continueGemma4Loop:752] continueGemma4Loop: iteration=1, sessionElapsed=0ms
+[2026-04-20T03:52:11Z] [DEBUG] [CompanionViewModel.continueGemma4Loop:756] continueGemma4Loop: listening (skipSemanticLayer=true)
+[2026-04-20T03:52:12Z] [DEBUG] [AudioCaptureService.startCapture:69] startCapture: recording started, sampleRate=48000.0, channels=1
+[2026-04-20T03:52:12Z] [DEBUG] [SpeechRecognitionService.startLiveTranscription:90] startLiveTranscription: started
+[2026-04-20T03:52:14Z] [DEBUG] [PIIScrubber.scrub:31] scrub: inputLength=5, tokensRedacted=0
+[2026-04-20T03:52:14Z] [DEBUG] [PIIScrubber.scrub:31] scrub: inputLength=6, tokensRedacted=0
+[2026-04-20T03:52:16Z] [DEBUG] [CompanionViewModel.listenForAnswer:604] listenForAnswer: Layer 2 skipped (Gemma mode) — returning transcript after silence
+[2026-04-20T03:52:16Z] [DEBUG] [CompanionViewModel.listenForAnswer:564] listenForAnswer: hard cap reached (8s)
+[2026-04-20T03:52:16Z] [DEBUG] [AudioCaptureService.stopCapture:90] stopCapture: recording stopped, accumulatedBytes=748800
+[2026-04-20T03:52:16Z] [DEBUG] [SpeechRecognitionService.stopTranscription:98] stopTranscription: transcript=Stones
+[2026-04-20T03:52:16Z] [DEBUG] [CompanionViewModel.listenForAnswer:626] listenForAnswer: answer='Stones', length=6
+[2026-04-20T03:52:16Z] [DEBUG] [CompanionViewModel.continueGemma4Loop:768] continueGemma4Loop: answer='Stones', listenTime=4387ms, piiCount=0
+[2026-04-20T03:52:16Z] [DEBUG] [Gemma4StoryService.generate:188] Gemma4StoryService: generate() turn=1, isFinal=false, promptLen=104
+[2026-04-20T03:52:16Z] [DEBUG] [Gemma4StoryService.generate:201] Gemma4StoryService: first token at 759ms (chunk #1)
+[2026-04-20T03:52:29Z] [DEBUG] [Gemma4StoryService.generate:209] Gemma4StoryService: generated 312 chars, ~50 words in 13299ms (3.8 words/s), ttft=759ms, chunks=28
+[2026-04-20T03:52:29Z] [DEBUG] [Gemma4StoryService.generate:210] Gemma4StoryService: raw response: ```json
+{"story_text": "You decide to get up and walk closer.  You reach out to touch the picture, but it feels oddly warm. The castle shimmers, and suddenly, you feel a gentle breeze.  The air smells sweet like berries and cinnamon.", "question": "Do you think the castle is magical?", "is_ending": false}
+```
+[2026-04-20T03:52:29Z] [DEBUG] [Gemma4StoryService.generate:213] Gemma4StoryService: parsed storyText: You decide to get up and walk closer.  You reach out to touch the picture, but it feels oddly warm. The castle shimmers, and suddenly, you feel a gentle breeze.  The air smells sweet like berries and cinnamon.
+[2026-04-20T03:52:29Z] [DEBUG] [Gemma4StoryService.generate:214] Gemma4StoryService: parsed question: Do you think the castle is magical?
+[2026-04-20T03:52:29Z] [DEBUG] [Gemma4StoryService.generate:215] Gemma4StoryService: parsed isEnding: false
+[2026-04-20T03:52:29Z] [DEBUG] [CompanionViewModel.continueGemma4Loop:781] continueGemma4Loop: beat[1] generated in 13315ms, sessionElapsed=17714ms
+[2026-04-20T03:52:29Z] [DEBUG] [CompanionViewModel.continueGemma4Loop:782] beat[1] storyText: You decide to get up and walk closer.  You reach out to touch the picture, but it feels oddly warm. The castle shimmers, and suddenly, you feel a gentle breeze.  The air smells sweet like berries and cinnamon.
+[2026-04-20T03:52:29Z] [DEBUG] [CompanionViewModel.continueGemma4Loop:783] beat[1] question: Do you think the castle is magical?
+[2026-04-20T03:52:29Z] [DEBUG] [CompanionViewModel.continueGemma4Loop:784] beat[1] isEnding: false
+[2026-04-20T03:52:29Z] [DEBUG] [AudioService.speakAll:263] AudioService: speaking 2 sentence(s), chars=208
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+[2026-04-20T03:52:43Z] [DEBUG] [AudioService.speakAll:275] AudioService: speech done, sentences=2, chars=208
+[2026-04-20T03:52:43Z] [DEBUG] [AudioService.speakAll:263] AudioService: speaking 1 sentence(s), chars=35
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+[2026-04-20T03:52:46Z] [DEBUG] [AudioService.speakAll:275] AudioService: speech done, sentences=1, chars=35
+[2026-04-20T03:52:46Z] [DEBUG] [CompanionViewModel.continueGemma4Loop:752] continueGemma4Loop: iteration=2, sessionElapsed=35085ms
+[2026-04-20T03:52:46Z] [DEBUG] [CompanionViewModel.continueGemma4Loop:756] continueGemma4Loop: listening (skipSemanticLayer=true)
+[2026-04-20T03:52:47Z] [DEBUG] [AudioCaptureService.startCapture:69] startCapture: recording started, sampleRate=48000.0, channels=1
+[2026-04-20T03:52:47Z] [DEBUG] [SpeechRecognitionService.startLiveTranscription:90] startLiveTranscription: started
+[2026-04-20T03:52:50Z] [DEBUG] [PIIScrubber.scrub:31] scrub: inputLength=3, tokensRedacted=0
+[2026-04-20T03:52:51Z] [DEBUG] [CompanionViewModel.listenForAnswer:604] listenForAnswer: Layer 2 skipped (Gemma mode) — returning transcript after silence
+[2026-04-20T03:52:51Z] [DEBUG] [CompanionViewModel.listenForAnswer:564] listenForAnswer: hard cap reached (8s)
+[2026-04-20T03:52:51Z] [DEBUG] [AudioCaptureService.stopCapture:90] stopCapture: recording stopped, accumulatedBytes=768000
+[2026-04-20T03:52:51Z] [DEBUG] [SpeechRecognitionService.stopTranscription:98] stopTranscription: transcript=Yes
+[2026-04-20T03:52:51Z] [DEBUG] [CompanionViewModel.listenForAnswer:626] listenForAnswer: answer='Yes', length=3
+[2026-04-20T03:52:51Z] [DEBUG] [CompanionViewModel.continueGemma4Loop:768] continueGemma4Loop: answer='Yes', listenTime=4497ms, piiCount=0
+[2026-04-20T03:52:51Z] [DEBUG] [Gemma4StoryService.generate:188] Gemma4StoryService: generate() turn=2, isFinal=false, promptLen=101
+[2026-04-20T03:52:52Z] [DEBUG] [Gemma4StoryService.generate:201] Gemma4StoryService: first token at 742ms (chunk #1)
+[2026-04-20T03:53:07Z] [DEBUG] [Gemma4StoryService.generate:209] Gemma4StoryService: generated 380 chars, ~59 words in 15818ms (3.7 words/s), ttft=742ms, chunks=33
+[2026-04-20T03:53:07Z] [DEBUG] [Gemma4StoryService.generate:210] Gemma4StoryService: raw response: ```json
+{"story_text": "You step closer, mesmerized by the castle's sparkle.  As you reach out your hand, the castle glows brighter and the air hums with energy. Suddenly, you are surrounded by sparkling dust that swirls around you, and a tiny voice whispers, \"Welcome to Castle Sparkle!\"", "question": "What do you think the castle might be made of?", "is_ending": false}
+```
+[2026-04-20T03:53:07Z] [DEBUG] [Gemma4StoryService.generate:213] Gemma4StoryService: parsed storyText: You step closer, mesmerized by the castle's sparkle.  As you reach out your hand, the castle glows brighter and the air hums with energy. Suddenly, you are surrounded by sparkling dust that swirls around you, and a tiny voice whispers, "Welcome to Castle Sparkle!"
+[2026-04-20T03:53:07Z] [DEBUG] [Gemma4StoryService.generate:214] Gemma4StoryService: parsed question: What do you think the castle might be made of?
+[2026-04-20T03:53:07Z] [DEBUG] [Gemma4StoryService.generate:215] Gemma4StoryService: parsed isEnding: false
+[2026-04-20T03:53:07Z] [DEBUG] [CompanionViewModel.continueGemma4Loop:781] continueGemma4Loop: beat[2] generated in 15834ms, sessionElapsed=55423ms
+[2026-04-20T03:53:07Z] [DEBUG] [CompanionViewModel.continueGemma4Loop:782] beat[2] storyText: You step closer, mesmerized by the castle's sparkle.  As you reach out your hand, the castle glows brighter and the air hums with energy. Suddenly, you are surrounded by sparkling dust that swirls around you, and a tiny voice whispers, "Welcome to Castle Sparkle!"
+[2026-04-20T03:53:07Z] [DEBUG] [CompanionViewModel.continueGemma4Loop:783] beat[2] question: What do you think the castle might be made of?
+[2026-04-20T03:53:07Z] [DEBUG] [CompanionViewModel.continueGemma4Loop:784] beat[2] isEnding: false
+[2026-04-20T03:53:07Z] [DEBUG] [AudioService.speakAll:263] AudioService: speaking 2 sentence(s), chars=263
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+[2026-04-20T03:53:24Z] [DEBUG] [AudioService.speakAll:275] AudioService: speech done, sentences=2, chars=263
+[2026-04-20T03:53:24Z] [DEBUG] [AudioService.speakAll:263] AudioService: speaking 1 sentence(s), chars=46
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+[2026-04-20T03:53:28Z] [DEBUG] [AudioService.speakAll:275] AudioService: speech done, sentences=1, chars=46
+[2026-04-20T03:53:28Z] [DEBUG] [CompanionViewModel.continueGemma4Loop:752] continueGemma4Loop: iteration=3, sessionElapsed=76423ms
+[2026-04-20T03:53:28Z] [DEBUG] [CompanionViewModel.continueGemma4Loop:756] continueGemma4Loop: listening (skipSemanticLayer=true)
+[2026-04-20T03:53:28Z] [DEBUG] [AudioCaptureService.startCapture:69] startCapture: recording started, sampleRate=48000.0, channels=1
+[2026-04-20T03:53:28Z] [DEBUG] [SpeechRecognitionService.startLiveTranscription:90] startLiveTranscription: started
+[2026-04-20T03:53:32Z] [DEBUG] [PIIScrubber.scrub:31] scrub: inputLength=5, tokensRedacted=0
+[2026-04-20T03:53:33Z] [DEBUG] [CompanionViewModel.listenForAnswer:604] listenForAnswer: Layer 2 skipped (Gemma mode) — returning transcript after silence
+[2026-04-20T03:53:33Z] [DEBUG] [CompanionViewModel.listenForAnswer:564] listenForAnswer: hard cap reached (8s)
+[2026-04-20T03:53:33Z] [DEBUG] [AudioCaptureService.stopCapture:90] stopCapture: recording stopped, accumulatedBytes=960000
+[2026-04-20T03:53:33Z] [DEBUG] [SpeechRecognitionService.stopTranscription:98] stopTranscription: transcript=Would
+[2026-04-20T03:53:33Z] [DEBUG] [CompanionViewModel.listenForAnswer:626] listenForAnswer: answer='Would', length=5
+[2026-04-20T03:53:33Z] [DEBUG] [CompanionViewModel.continueGemma4Loop:768] continueGemma4Loop: answer='Would', listenTime=5490ms, piiCount=0
+[2026-04-20T03:53:33Z] [DEBUG] [Gemma4StoryService.generate:188] Gemma4StoryService: generate() turn=3, isFinal=false, promptLen=103
+[2026-04-20T03:53:34Z] [DEBUG] [Gemma4StoryService.generate:201] Gemma4StoryService: first token at 724ms (chunk #1)
+[2026-04-20T03:53:45Z] [DEBUG] [Gemma4StoryService.generate:209] Gemma4StoryService: generated 254 chars, ~40 words in 12240ms (3.3 words/s), ttft=724ms, chunks=26
+[2026-04-20T03:53:45Z] [DEBUG] [Gemma4StoryService.generate:210] Gemma4StoryService: raw response: ```json
+{"story_text": "The voice giggles, \"That's a great guess!  Castle Sparkle is made of wishes and dreams!  Anything you wish for can be here!  What do you want to wish for first?\", "question": "What would you wish for?", "is_ending": false}
+```
+[2026-04-20T03:53:45Z] [DEBUG] [Gemma4StoryService.generate:213] Gemma4StoryService: parsed storyText: ```json
+{"story_text": "The voice giggles, \"That's a great guess. Castle Sparkle is made of wishes and dreams. Anything you wish for can be here. ", "is_ending": false}
+```
+[2026-04-20T03:53:45Z] [DEBUG] [Gemma4StoryService.generate:214] Gemma4StoryService: parsed question: \", "question": "What would you wish for?
+[2026-04-20T03:53:45Z] [DEBUG] [Gemma4StoryService.generate:215] Gemma4StoryService: parsed isEnding: false
+[2026-04-20T03:53:45Z] [DEBUG] [CompanionViewModel.continueGemma4Loop:781] continueGemma4Loop: beat[3] generated in 12256ms, sessionElapsed=94179ms
+[2026-04-20T03:53:45Z] [DEBUG] [CompanionViewModel.continueGemma4Loop:782] beat[3] storyText: ```json
+{"story_text": "The voice giggles, \"That's a great guess. Castle Sparkle is made of wishes and dreams. Anything you wish for can be here. ", "is_ending": false}
+```
+[2026-04-20T03:53:45Z] [DEBUG] [CompanionViewModel.continueGemma4Loop:783] beat[3] question: \", "question": "What would you wish for?
+[2026-04-20T03:53:45Z] [DEBUG] [CompanionViewModel.continueGemma4Loop:784] beat[3] isEnding: false
+[2026-04-20T03:53:46Z] [DEBUG] [AudioService.speakAll:263] AudioService: speaking 3 sentence(s), chars=171
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+[2026-04-20T03:53:58Z] [DEBUG] [AudioService.speakAll:275] AudioService: speech done, sentences=3, chars=171
+[2026-04-20T03:53:58Z] [DEBUG] [AudioService.speakAll:263] AudioService: speaking 1 sentence(s), chars=41
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+[2026-04-20T03:54:01Z] [DEBUG] [AudioService.speakAll:275] AudioService: speech done, sentences=1, chars=41
+[2026-04-20T03:54:01Z] [DEBUG] [CompanionViewModel.continueGemma4Loop:752] continueGemma4Loop: iteration=4, sessionElapsed=110215ms
+[2026-04-20T03:54:01Z] [DEBUG] [CompanionViewModel.continueGemma4Loop:756] continueGemma4Loop: listening (skipSemanticLayer=true)
+[2026-04-20T03:54:02Z] [DEBUG] [AudioCaptureService.startCapture:69] startCapture: recording started, sampleRate=48000.0, channels=1
+[2026-04-20T03:54:02Z] [DEBUG] [SpeechRecognitionService.startLiveTranscription:90] startLiveTranscription: started
+[2026-04-20T03:54:07Z] [DEBUG] [PIIScrubber.scrub:31] scrub: inputLength=2, tokensRedacted=0
+[2026-04-20T03:54:07Z] [DEBUG] [PIIScrubber.scrub:31] scrub: inputLength=5, tokensRedacted=0
+[2026-04-20T03:54:07Z] [DEBUG] [PIIScrubber.scrub:31] scrub: inputLength=11, tokensRedacted=0
+[2026-04-20T03:54:08Z] [DEBUG] [PIIScrubber.scrub:31] scrub: inputLength=13, tokensRedacted=0
+[2026-04-20T03:54:09Z] [DEBUG] [CompanionViewModel.listenForAnswer:604] listenForAnswer: Layer 2 skipped (Gemma mode) — returning transcript after silence
+[2026-04-20T03:54:09Z] [DEBUG] [CompanionViewModel.listenForAnswer:564] listenForAnswer: hard cap reached (8s)
+[2026-04-20T03:54:09Z] [DEBUG] [AudioCaptureService.stopCapture:90] stopCapture: recording stopped, accumulatedBytes=1382400
+[2026-04-20T03:54:09Z] [DEBUG] [SpeechRecognitionService.stopTranscription:98] stopTranscription: transcript=To be magical
+[2026-04-20T03:54:09Z] [DEBUG] [CompanionViewModel.listenForAnswer:626] listenForAnswer: answer='To be magical', length=13
+[2026-04-20T03:54:09Z] [DEBUG] [CompanionViewModel.continueGemma4Loop:768] continueGemma4Loop: answer='To be magical', listenTime=7696ms, piiCount=0
+[2026-04-20T03:54:09Z] [DEBUG] [Gemma4StoryService.generate:188] Gemma4StoryService: generate() turn=4, isFinal=false, promptLen=111
+[2026-04-20T03:54:10Z] [DEBUG] [Gemma4StoryService.generate:201] Gemma4StoryService: first token at 737ms (chunk #1)
+[2026-04-20T03:54:32Z] [DEBUG] [Gemma4StoryService.generate:209] Gemma4StoryService: generated 606 chars, ~100 words in 23268ms (4.3 words/s), ttft=737ms, chunks=48
+[2026-04-20T03:54:32Z] [DEBUG] [Gemma4StoryService.generate:210] Gemma4StoryService: raw response: ```json
+{"story_text": "The castle lights up with a brilliant glow, and you feel a warmth spread through your body. You close your eyes and take a deep breath. When you open them, the world is different. The castle sparkles with all sorts of colors, and everything around you seems to hum with magic. You feel a tingling in your fingers, like they're filled with sparkling glitter. You're no longer wearing your normal clothes, but you're wearing a dress made of stardust, shimmering in every color imaginable.", "question": "What do you want to do first in this magical castle?", "is_ending": false}
+```
+[2026-04-20T03:54:32Z] [DEBUG] [Gemma4StoryService.generate:213] Gemma4StoryService: parsed storyText: The castle lights up with a brilliant glow, and you feel a warmth spread through your body. You close your eyes and take a deep breath. When you open them, the world is different. The castle sparkles with all sorts of colors, and everything around you seems to hum with magic. You feel a tingling in your fingers, like they're filled with sparkling glitter. You're no longer wearing your normal clothes, but you're wearing a dress made of stardust, shimmering in every color imaginable.
+[2026-04-20T03:54:32Z] [DEBUG] [Gemma4StoryService.generate:214] Gemma4StoryService: parsed question: What do you want to do first in this magical castle?
+[2026-04-20T03:54:32Z] [DEBUG] [Gemma4StoryService.generate:215] Gemma4StoryService: parsed isEnding: false
+[2026-04-20T03:54:32Z] [DEBUG] [CompanionViewModel.continueGemma4Loop:781] continueGemma4Loop: beat[4] generated in 23285ms, sessionElapsed=141207ms
+[2026-04-20T03:54:32Z] [DEBUG] [CompanionViewModel.continueGemma4Loop:782] beat[4] storyText: The castle lights up with a brilliant glow, and you feel a warmth spread through your body. You close your eyes and take a deep breath. When you open them, the world is different. The castle sparkles with all sorts of colors, and everything around you seems to hum with magic. You feel a tingling in your fingers, like they're filled with sparkling glitter. You're no longer wearing your normal clothes, but you're wearing a dress made of stardust, shimmering in every color imaginable.
+[2026-04-20T03:54:32Z] [DEBUG] [CompanionViewModel.continueGemma4Loop:783] beat[4] question: What do you want to do first in this magical castle?
+[2026-04-20T03:54:32Z] [DEBUG] [CompanionViewModel.continueGemma4Loop:784] beat[4] isEnding: false
+[2026-04-20T03:54:33Z] [DEBUG] [AudioService.speakAll:263] AudioService: speaking 6 sentence(s), chars=481
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+[2026-04-20T03:55:03Z] [DEBUG] [AudioService.speakAll:275] AudioService: speech done, sentences=6, chars=481
+[2026-04-20T03:55:03Z] [DEBUG] [AudioService.speakAll:263] AudioService: speaking 1 sentence(s), chars=52
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+[2026-04-20T03:55:07Z] [DEBUG] [AudioService.speakAll:275] AudioService: speech done, sentences=1, chars=52
+[2026-04-20T03:55:07Z] [DEBUG] [CompanionViewModel.continueGemma4Loop:752] continueGemma4Loop: iteration=5, sessionElapsed=175795ms
+[2026-04-20T03:55:07Z] [DEBUG] [CompanionViewModel.continueGemma4Loop:756] continueGemma4Loop: listening (skipSemanticLayer=true)
+[2026-04-20T03:55:07Z] [DEBUG] [AudioCaptureService.startCapture:69] startCapture: recording started, sampleRate=48000.0, channels=1
+[2026-04-20T03:55:07Z] [DEBUG] [SpeechRecognitionService.startLiveTranscription:90] startLiveTranscription: started
+[2026-04-20T03:55:11Z] [DEBUG] [PIIScrubber.scrub:31] scrub: inputLength=2, tokensRedacted=0
+[2026-04-20T03:55:12Z] [DEBUG] [PIIScrubber.scrub:31] scrub: inputLength=5, tokensRedacted=0
+[2026-04-20T03:55:12Z] [DEBUG] [PIIScrubber.scrub:31] scrub: inputLength=10, tokensRedacted=0
+[2026-04-20T03:55:13Z] [DEBUG] [CompanionViewModel.listenForAnswer:604] listenForAnswer: Layer 2 skipped (Gemma mode) — returning transcript after silence
+[2026-04-20T03:55:13Z] [DEBUG] [CompanionViewModel.listenForAnswer:564] listenForAnswer: hard cap reached (8s)
+[2026-04-20T03:55:13Z] [DEBUG] [AudioCaptureService.stopCapture:90] stopCapture: recording stopped, accumulatedBytes=1094400
+[2026-04-20T03:55:13Z] [DEBUG] [SpeechRecognitionService.stopTranscription:98] stopTranscription: transcript=To explore
+[2026-04-20T03:55:13Z] [DEBUG] [CompanionViewModel.listenForAnswer:626] listenForAnswer: answer='To explore', length=10
+[2026-04-20T03:55:13Z] [DEBUG] [CompanionViewModel.continueGemma4Loop:768] continueGemma4Loop: answer='To explore', listenTime=6138ms, piiCount=0
+[2026-04-20T03:55:13Z] [DEBUG] [Gemma4StoryService.generate:188] Gemma4StoryService: generate() turn=5, isFinal=false, promptLen=108
+[2026-04-20T03:55:14Z] [DEBUG] [Gemma4StoryService.generate:201] Gemma4StoryService: first token at 745ms (chunk #1)
+[2026-04-20T03:55:29Z] [DEBUG] [Gemma4StoryService.generate:209] Gemma4StoryService: generated 355 chars, ~61 words in 15770ms (3.9 words/s), ttft=745ms, chunks=33
+[2026-04-20T03:55:29Z] [DEBUG] [Gemma4StoryService.generate:210] Gemma4StoryService: raw response: ```json
+{"story_text": "With a skip and a twirl, you set off on your magical adventure.  The castle's walls are made of rainbow-colored stone, and each step you take makes a tinkling sound.  You notice a path branching off to the left and right. Which way do you want to go?", "question": "Which path do you want to take first?", "is_ending": false}
+```
+[2026-04-20T03:55:29Z] [DEBUG] [Gemma4StoryService.generate:213] Gemma4StoryService: parsed storyText: With a skip and a twirl, you set off on your magical adventure.  The castle's walls are made of rainbow-colored stone, and each step you take makes a tinkling sound.  You notice a path branching off to the left and right. Which way do you want to go?
+[2026-04-20T03:55:29Z] [DEBUG] [Gemma4StoryService.generate:214] Gemma4StoryService: parsed question: Which path do you want to take first?
+[2026-04-20T03:55:29Z] [DEBUG] [Gemma4StoryService.generate:215] Gemma4StoryService: parsed isEnding: false
+[2026-04-20T03:55:29Z] [DEBUG] [CompanionViewModel.continueGemma4Loop:781] continueGemma4Loop: beat[5] generated in 15787ms, sessionElapsed=197729ms
+[2026-04-20T03:55:29Z] [DEBUG] [CompanionViewModel.continueGemma4Loop:782] beat[5] storyText: With a skip and a twirl, you set off on your magical adventure.  The castle's walls are made of rainbow-colored stone, and each step you take makes a tinkling sound.  You notice a path branching off to the left and right. Which way do you want to go?
+[2026-04-20T03:55:29Z] [DEBUG] [CompanionViewModel.continueGemma4Loop:783] beat[5] question: Which path do you want to take first?
+[2026-04-20T03:55:29Z] [DEBUG] [CompanionViewModel.continueGemma4Loop:784] beat[5] isEnding: false
+[2026-04-20T03:55:29Z] [DEBUG] [AudioService.speakAll:263] AudioService: speaking 2 sentence(s), chars=249
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+[2026-04-20T03:55:46Z] [DEBUG] [AudioService.speakAll:275] AudioService: speech done, sentences=2, chars=249
+[2026-04-20T03:55:46Z] [DEBUG] [AudioService.speakAll:263] AudioService: speaking 1 sentence(s), chars=37
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+[2026-04-20T03:55:49Z] [DEBUG] [AudioService.speakAll:275] AudioService: speech done, sentences=1, chars=37
+[2026-04-20T03:55:49Z] [DEBUG] [CompanionViewModel.continueGemma4Loop:752] continueGemma4Loop: iteration=6, sessionElapsed=217425ms
+[2026-04-20T03:55:49Z] [DEBUG] [CompanionViewModel.continueGemma4Loop:756] continueGemma4Loop: listening (skipSemanticLayer=true)
+[2026-04-20T03:55:49Z] [DEBUG] [AudioCaptureService.startCapture:69] startCapture: recording started, sampleRate=48000.0, channels=1
+[2026-04-20T03:55:49Z] [DEBUG] [SpeechRecognitionService.startLiveTranscription:90] startLiveTranscription: started

@@ -25,6 +25,9 @@ final class CompanionViewModel {
     }
     var storyTurnCount: Int = 0
 
+    /// Set to true when a story session ends naturally — triggers the parent rating sheet.
+    var showRatingSheet = false
+
     /// Partial story text streamed token-by-token during on-device generation.
     /// Reset to empty when generation completes or before each new turn.
     var streamingStoryText: String = ""
@@ -62,6 +65,7 @@ final class CompanionViewModel {
     let modelDownloadManager: ModelDownloadManager
     private let storyTimelineStore: StoryTimelineStore
     private let hybridMetricsStore: HybridMetricsStore
+    let storyRatingStore: StoryRatingStore
     private let backgroundEnhancer: BackgroundStoryEnhancer
     private let turnDetector = SemanticTurnDetector()
 
@@ -91,6 +95,10 @@ final class CompanionViewModel {
     private var latestAnswerPiiCount = 0
     /// Whether restartWithSummary has been triggered in this session.
     private var sessionHadRestart = false
+    /// Wall-clock time when the current story session started (set in generateStory()).
+    private var sessionStartTime: Date?
+    /// Snapshot of storyTurnCount captured just before reset, for the rating sheet.
+    var ratingBeatsPlayed = 0
 
     // MARK: - Init
 
@@ -107,7 +115,8 @@ final class CompanionViewModel {
         gemma4StoryService: Gemma4StoryService,
         modelDownloadManager: ModelDownloadManager,
         storyTimelineStore: StoryTimelineStore,
-        hybridMetricsStore: HybridMetricsStore
+        hybridMetricsStore: HybridMetricsStore,
+        storyRatingStore: StoryRatingStore
     ) {
         self.accessoryManager = accessoryManager
         self.privacyPipeline  = privacyPipeline
@@ -122,6 +131,7 @@ final class CompanionViewModel {
         self.modelDownloadManager = modelDownloadManager
         self.storyTimelineStore = storyTimelineStore
         self.hybridMetricsStore = hybridMetricsStore
+        self.storyRatingStore = storyRatingStore
         self.backgroundEnhancer = BackgroundStoryEnhancer(cloudService: cloudService)
     }
 
@@ -213,6 +223,7 @@ final class CompanionViewModel {
             return
         }
         isShowingScenePreview = false
+        sessionStartTime = Date()
         Task {
             await runFullPipeline(jpegData: jpegData)
         }
@@ -441,7 +452,7 @@ final class CompanionViewModel {
                 }
             } else {
                 await onDeviceStoryService.endSession()
-                finalizeCurrentSession()
+                finalizeCurrentSession(showRating: true)
                 storyTurnCount = 0
                 sessionState = .connected
             }
@@ -521,7 +532,7 @@ final class CompanionViewModel {
             }
         }
         await onDeviceStoryService.endSession()
-        finalizeCurrentSession()
+        finalizeCurrentSession(showRating: true)
         storyTurnCount = 0
         guard case .error = sessionState else {
             sessionState = .connected
@@ -636,7 +647,7 @@ final class CompanionViewModel {
         sessionState = .sendingAudio
         await audioService.speak(StoryBeat.endingFallback.storyText)
         await onDeviceStoryService.endSession()
-        finalizeCurrentSession()
+        finalizeCurrentSession(showRating: true)
         storyTurnCount = 0
         sessionState = .connected
     }
@@ -727,7 +738,7 @@ final class CompanionViewModel {
                 }
             } else {
                 await gemma4StoryService.endSession()
-                finalizeCurrentSession()
+                finalizeCurrentSession(showRating: true)
                 storyTurnCount = 0
                 sessionState = .connected
             }
@@ -807,7 +818,7 @@ final class CompanionViewModel {
             }
         }
         await gemma4StoryService.endSession()
-        finalizeCurrentSession()
+        finalizeCurrentSession(showRating: true)
         storyTurnCount = 0
         guard case .error = sessionState else {
             sessionState = .connected
@@ -900,7 +911,7 @@ final class CompanionViewModel {
                     )
                 }
             } else {
-                finalizeCurrentSession()
+                finalizeCurrentSession(showRating: true)
                 storyTurnCount = 0
                 sessionState = .connected
             }
@@ -1003,7 +1014,7 @@ final class CompanionViewModel {
 
         await localService.endSession()
         await backgroundEnhancer.reset()
-        finalizeCurrentSession()
+        finalizeCurrentSession(showRating: true)
         storyTurnCount = 0
         guard case .error = sessionState else { sessionState = .connected; return }
     }
@@ -1075,7 +1086,7 @@ final class CompanionViewModel {
                     await self?.continueCloudLoop(basePayload: result.payload, lastBeat: beat)
                 }
             } else {
-                finalizeCurrentSession()
+                finalizeCurrentSession(showRating: true)
                 storyTurnCount = 0
                 sessionState = .connected
             }
@@ -1155,7 +1166,7 @@ final class CompanionViewModel {
                 break
             }
         }
-        finalizeCurrentSession()
+        finalizeCurrentSession(showRating: true)
         storyTurnCount = 0
         guard case .error = sessionState else {
             sessionState = .connected
@@ -1227,15 +1238,43 @@ final class CompanionViewModel {
     }
 
     /// Marks the current session as complete and clears tracking state.
+    /// Pass showRating: true at natural story endings to prompt the parent.
     /// Safe to call multiple times — no-ops if there is no active session.
-    private func finalizeCurrentSession() {
+    private func finalizeCurrentSession(showRating: Bool = false) {
         guard let session = currentSession else { return }
         storyTimelineStore.finalizeSession(session, hadContextRestart: sessionHadRestart)
+        if showRating {
+            ratingBeatsPlayed = storyTurnCount
+            showRatingSheet = true
+        }
         currentSession       = nil
         pendingBeat          = nil
         currentBeatSequence  = 0
         prevLocalBeatIndex   = -1
         sessionHadRestart    = false
+    }
+
+    // MARK: - Parent story rating
+
+    func submitRating(enjoyment: Int, ageAppropriateness: Int, sceneGrounding: Int) {
+        let durationMs = sessionStartTime.map { Date().timeIntervalSince($0) * 1000 } ?? 0
+        let event = StoryRatingEvent(
+            generationMode: storyMode,
+            childAge: childAge,
+            beatsPlayed: ratingBeatsPlayed,
+            sessionDurationMs: durationMs,
+            enjoyment: enjoyment,
+            ageAppropriateness: ageAppropriateness,
+            sceneGrounding: sceneGrounding
+        )
+        Task { await storyRatingStore.record(event) }
+        showRatingSheet = false
+        sessionStartTime = nil
+    }
+
+    func skipRating() {
+        showRatingSheet = false
+        sessionStartTime = nil
     }
 
     // MARK: - Helpers

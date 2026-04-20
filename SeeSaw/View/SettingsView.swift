@@ -15,6 +15,8 @@ struct SettingsView: View {
     var accessoryManager: AccessoryManager
     var metricsStore: PrivacyMetricsStore
     var storyMetricsStore: StoryMetricsStore
+    var hybridMetricsStore: HybridMetricsStore
+    var storyRatingStore: StoryRatingStore
 
     @State private var cloudURLString: String = UserDefaults.standard.cloudAgentURL?.absoluteString ?? ""
     @State private var metricsCount = 0
@@ -27,8 +29,18 @@ struct SettingsView: View {
     @State private var avgGenMs = 0.0
     @State private var avgStoryLen = 0
     @State private var totalViolations = 0
+    @State private var hybridBeatCount = 0
+    @State private var hybridCloudHitRate = 0.0
+    @State private var hybridAvgLocalMs = 0.0
+    @State private var hybridAvgCloudMs = 0.0
+    @State private var ratingCount = 0
+    @State private var avgEnjoyment = 0.0
+    @State private var avgAgeAppropriateness = 0.0
+    @State private var avgSceneGrounding = 0.0
     @State private var csvData = ""
     @State private var showingCSVShare = false
+    @State private var showingExportAll = false
+    @State private var exportAllItems: [Any] = []
     @Environment(\.dismiss) private var dismiss
 
     // MARK: - Body
@@ -41,6 +53,9 @@ struct SettingsView: View {
                 cloudSection
                 privacyMetricsSection
                 storyMetricsSection
+                hybridMetricsSection
+                storyRatingsSection
+                exportAllSection
                 aboutSection
             }
             .navigationTitle("Settings")
@@ -51,6 +66,11 @@ struct SettingsView: View {
                 }
             }
             .task { await loadMetrics() }
+            .sheet(isPresented: $showingCSVShare) {
+                if let data = csvData.data(using: .utf8) {
+                    ShareLink(item: data, preview: SharePreview("SeeSaw CSV Export"))
+                }
+            }
         }
     }
 
@@ -97,10 +117,52 @@ struct SettingsView: View {
             Text("All processing runs on-device. Raw images and audio never leave the device.")
                 .font(.caption)
         }
-        .sheet(isPresented: $showingCSVShare) {
-            if let data = csvData.data(using: .utf8) {
-                ShareLink(item: data, preview: SharePreview("Privacy Metrics CSV"))
+    }
+
+    private var storyRatingsSection: some View {
+        Section {
+            LabeledContent("Sessions Rated", value: "\(ratingCount)")
+            LabeledContent("Avg Enjoyment", value: ratingCount > 0 ? String(format: "%.1f / 5", avgEnjoyment) : "—")
+            LabeledContent("Avg Age-Appropriate", value: ratingCount > 0 ? String(format: "%.1f / 5", avgAgeAppropriateness) : "—")
+            LabeledContent("Avg Scene Match", value: ratingCount > 0 ? String(format: "%.1f / 5", avgSceneGrounding) : "—")
+            Button("Export Ratings CSV") {
+                Task {
+                    csvData = await storyRatingStore.exportCSV()
+                    showingCSVShare = true
+                }
             }
+            .disabled(ratingCount == 0)
+        } header: {
+            Text("Story Ratings")
+        } footer: {
+            Text("Parent-submitted star ratings after each story session.")
+                .font(.caption)
+        }
+    }
+
+    private var exportAllSection: some View {
+        Section {
+            Button("Export All Data") {
+                Task {
+                    let privacy  = await metricsStore.exportCSV()
+                    let story    = await storyMetricsStore.exportCSV()
+                    let hybrid   = await hybridMetricsStore.exportCSV()
+                    let ratings  = await storyRatingStore.exportCSV()
+                    exportAllItems = [
+                        privacy.data(using: .utf8) as Any,
+                        story.data(using: .utf8) as Any,
+                        hybrid.data(using: .utf8) as Any,
+                        ratings.data(using: .utf8) as Any
+                    ].compactMap { $0 }
+                    showingExportAll = true
+                }
+            }
+        } footer: {
+            Text("Shares privacy_metrics.csv, story_metrics.csv, hybrid_metrics.csv and story_ratings.csv in one share sheet.")
+                .font(.caption)
+        }
+        .sheet(isPresented: $showingExportAll) {
+            ActivityViewController(activityItems: exportAllItems)
         }
     }
 
@@ -133,6 +195,27 @@ struct SettingsView: View {
         }
     }
 
+    private var hybridMetricsSection: some View {
+        Section {
+            LabeledContent("Beats Recorded", value: "\(hybridBeatCount)")
+            LabeledContent("Cloud Hit Rate", value: hybridBeatCount > 0 ? formatPercent(hybridCloudHitRate) : "—")
+            LabeledContent("Avg Local Gen", value: hybridBeatCount > 0 ? "\(Int(hybridAvgLocalMs)) ms" : "—")
+            LabeledContent("Avg Cloud Response", value: hybridAvgCloudMs > 0 ? "\(Int(hybridAvgCloudMs)) ms" : "—")
+            Button("Export Hybrid CSV") {
+                Task {
+                    csvData = await hybridMetricsStore.exportCSV()
+                    showingCSVShare = true
+                }
+            }
+            .disabled(hybridBeatCount == 0)
+        } header: {
+            Text("Hybrid Mode Metrics")
+        } footer: {
+            Text("Per-beat source routing data (local Gemma vs cloud-enhanced). Chapter 6 dissertation data.")
+                .font(.caption)
+        }
+    }
+
     // MARK: - Helpers
 
     private func loadMetrics() async {
@@ -146,6 +229,14 @@ struct SettingsView: View {
         avgGenMs = await storyMetricsStore.averageGenerationMs()
         avgStoryLen = await storyMetricsStore.averageStoryLength()
         totalViolations = await storyMetricsStore.totalGuardrailViolations()
+        hybridBeatCount = await hybridMetricsStore.eventCount()
+        hybridCloudHitRate = await hybridMetricsStore.cloudHitRate()
+        hybridAvgLocalMs = await hybridMetricsStore.averageLocalMs()
+        hybridAvgCloudMs = await hybridMetricsStore.averageCloudMs()
+        ratingCount = await storyRatingStore.eventCount()
+        avgEnjoyment = await storyRatingStore.averageEnjoyment()
+        avgAgeAppropriateness = await storyRatingStore.averageAgeAppropriateness()
+        avgSceneGrounding = await storyRatingStore.averageSceneGrounding()
     }
 
     private func formatPercent(_ value: Double) -> String {
@@ -170,7 +261,9 @@ struct SettingsView: View {
         childAge: .constant(5),
         accessoryManager: container.accessoryManager,
         metricsStore: container.privacyMetricsStore,
-        storyMetricsStore: container.storyMetricsStore
+        storyMetricsStore: container.storyMetricsStore,
+        hybridMetricsStore: container.hybridMetricsStore,
+        storyRatingStore: container.storyRatingStore
     )
 }
 

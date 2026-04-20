@@ -48,6 +48,10 @@ final class AppDependencyContainer {
 
     let hybridMetricsStore: HybridMetricsStore
 
+    // MARK: - Story ratings
+
+    let storyRatingStore: StoryRatingStore
+
     // MARK: - Init
 
     init() {
@@ -81,6 +85,7 @@ final class AppDependencyContainer {
         storyMetricsStore        = StoryMetricsStore()
         storyTimelineStore       = StoryTimelineStore()
         hybridMetricsStore       = HybridMetricsStore()
+        storyRatingStore         = StoryRatingStore()
 
         // Restore Gemma model state from the filesystem on every launch.
         // Documents/ is preserved across Xcode debug installs on physical devices,
@@ -131,7 +136,8 @@ final class AppDependencyContainer {
             gemma4StoryService: gemma4StoryService,
             modelDownloadManager: modelDownloadManager,
             storyTimelineStore: storyTimelineStore,
-            hybridMetricsStore: hybridMetricsStore
+            hybridMetricsStore: hybridMetricsStore,
+            storyRatingStore: storyRatingStore
         )
     }
 

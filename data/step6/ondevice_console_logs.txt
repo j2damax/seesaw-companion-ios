@@ -1,0 +1,625 @@
+12.12.0 - [GoogleUtilities/AppDelegateSwizzler][I-SWZ001014] App Delegate does not conform to UIApplicationDelegate protocol.
+12.12.0 - [FirebaseAnalytics][I-ACS023007] Analytics v.12.12.0 started
+12.12.0 - [FirebaseAnalytics][I-ACS023008] To enable debug logging set the following application argument: -FIRAnalyticsDebugEnabled (see http://goo.gl/RfcP7r)
+12.12.0 - [FirebaseAnalytics][I-ACS044002] The AdSupport Framework is not currently linked. Some features will not function properly. Learn more at http://goo.gl/9vSsPb
+12.12.0 - [FirebaseAnalytics][I-ACS800023] No pending snapshot to activate. SDK name: app_measurement
+[Firebase/Crashlytics] Version 12.12.0
+12.12.0 - [FirebaseAnalytics][I-ACS023012] Analytics collection enabled
+12.12.0 - [FirebaseAnalytics][I-ACS023220] Analytics screen reporting is enabled. Call Analytics.logEvent(AnalyticsEventScreenView, parameters: [...]) to log a screen view event. To disable automatic screen reporting, set the flag FirebaseAutomaticScreenReportingEnabled to NO (boolean) in the Info.plist
+numANECores: Unknown aneSubType
+[2026-04-20T03:25:13Z] [DEBUG] [PrivacyPipelineService.init:60] init: objectDetectionModel loaded=true
+<SKPaymentQueue: 0x1032096b0>: Error in remote proxy while checking server queue: Error Domain=SKInternalErrorDomain Code=12 "(null)"
+Reading from public effective user settings.
+void * _Nullable NSMapGet(NSMapTable * _Nonnull, const void * _Nullable): map table argument is NULL
+Unknown client: SeeSaw
+<<<< FigXPCUtilities >>>> signalled err=-17281 at <>:308
+<<<< FigCaptureSourceRemote >>>> Fig assert: "err == 0 " at bail (FigCaptureSourceRemote.m:569) - (err=-17281)
+[2026-04-20T03:25:37Z] [DEBUG] [LocalDeviceAccessory.sendCommand:143] sendCommand: command=CAPTURE
+[2026-04-20T03:25:37Z] [DEBUG] [LocalDeviceAccessory.photoOutput:284] photoOutput: capturedBytes=32550, exifOrientation=6
+[2026-04-20T03:25:37Z] [DEBUG] [CompanionViewModel.runDetectionPreview:298] runDetectionPreview: start, jpegBytes=32550
+[2026-04-20T03:25:37Z] [DEBUG] [PrivacyPipelineService.runDebugDetection:207] runDebugDetection – start: inputSize=(360.0, 480.0), modelLoaded=true
+[2026-04-20T03:25:37Z] [DEBUG] [PrivacyPipelineService.detectAndBlurFaces:160] Stage 1 – face detection: imageSize=(360.0, 480.0)
+[2026-04-20T03:25:37Z] [DEBUG] [PrivacyPipelineService.detectAndBlurFaces:166] Stage 2 – face blur: faceCount=0, skipping blur
+[2026-04-20T03:25:37Z] [DEBUG] [PrivacyPipelineService.parseDetections:308] Stage 3 – object detection (recognized): count=3, items=["toy_airplane@97%", "window@92%", "cupboard@91%"]
+[2026-04-20T03:25:37Z] [DEBUG] [PrivacyPipelineService.detectObjectsWithBoxes:282] Stage 3 – object detection (boxes): count=3, items=["toy_airplane@97%", "window@92%", "cupboard@91%"]
+[2026-04-20T03:25:37Z] [DEBUG] [PrivacyPipelineService.runDebugDetection:227] runDebugDetection – detections: count=3, labels=["toy_airplane", "window", "cupboard"]
+[2026-04-20T03:25:37Z] [DEBUG] [PrivacyPipelineService.runDebugDetection:230] runDebugDetection – done: blurredDataBytes=41159
+[2026-04-20T03:25:37Z] [DEBUG] [CompanionViewModel.runDetectionPreview:328] runDetectionPreview: done, detectionCount=3, blurredBytes=41159
+[2026-04-20T03:25:45Z] [DEBUG] [CompanionViewModel.runFullPipeline:339] runFullPipeline: start, mode=onDevice, jpegBytes=41159, childAge=6
+[2026-04-20T03:25:45Z] [DEBUG] [CompanionViewModel.runOnDevicePipeline:356] runOnDevicePipeline: start
+[2026-04-20T03:25:45Z] [DEBUG] [PrivacyPipelineService.process:74] Stage 0 – input: imageSize=(480.0, 360.0), childAge=6
+[2026-04-20T03:25:45Z] [DEBUG] [PrivacyPipelineService.detectAndBlurFaces:160] Stage 1 – face detection: imageSize=(480.0, 360.0)
+[2026-04-20T03:25:45Z] [DEBUG] [PrivacyPipelineService.detectAndBlurFaces:166] Stage 2 – face blur: faceCount=0, skipping blur
+[2026-04-20T03:25:45Z] [DEBUG] [PrivacyPipelineService.parseDetections:308] Stage 3 – object detection (recognized): count=0, items=[]
+[2026-04-20T03:25:45Z] [DEBUG] [PrivacyPipelineService.detectObjectsWithModel:272] Stage 3 – object detection: labels=[]
+[2026-04-20T03:25:46Z] [DEBUG] [PrivacyPipelineService.classifyScene:382] Stage 4 – scene classification: labels=["container", "cardboard_box"]
+[2026-04-20T03:25:46Z] [DEBUG] [PrivacyPipelineService.recognizeSpeech:399] Stage 5 – speech recognition: skipped: no audio data provided
+[2026-04-20T03:25:46Z] [DEBUG] [PrivacyPipelineService.process:142] Pipeline benchmark: faceDetect=12ms blur=8ms yolo=292ms scene=292ms stt=292ms piiScrub=0ms total=336ms
+[2026-04-20T03:25:46Z] [DEBUG] [PrivacyPipelineService.process:143] Stage 6 – output: objects=[], scene=["container", "cardboard_box"], hasTranscript=false
+[2026-04-20T03:25:46Z] [DEBUG] [CompanionViewModel.runOnDevicePipeline:374] runOnDevicePipeline: privacy done, objects=[]
+[2026-04-20T03:25:46Z] [DEBUG] [StoryTimelineStore.insert:42] StoryTimeline: session inserted id=A4D93BDD-B20E-4AB4-876F-F456005F0D2B
+[2026-04-20T03:25:46Z] [DEBUG] [OnDeviceStoryService.streamWithErrorRecovery:231] streamWithErrorRecovery: starting stream
+[2026-04-20T03:25:59Z] [DEBUG] [OnDeviceStoryService.streamWithErrorRecovery:243] streamWithErrorRecovery: done, snapshots=5, textLen=72, hasQuestion=true, isEnding=false
+[2026-04-20T03:25:59Z] [DEBUG] [CompanionViewModel.runOnDevicePipeline:411] runOnDevicePipeline: story generated in 13626ms, ttft=10781ms
+[2026-04-20T03:25:59Z] [DEBUG] [CompanionViewModel.runOnDevicePipeline:412] beat[0] storyText: You find a shiny red coin in the sandbox. You wonder if it's a treasure.
+[2026-04-20T03:25:59Z] [DEBUG] [CompanionViewModel.runOnDevicePipeline:413] beat[0] question: Do you want to keep it or show it to your friends?
+Potential Structural Swift Concurrency Issue: unsafeForcedSync called from Swift Concurrent context.
+[2026-04-20T03:26:00Z] [WARNING] [AudioService.resolvedNarratorVoice:105] AudioService: enhanced voice 'com.apple.voice.enhanced.en-US.Samantha' not available — using language default
+Potential Structural Swift Concurrency Issue: unsafeForcedSync called from Swift Concurrent context.
+[2026-04-20T03:26:00Z] [DEBUG] [AudioService.speakAll:263] AudioService: speaking 2 sentence(s), chars=71
+          IPCAUClient.cpp:139   IPCAUClient: can't connect to server (-66748)
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+[2026-04-20T03:26:07Z] [DEBUG] [AudioService.speakAll:275] AudioService: speech done, sentences=2, chars=71
+[2026-04-20T03:26:07Z] [DEBUG] [AudioService.speakAll:263] AudioService: speaking 1 sentence(s), chars=50
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+[2026-04-20T03:26:11Z] [DEBUG] [AudioService.speakAll:275] AudioService: speech done, sentences=1, chars=50
+[2026-04-20T03:26:11Z] [DEBUG] [AudioCaptureService.startCapture:69] startCapture: recording started, sampleRate=48000.0, channels=1
+[2026-04-20T03:26:11Z] [DEBUG] [SpeechRecognitionService.startLiveTranscription:90] startLiveTranscription: started
+[2026-04-20T03:26:13Z] [DEBUG] [PIIScrubber.scrub:31] scrub: inputLength=1, tokensRedacted=0
+[2026-04-20T03:26:13Z] [DEBUG] [PIIScrubber.scrub:31] scrub: inputLength=6, tokensRedacted=0
+[2026-04-20T03:26:14Z] [DEBUG] [PIIScrubber.scrub:31] scrub: inputLength=9, tokensRedacted=0
+[2026-04-20T03:26:14Z] [DEBUG] [PIIScrubber.scrub:31] scrub: inputLength=14, tokensRedacted=0
+[2026-04-20T03:26:14Z] [DEBUG] [PIIScrubber.scrub:31] scrub: inputLength=20, tokensRedacted=0
+[2026-04-20T03:26:15Z] [DEBUG] [PIIScrubber.scrub:31] scrub: inputLength=20, tokensRedacted=0
+[2026-04-20T03:26:15Z] [DEBUG] [PIIScrubber.scrub:31] scrub: inputLength=27, tokensRedacted=0
+[2026-04-20T03:26:16Z] [DEBUG] [CompanionViewModel.listenForAnswer:607] listenForAnswer: Layer 2 semantic check starting
+[2026-04-20T03:26:16Z] [DEBUG] [SemanticTurnDetector.semanticCheck:68] listenForAnswer: Layer 2 semantic check starting
+[2026-04-20T03:26:17Z] [DEBUG] [PIIScrubber.scrub:31] scrub: inputLength=27, tokensRedacted=0
+[2026-04-20T03:26:18Z] [DEBUG] [SemanticTurnDetector.semanticCheck:89] listenForAnswer: Layer 2 complete → returning transcript
+[2026-04-20T03:26:18Z] [DEBUG] [CompanionViewModel.listenForAnswer:610] listenForAnswer: Layer 2 complete → returning transcript
+[2026-04-20T03:26:18Z] [DEBUG] [CompanionViewModel.listenForAnswer:564] listenForAnswer: hard cap reached (8s)
+[2026-04-20T03:26:18Z] [DEBUG] [AudioCaptureService.stopCapture:90] stopCapture: recording stopped, accumulatedBytes=1228800
+[2026-04-20T03:26:18Z] [DEBUG] [SpeechRecognitionService.stopTranscription:98] stopTranscription: transcript=
+[2026-04-20T03:26:18Z] [DEBUG] [CompanionViewModel.listenForAnswer:626] listenForAnswer: answer='I want to show to my friend', length=27
+[2026-04-20T03:26:18Z] [DEBUG] [OnDeviceStoryService.streamWithErrorRecovery:231] streamWithErrorRecovery: starting stream
+[2026-04-20T03:26:25Z] [DEBUG] [OnDeviceStoryService.streamWithErrorRecovery:243] streamWithErrorRecovery: done, snapshots=6, textLen=95, hasQuestion=true, isEnding=false
+[2026-04-20T03:26:25Z] [DEBUG] [CompanionViewModel.continueStoryLoop:491] beat[0] storyText: You walk to your friend's house and show them the coin. They're excited and give you a big hug.
+[2026-04-20T03:26:25Z] [DEBUG] [CompanionViewModel.continueStoryLoop:492] beat[0] question: Do you want to play a game with your friend now?
+[2026-04-20T03:26:25Z] [DEBUG] [AudioService.speakAll:263] AudioService: speaking 2 sentence(s), chars=94
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+[2026-04-20T03:26:30Z] [DEBUG] [AudioService.speakAll:275] AudioService: speech done, sentences=2, chars=94
+[2026-04-20T03:26:30Z] [DEBUG] [AudioService.speakAll:263] AudioService: speaking 1 sentence(s), chars=48
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+[2026-04-20T03:26:34Z] [DEBUG] [AudioService.speakAll:275] AudioService: speech done, sentences=1, chars=48
+[2026-04-20T03:26:35Z] [DEBUG] [AudioCaptureService.startCapture:69] startCapture: recording started, sampleRate=48000.0, channels=1
+[2026-04-20T03:26:35Z] [DEBUG] [SpeechRecognitionService.startLiveTranscription:90] startLiveTranscription: started
+[2026-04-20T03:26:37Z] [DEBUG] [PIIScrubber.scrub:31] scrub: inputLength=3, tokensRedacted=0
+[2026-04-20T03:26:38Z] [DEBUG] [CompanionViewModel.listenForAnswer:607] listenForAnswer: Layer 2 semantic check starting
+[2026-04-20T03:26:38Z] [DEBUG] [CompanionViewModel.listenForAnswer:610] listenForAnswer: Layer 2 complete → returning transcript
+[2026-04-20T03:26:38Z] [DEBUG] [CompanionViewModel.listenForAnswer:564] listenForAnswer: hard cap reached (8s)
+[2026-04-20T03:26:38Z] [DEBUG] [AudioCaptureService.stopCapture:90] stopCapture: recording stopped, accumulatedBytes=576000
+[2026-04-20T03:26:38Z] [DEBUG] [SpeechRecognitionService.stopTranscription:98] stopTranscription: transcript=Yes
+[2026-04-20T03:26:38Z] [DEBUG] [CompanionViewModel.listenForAnswer:626] listenForAnswer: answer='Yes', length=3
+[2026-04-20T03:26:38Z] [DEBUG] [OnDeviceStoryService.streamWithErrorRecovery:231] streamWithErrorRecovery: starting stream
+[2026-04-20T03:26:45Z] [DEBUG] [OnDeviceStoryService.streamWithErrorRecovery:243] streamWithErrorRecovery: done, snapshots=6, textLen=121, hasQuestion=true, isEnding=false
+[2026-04-20T03:26:45Z] [DEBUG] [CompanionViewModel.continueStoryLoop:491] beat[1] storyText: You and your friend play a game of hide and seek. You hide behind the cardboard box and wait for your friend to find you.
+[2026-04-20T03:26:45Z] [DEBUG] [CompanionViewModel.continueStoryLoop:492] beat[1] question: Do you think you'll find your friend quickly?
+[2026-04-20T03:26:45Z] [DEBUG] [AudioService.speakAll:263] AudioService: speaking 2 sentence(s), chars=120
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+[2026-04-20T03:26:52Z] [DEBUG] [AudioService.speakAll:275] AudioService: speech done, sentences=2, chars=120
+[2026-04-20T03:26:52Z] [DEBUG] [AudioService.speakAll:263] AudioService: speaking 1 sentence(s), chars=45
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+[2026-04-20T03:26:55Z] [DEBUG] [AudioService.speakAll:275] AudioService: speech done, sentences=1, chars=45
+[2026-04-20T03:26:56Z] [DEBUG] [AudioCaptureService.startCapture:69] startCapture: recording started, sampleRate=48000.0, channels=1
+[2026-04-20T03:26:56Z] [DEBUG] [SpeechRecognitionService.startLiveTranscription:90] startLiveTranscription: started
+[2026-04-20T03:26:59Z] [DEBUG] [PIIScrubber.scrub:31] scrub: inputLength=3, tokensRedacted=0
+[2026-04-20T03:27:00Z] [DEBUG] [CompanionViewModel.listenForAnswer:607] listenForAnswer: Layer 2 semantic check starting
+[2026-04-20T03:27:00Z] [DEBUG] [CompanionViewModel.listenForAnswer:610] listenForAnswer: Layer 2 complete → returning transcript
+[2026-04-20T03:27:00Z] [DEBUG] [CompanionViewModel.listenForAnswer:564] listenForAnswer: hard cap reached (8s)
+[2026-04-20T03:27:00Z] [DEBUG] [AudioCaptureService.stopCapture:90] stopCapture: recording stopped, accumulatedBytes=806400
+[2026-04-20T03:27:00Z] [DEBUG] [SpeechRecognitionService.stopTranscription:98] stopTranscription: transcript=Yes
+[2026-04-20T03:27:00Z] [DEBUG] [CompanionViewModel.listenForAnswer:626] listenForAnswer: answer='Yes', length=3
+[2026-04-20T03:27:00Z] [DEBUG] [OnDeviceStoryService.streamWithErrorRecovery:231] streamWithErrorRecovery: starting stream
+[2026-04-20T03:27:07Z] [DEBUG] [OnDeviceStoryService.streamWithErrorRecovery:243] streamWithErrorRecovery: done, snapshots=5, textLen=107, hasQuestion=true, isEnding=false
+[2026-04-20T03:27:07Z] [DEBUG] [CompanionViewModel.continueStoryLoop:491] beat[2] storyText: You spot your friend hiding behind the tree and run over to them. You both laugh and play together happily.
+[2026-04-20T03:27:07Z] [DEBUG] [CompanionViewModel.continueStoryLoop:492] beat[2] question: Do you want to play another game now?
+[2026-04-20T03:27:07Z] [DEBUG] [AudioService.speakAll:263] AudioService: speaking 2 sentence(s), chars=106
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+[2026-04-20T03:27:14Z] [DEBUG] [AudioService.speakAll:275] AudioService: speech done, sentences=2, chars=106
+[2026-04-20T03:27:14Z] [DEBUG] [AudioService.speakAll:263] AudioService: speaking 1 sentence(s), chars=37
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+[2026-04-20T03:27:17Z] [DEBUG] [AudioService.speakAll:275] AudioService: speech done, sentences=1, chars=37
+[2026-04-20T03:27:17Z] [DEBUG] [AudioCaptureService.startCapture:69] startCapture: recording started, sampleRate=48000.0, channels=1
+[2026-04-20T03:27:17Z] [DEBUG] [SpeechRecognitionService.startLiveTranscription:90] startLiveTranscription: started
+[2026-04-20T03:27:25Z] [DEBUG] [CompanionViewModel.listenForAnswer:564] listenForAnswer: hard cap reached (8s)
+[2026-04-20T03:27:25Z] [ERROR] [SpeechRecognitionService.startLiveTranscription:77] recognitionTask error: No speech detected
+[2026-04-20T03:27:25Z] [DEBUG] [AudioCaptureService.stopCapture:90] stopCapture: recording stopped, accumulatedBytes=1536000
+[2026-04-20T03:27:25Z] [DEBUG] [SpeechRecognitionService.stopTranscription:98] stopTranscription: transcript=nil
+[2026-04-20T03:27:25Z] [DEBUG] [CompanionViewModel.listenForAnswer:626] listenForAnswer: answer='nil', length=0
+[2026-04-20T03:27:25Z] [DEBUG] [CompanionViewModel.continueStoryLoop:464] continueStoryLoop: answer timeout, ending story
+[2026-04-20T03:27:25Z] [DEBUG] [AudioService.speakAll:263] AudioService: speaking 2 sentence(s), chars=126
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+[2026-04-20T03:27:34Z] [DEBUG] [AudioService.speakAll:275] AudioService: speech done, sentences=2, chars=126
+[2026-04-20T03:27:34Z] [DEBUG] [StoryTimelineStore.finalizeSession:50] StoryTimeline: session finalised beats=4, restart=false
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+[2026-04-20T03:27:45Z] [DEBUG] [LocalDeviceAccessory.sendCommand:143] sendCommand: command=CAPTURE
+[2026-04-20T03:27:45Z] [DEBUG] [LocalDeviceAccessory.photoOutput:284] photoOutput: capturedBytes=63788, exifOrientation=6
+[2026-04-20T03:27:45Z] [DEBUG] [CompanionViewModel.runDetectionPreview:298] runDetectionPreview: start, jpegBytes=63788
+[2026-04-20T03:27:45Z] [DEBUG] [PrivacyPipelineService.runDebugDetection:207] runDebugDetection – start: inputSize=(360.0, 480.0), modelLoaded=true
+[2026-04-20T03:27:45Z] [DEBUG] [PrivacyPipelineService.detectAndBlurFaces:160] Stage 1 – face detection: imageSize=(360.0, 480.0)
+[2026-04-20T03:27:45Z] [DEBUG] [PrivacyPipelineService.detectAndBlurFaces:166] Stage 2 – face blur: faceCount=0, skipping blur
+[2026-04-20T03:27:45Z] [DEBUG] [PrivacyPipelineService.parseDetections:308] Stage 3 – object detection (recognized): count=1, items=["photo_frame@99%"]
+[2026-04-20T03:27:45Z] [DEBUG] [PrivacyPipelineService.detectObjectsWithBoxes:282] Stage 3 – object detection (boxes): count=1, items=["photo_frame@99%"]
+[2026-04-20T03:27:45Z] [DEBUG] [PrivacyPipelineService.runDebugDetection:227] runDebugDetection – detections: count=1, labels=["photo_frame"]
+[2026-04-20T03:27:45Z] [DEBUG] [PrivacyPipelineService.runDebugDetection:230] runDebugDetection – done: blurredDataBytes=63917
+[2026-04-20T03:27:45Z] [DEBUG] [CompanionViewModel.runDetectionPreview:328] runDetectionPreview: done, detectionCount=1, blurredBytes=63917
+[2026-04-20T03:27:49Z] [DEBUG] [LocalDeviceAccessory.sendCommand:143] sendCommand: command=CAPTURE
+[2026-04-20T03:27:49Z] [DEBUG] [LocalDeviceAccessory.photoOutput:284] photoOutput: capturedBytes=58509, exifOrientation=6
+[2026-04-20T03:27:49Z] [DEBUG] [CompanionViewModel.runDetectionPreview:298] runDetectionPreview: start, jpegBytes=58509
+[2026-04-20T03:27:49Z] [DEBUG] [PrivacyPipelineService.runDebugDetection:207] runDebugDetection – start: inputSize=(360.0, 480.0), modelLoaded=true
+[2026-04-20T03:27:49Z] [DEBUG] [PrivacyPipelineService.detectAndBlurFaces:160] Stage 1 – face detection: imageSize=(360.0, 480.0)
+[2026-04-20T03:27:49Z] [DEBUG] [PrivacyPipelineService.detectAndBlurFaces:166] Stage 2 – face blur: faceCount=0, skipping blur
+[2026-04-20T03:27:49Z] [DEBUG] [PrivacyPipelineService.parseDetections:308] Stage 3 – object detection (recognized): count=4, items=["photo_frame@98%", "window@95%", "sofa@90%", "chair@70%"]
+[2026-04-20T03:27:49Z] [DEBUG] [PrivacyPipelineService.detectObjectsWithBoxes:282] Stage 3 – object detection (boxes): count=4, items=["photo_frame@98%", "window@95%", "sofa@90%", "chair@70%"]
+[2026-04-20T03:27:49Z] [DEBUG] [PrivacyPipelineService.runDebugDetection:227] runDebugDetection – detections: count=4, labels=["photo_frame", "window", "sofa", "chair"]
+[2026-04-20T03:27:49Z] [DEBUG] [PrivacyPipelineService.runDebugDetection:230] runDebugDetection – done: blurredDataBytes=59276
+[2026-04-20T03:27:49Z] [DEBUG] [CompanionViewModel.runDetectionPreview:328] runDetectionPreview: done, detectionCount=4, blurredBytes=59276
+[2026-04-20T03:27:52Z] [DEBUG] [CompanionViewModel.runFullPipeline:339] runFullPipeline: start, mode=onDevice, jpegBytes=59276, childAge=6
+[2026-04-20T03:27:52Z] [DEBUG] [CompanionViewModel.runOnDevicePipeline:356] runOnDevicePipeline: start
+[2026-04-20T03:27:52Z] [DEBUG] [PrivacyPipelineService.process:74] Stage 0 – input: imageSize=(480.0, 360.0), childAge=6
+[2026-04-20T03:27:52Z] [DEBUG] [PrivacyPipelineService.detectAndBlurFaces:160] Stage 1 – face detection: imageSize=(480.0, 360.0)
+[2026-04-20T03:27:52Z] [DEBUG] [PrivacyPipelineService.detectAndBlurFaces:166] Stage 2 – face blur: faceCount=0, skipping blur
+[2026-04-20T03:27:52Z] [DEBUG] [PrivacyPipelineService.parseDetections:308] Stage 3 – object detection (recognized): count=0, items=[]
+[2026-04-20T03:27:52Z] [DEBUG] [PrivacyPipelineService.detectObjectsWithModel:272] Stage 3 – object detection: labels=[]
+[2026-04-20T03:27:52Z] [DEBUG] [PrivacyPipelineService.classifyScene:382] Stage 4 – scene classification: labels=["structure", "conveyance", "portal"]
+[2026-04-20T03:27:52Z] [DEBUG] [PrivacyPipelineService.recognizeSpeech:399] Stage 5 – speech recognition: skipped: no audio data provided
+[2026-04-20T03:27:52Z] [DEBUG] [PrivacyPipelineService.process:142] Pipeline benchmark: faceDetect=8ms blur=5ms yolo=39ms scene=39ms stt=39ms piiScrub=0ms total=59ms
+[2026-04-20T03:27:52Z] [DEBUG] [PrivacyPipelineService.process:143] Stage 6 – output: objects=[], scene=["structure", "conveyance", "portal"], hasTranscript=false
+[2026-04-20T03:27:52Z] [DEBUG] [CompanionViewModel.runOnDevicePipeline:374] runOnDevicePipeline: privacy done, objects=[]
+[2026-04-20T03:27:52Z] [DEBUG] [StoryTimelineStore.insert:42] StoryTimeline: session inserted id=FF6E2282-F1EB-4B63-AACC-2DC8FCFF3474
+[2026-04-20T03:27:52Z] [DEBUG] [OnDeviceStoryService.streamWithErrorRecovery:231] streamWithErrorRecovery: starting stream
+[2026-04-20T03:28:00Z] [DEBUG] [OnDeviceStoryService.streamWithErrorRecovery:243] streamWithErrorRecovery: done, snapshots=6, textLen=107, hasQuestion=true, isEnding=false
+[2026-04-20T03:28:00Z] [DEBUG] [CompanionViewModel.runOnDevicePipeline:411] runOnDevicePipeline: story generated in 7566ms, ttft=4335ms
+[2026-04-20T03:28:00Z] [DEBUG] [CompanionViewModel.runOnDevicePipeline:412] beat[0] storyText: You stand in front of a wooden door. It's a little ajar, and you can hear the sounds of the forest outside.
+[2026-04-20T03:28:00Z] [DEBUG] [CompanionViewModel.runOnDevicePipeline:413] beat[0] question: Do you want to open the door?
+[2026-04-20T03:28:00Z] [DEBUG] [AudioService.speakAll:263] AudioService: speaking 2 sentence(s), chars=106
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+[2026-04-20T03:28:06Z] [DEBUG] [AudioService.speakAll:275] AudioService: speech done, sentences=2, chars=106
+[2026-04-20T03:28:06Z] [DEBUG] [AudioService.speakAll:263] AudioService: speaking 1 sentence(s), chars=29
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+[2026-04-20T03:28:09Z] [DEBUG] [AudioService.speakAll:275] AudioService: speech done, sentences=1, chars=29
+[2026-04-20T03:28:10Z] [DEBUG] [AudioCaptureService.startCapture:69] startCapture: recording started, sampleRate=48000.0, channels=1
+[2026-04-20T03:28:10Z] [DEBUG] [SpeechRecognitionService.startLiveTranscription:90] startLiveTranscription: started
+[2026-04-20T03:28:13Z] [DEBUG] [PIIScrubber.scrub:31] scrub: inputLength=3, tokensRedacted=0
+[2026-04-20T03:28:15Z] [DEBUG] [CompanionViewModel.listenForAnswer:607] listenForAnswer: Layer 2 semantic check starting
+[2026-04-20T03:28:15Z] [DEBUG] [CompanionViewModel.listenForAnswer:610] listenForAnswer: Layer 2 complete → returning transcript
+[2026-04-20T03:28:15Z] [DEBUG] [CompanionViewModel.listenForAnswer:564] listenForAnswer: hard cap reached (8s)
+[2026-04-20T03:28:15Z] [DEBUG] [AudioCaptureService.stopCapture:90] stopCapture: recording stopped, accumulatedBytes=921600
+[2026-04-20T03:28:15Z] [DEBUG] [SpeechRecognitionService.stopTranscription:98] stopTranscription: transcript=Yes
+[2026-04-20T03:28:15Z] [DEBUG] [CompanionViewModel.listenForAnswer:626] listenForAnswer: answer='Yes', length=3
+[2026-04-20T03:28:15Z] [DEBUG] [OnDeviceStoryService.streamWithErrorRecovery:231] streamWithErrorRecovery: starting stream
+[2026-04-20T03:28:21Z] [DEBUG] [OnDeviceStoryService.streamWithErrorRecovery:243] streamWithErrorRecovery: done, snapshots=6, textLen=131, hasQuestion=true, isEnding=false
+[2026-04-20T03:28:21Z] [DEBUG] [CompanionViewModel.continueStoryLoop:491] beat[0] storyText: You push the door open, and a warm breeze rushes in. Sunlight filters through the trees, casting a golden glow on the forest floor.
+[2026-04-20T03:28:21Z] [DEBUG] [CompanionViewModel.continueStoryLoop:492] beat[0] question: Do you want to explore the forest?
+[2026-04-20T03:28:21Z] [DEBUG] [AudioService.speakAll:263] AudioService: speaking 2 sentence(s), chars=130
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+[2026-04-20T03:28:30Z] [DEBUG] [AudioService.speakAll:275] AudioService: speech done, sentences=2, chars=130
+[2026-04-20T03:28:30Z] [DEBUG] [AudioService.speakAll:263] AudioService: speaking 1 sentence(s), chars=34
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+[2026-04-20T03:28:33Z] [DEBUG] [AudioService.speakAll:275] AudioService: speech done, sentences=1, chars=34
+[2026-04-20T03:28:34Z] [DEBUG] [AudioCaptureService.startCapture:69] startCapture: recording started, sampleRate=48000.0, channels=1
+[2026-04-20T03:28:34Z] [DEBUG] [SpeechRecognitionService.startLiveTranscription:90] startLiveTranscription: started
+[2026-04-20T03:28:35Z] [DEBUG] [PIIScrubber.scrub:31] scrub: inputLength=3, tokensRedacted=0
+[2026-04-20T03:28:37Z] [DEBUG] [CompanionViewModel.listenForAnswer:607] listenForAnswer: Layer 2 semantic check starting
+[2026-04-20T03:28:37Z] [DEBUG] [CompanionViewModel.listenForAnswer:610] listenForAnswer: Layer 2 complete → returning transcript
+[2026-04-20T03:28:37Z] [DEBUG] [CompanionViewModel.listenForAnswer:564] listenForAnswer: hard cap reached (8s)
+[2026-04-20T03:28:37Z] [DEBUG] [AudioCaptureService.stopCapture:90] stopCapture: recording stopped, accumulatedBytes=556800
+[2026-04-20T03:28:37Z] [DEBUG] [SpeechRecognitionService.stopTranscription:98] stopTranscription: transcript=Yes
+[2026-04-20T03:28:37Z] [DEBUG] [CompanionViewModel.listenForAnswer:626] listenForAnswer: answer='Yes', length=3
+[2026-04-20T03:28:37Z] [DEBUG] [OnDeviceStoryService.streamWithErrorRecovery:231] streamWithErrorRecovery: starting stream
+[2026-04-20T03:28:44Z] [DEBUG] [OnDeviceStoryService.streamWithErrorRecovery:243] streamWithErrorRecovery: done, snapshots=6, textLen=160, hasQuestion=true, isEnding=false
+[2026-04-20T03:28:44Z] [DEBUG] [CompanionViewModel.continueStoryLoop:491] beat[1] storyText: You step into the forest, your heart pounding with excitement. The trees whisper secrets as you walk, and you see colorful birds flitting from branch to branch.
+[2026-04-20T03:28:44Z] [DEBUG] [CompanionViewModel.continueStoryLoop:492] beat[1] question: Do you want to find a friendly animal?
+[2026-04-20T03:28:44Z] [DEBUG] [AudioService.speakAll:263] AudioService: speaking 2 sentence(s), chars=159
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+[2026-04-20T03:28:54Z] [DEBUG] [AudioService.speakAll:275] AudioService: speech done, sentences=2, chars=159
+[2026-04-20T03:28:54Z] [DEBUG] [AudioService.speakAll:263] AudioService: speaking 1 sentence(s), chars=38
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+[2026-04-20T03:28:58Z] [DEBUG] [AudioService.speakAll:275] AudioService: speech done, sentences=1, chars=38
+[2026-04-20T03:28:58Z] [DEBUG] [AudioCaptureService.startCapture:69] startCapture: recording started, sampleRate=48000.0, channels=1
+[2026-04-20T03:28:58Z] [DEBUG] [SpeechRecognitionService.startLiveTranscription:90] startLiveTranscription: started
+[2026-04-20T03:29:06Z] [DEBUG] [CompanionViewModel.listenForAnswer:564] listenForAnswer: hard cap reached (8s)
+[2026-04-20T03:29:06Z] [ERROR] [SpeechRecognitionService.startLiveTranscription:77] recognitionTask error: No speech detected
+[2026-04-20T03:29:06Z] [DEBUG] [AudioCaptureService.stopCapture:90] stopCapture: recording stopped, accumulatedBytes=1536000
+[2026-04-20T03:29:06Z] [DEBUG] [SpeechRecognitionService.stopTranscription:98] stopTranscription: transcript=nil
+[2026-04-20T03:29:06Z] [DEBUG] [CompanionViewModel.listenForAnswer:626] listenForAnswer: answer='nil', length=0
+[2026-04-20T03:29:06Z] [DEBUG] [CompanionViewModel.continueStoryLoop:464] continueStoryLoop: answer timeout, ending story
+[2026-04-20T03:29:06Z] [DEBUG] [AudioService.speakAll:263] AudioService: speaking 2 sentence(s), chars=126
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+[2026-04-20T03:29:14Z] [DEBUG] [AudioService.speakAll:275] AudioService: speech done, sentences=2, chars=126
+[2026-04-20T03:29:14Z] [DEBUG] [StoryTimelineStore.finalizeSession:50] StoryTimeline: session finalised beats=3, restart=false
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+[2026-04-20T03:29:20Z] [DEBUG] [LocalDeviceAccessory.sendCommand:143] sendCommand: command=CAPTURE
+[2026-04-20T03:29:20Z] [DEBUG] [LocalDeviceAccessory.photoOutput:284] photoOutput: capturedBytes=37568, exifOrientation=6
+[2026-04-20T03:29:20Z] [DEBUG] [CompanionViewModel.runDetectionPreview:298] runDetectionPreview: start, jpegBytes=37568
+[2026-04-20T03:29:20Z] [DEBUG] [PrivacyPipelineService.runDebugDetection:207] runDebugDetection – start: inputSize=(360.0, 480.0), modelLoaded=true
+[2026-04-20T03:29:20Z] [DEBUG] [PrivacyPipelineService.detectAndBlurFaces:160] Stage 1 – face detection: imageSize=(360.0, 480.0)
+[2026-04-20T03:29:21Z] [DEBUG] [PrivacyPipelineService.detectAndBlurFaces:166] Stage 2 – face blur: faceCount=0, skipping blur
+[2026-04-20T03:29:21Z] [DEBUG] [PrivacyPipelineService.parseDetections:308] Stage 3 – object detection (recognized): count=2, items=["wardrobe@57%", "cupboard@42%"]
+[2026-04-20T03:29:21Z] [DEBUG] [PrivacyPipelineService.detectObjectsWithBoxes:282] Stage 3 – object detection (boxes): count=2, items=["wardrobe@57%", "cupboard@42%"]
+[2026-04-20T03:29:21Z] [DEBUG] [PrivacyPipelineService.runDebugDetection:227] runDebugDetection – detections: count=2, labels=["wardrobe", "cupboard"]
+[2026-04-20T03:29:21Z] [DEBUG] [PrivacyPipelineService.runDebugDetection:230] runDebugDetection – done: blurredDataBytes=48035
+[2026-04-20T03:29:21Z] [DEBUG] [CompanionViewModel.runDetectionPreview:328] runDetectionPreview: done, detectionCount=2, blurredBytes=48035
+[2026-04-20T03:29:23Z] [DEBUG] [CompanionViewModel.runFullPipeline:339] runFullPipeline: start, mode=onDevice, jpegBytes=48035, childAge=6
+[2026-04-20T03:29:23Z] [DEBUG] [CompanionViewModel.runOnDevicePipeline:356] runOnDevicePipeline: start
+[2026-04-20T03:29:23Z] [DEBUG] [PrivacyPipelineService.process:74] Stage 0 – input: imageSize=(480.0, 360.0), childAge=6
+[2026-04-20T03:29:23Z] [DEBUG] [PrivacyPipelineService.detectAndBlurFaces:160] Stage 1 – face detection: imageSize=(480.0, 360.0)
+[2026-04-20T03:29:23Z] [DEBUG] [PrivacyPipelineService.detectAndBlurFaces:166] Stage 2 – face blur: faceCount=0, skipping blur
+[2026-04-20T03:29:23Z] [DEBUG] [PrivacyPipelineService.parseDetections:308] Stage 3 – object detection (recognized): count=2, items=["cupboard@81%", "table@94%"]
+[2026-04-20T03:29:23Z] [DEBUG] [PrivacyPipelineService.detectObjectsWithModel:272] Stage 3 – object detection: labels=["cupboard", "table"]
+[2026-04-20T03:29:23Z] [DEBUG] [PrivacyPipelineService.classifyScene:382] Stage 4 – scene classification: labels=["structure", "wood_processed", "furniture"]
+[2026-04-20T03:29:23Z] [DEBUG] [PrivacyPipelineService.recognizeSpeech:399] Stage 5 – speech recognition: skipped: no audio data provided
+[2026-04-20T03:29:23Z] [DEBUG] [PrivacyPipelineService.process:142] Pipeline benchmark: faceDetect=7ms blur=5ms yolo=41ms scene=41ms stt=41ms piiScrub=0ms total=60ms
+[2026-04-20T03:29:23Z] [DEBUG] [PrivacyPipelineService.process:143] Stage 6 – output: objects=["cupboard", "table"], scene=["structure", "wood_processed", "furniture"], hasTranscript=false
+[2026-04-20T03:29:23Z] [DEBUG] [CompanionViewModel.runOnDevicePipeline:374] runOnDevicePipeline: privacy done, objects=["cupboard", "table"]
+[2026-04-20T03:29:23Z] [DEBUG] [StoryTimelineStore.insert:42] StoryTimeline: session inserted id=5871F1B0-C04B-4E6D-ABD3-6BEA6BDA309C
+[2026-04-20T03:29:23Z] [DEBUG] [OnDeviceStoryService.streamWithErrorRecovery:231] streamWithErrorRecovery: starting stream
+[2026-04-20T03:29:30Z] [DEBUG] [OnDeviceStoryService.streamWithErrorRecovery:243] streamWithErrorRecovery: done, snapshots=5, textLen=77, hasQuestion=true, isEnding=false
+[2026-04-20T03:29:30Z] [DEBUG] [CompanionViewModel.runOnDevicePipeline:411] runOnDevicePipeline: story generated in 6572ms, ttft=4284ms
+[2026-04-20T03:29:30Z] [DEBUG] [CompanionViewModel.runOnDevicePipeline:412] beat[0] storyText: You look at the cupboard and wonder what's inside. You decide to take a peek.
+[2026-04-20T03:29:30Z] [DEBUG] [CompanionViewModel.runOnDevicePipeline:413] beat[0] question: What do you think is inside?
+[2026-04-20T03:29:30Z] [DEBUG] [AudioService.speakAll:263] AudioService: speaking 2 sentence(s), chars=76
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+[2026-04-20T03:29:35Z] [DEBUG] [AudioService.speakAll:275] AudioService: speech done, sentences=2, chars=76
+[2026-04-20T03:29:35Z] [DEBUG] [AudioService.speakAll:263] AudioService: speaking 1 sentence(s), chars=28
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+[2026-04-20T03:29:38Z] [DEBUG] [AudioService.speakAll:275] AudioService: speech done, sentences=1, chars=28
+[2026-04-20T03:29:38Z] [DEBUG] [AudioCaptureService.startCapture:69] startCapture: recording started, sampleRate=48000.0, channels=1
+[2026-04-20T03:29:38Z] [DEBUG] [SpeechRecognitionService.startLiveTranscription:90] startLiveTranscription: started
+[2026-04-20T03:29:41Z] [DEBUG] [PIIScrubber.scrub:31] scrub: inputLength=5, tokensRedacted=0
+[2026-04-20T03:29:41Z] [DEBUG] [PIIScrubber.scrub:31] scrub: inputLength=9, tokensRedacted=0
+[2026-04-20T03:29:42Z] [DEBUG] [PIIScrubber.scrub:31] scrub: inputLength=14, tokensRedacted=0
+[2026-04-20T03:29:42Z] [DEBUG] [PIIScrubber.scrub:31] scrub: inputLength=21, tokensRedacted=0
+[2026-04-20T03:29:42Z] [DEBUG] [PIIScrubber.scrub:31] scrub: inputLength=22, tokensRedacted=0
+[2026-04-20T03:29:42Z] [DEBUG] [PIIScrubber.scrub:31] scrub: inputLength=27, tokensRedacted=0
+[2026-04-20T03:29:43Z] [DEBUG] [PIIScrubber.scrub:31] scrub: inputLength=30, tokensRedacted=0
+[2026-04-20T03:29:43Z] [DEBUG] [PIIScrubber.scrub:31] scrub: inputLength=34, tokensRedacted=0
+[2026-04-20T03:29:44Z] [DEBUG] [CompanionViewModel.listenForAnswer:607] listenForAnswer: Layer 2 semantic check starting
+[2026-04-20T03:29:44Z] [DEBUG] [SemanticTurnDetector.semanticCheck:68] listenForAnswer: Layer 2 semantic check starting
+[2026-04-20T03:29:45Z] [DEBUG] [PIIScrubber.scrub:31] scrub: inputLength=34, tokensRedacted=0
+[2026-04-20T03:29:45Z] [DEBUG] [SemanticTurnDetector.semanticCheck:89] listenForAnswer: Layer 2 complete → returning transcript
+[2026-04-20T03:29:45Z] [DEBUG] [CompanionViewModel.listenForAnswer:610] listenForAnswer: Layer 2 complete → returning transcript
+[2026-04-20T03:29:45Z] [DEBUG] [CompanionViewModel.listenForAnswer:564] listenForAnswer: hard cap reached (8s)
+[2026-04-20T03:29:45Z] [DEBUG] [AudioCaptureService.stopCapture:90] stopCapture: recording stopped, accumulatedBytes=1401600
+[2026-04-20T03:29:45Z] [DEBUG] [SpeechRecognitionService.stopTranscription:98] stopTranscription: transcript=
+[2026-04-20T03:29:45Z] [DEBUG] [CompanionViewModel.listenForAnswer:626] listenForAnswer: answer='There are some secrets from my mom', length=34
+[2026-04-20T03:29:45Z] [DEBUG] [OnDeviceStoryService.streamWithErrorRecovery:231] streamWithErrorRecovery: starting stream
+[2026-04-20T03:29:54Z] [DEBUG] [OnDeviceStoryService.streamWithErrorRecovery:243] streamWithErrorRecovery: done, snapshots=6, textLen=143, hasQuestion=true, isEnding=false
+[2026-04-20T03:29:54Z] [DEBUG] [CompanionViewModel.continueStoryLoop:491] beat[0] storyText: You open the cupboard and find a small box with a note inside. The note says, 'Keep this safe and use it when you need a reminder of our love.'
+[2026-04-20T03:29:54Z] [DEBUG] [CompanionViewModel.continueStoryLoop:492] beat[0] question: What do you think the note means?
+[2026-04-20T03:29:54Z] [DEBUG] [AudioService.speakAll:263] AudioService: speaking 2 sentence(s), chars=142
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+[2026-04-20T03:30:03Z] [DEBUG] [AudioService.speakAll:275] AudioService: speech done, sentences=2, chars=142
+[2026-04-20T03:30:03Z] [DEBUG] [AudioService.speakAll:263] AudioService: speaking 1 sentence(s), chars=33
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+[2026-04-20T03:30:06Z] [DEBUG] [AudioService.speakAll:275] AudioService: speech done, sentences=1, chars=33
+[2026-04-20T03:30:06Z] [DEBUG] [AudioCaptureService.startCapture:69] startCapture: recording started, sampleRate=48000.0, channels=1
+[2026-04-20T03:30:06Z] [DEBUG] [SpeechRecognitionService.startLiveTranscription:90] startLiveTranscription: started
+[2026-04-20T03:30:09Z] [DEBUG] [PIIScrubber.scrub:31] scrub: inputLength=2, tokensRedacted=0
+[2026-04-20T03:30:09Z] [DEBUG] [PIIScrubber.scrub:31] scrub: inputLength=9, tokensRedacted=0
+[2026-04-20T03:30:10Z] [DEBUG] [PIIScrubber.scrub:31] scrub: inputLength=15, tokensRedacted=0
+[2026-04-20T03:30:10Z] [DEBUG] [PIIScrubber.scrub:31] scrub: inputLength=18, tokensRedacted=0
+[2026-04-20T03:30:11Z] [DEBUG] [PIIScrubber.scrub:31] scrub: inputLength=24, tokensRedacted=0
+[2026-04-20T03:30:12Z] [DEBUG] [PIIScrubber.scrub:31] scrub: inputLength=28, tokensRedacted=0
+[2026-04-20T03:30:12Z] [DEBUG] [PIIScrubber.scrub:31] scrub: inputLength=33, tokensRedacted=0
+[2026-04-20T03:30:13Z] [DEBUG] [PIIScrubber.scrub:31] scrub: inputLength=38, tokensRedacted=0
+[2026-04-20T03:30:14Z] [DEBUG] [PIIScrubber.scrub:31] scrub: inputLength=41, tokensRedacted=0
+[2026-04-20T03:30:14Z] [DEBUG] [CompanionViewModel.listenForAnswer:564] listenForAnswer: hard cap reached (8s)
+[2026-04-20T03:30:14Z] [DEBUG] [AudioCaptureService.stopCapture:90] stopCapture: recording stopped, accumulatedBytes=1536000
+[2026-04-20T03:30:14Z] [DEBUG] [SpeechRecognitionService.stopTranscription:98] stopTranscription: transcript=My mother wants to share her love with me
+[2026-04-20T03:30:14Z] [DEBUG] [CompanionViewModel.listenForAnswer:626] listenForAnswer: answer='My mother wants to share her love with me', length=41
+[2026-04-20T03:30:14Z] [DEBUG] [OnDeviceStoryService.streamWithErrorRecovery:231] streamWithErrorRecovery: starting stream
+[2026-04-20T03:30:22Z] [DEBUG] [OnDeviceStoryService.streamWithErrorRecovery:243] streamWithErrorRecovery: done, snapshots=6, textLen=142, hasQuestion=true, isEnding=true
+[2026-04-20T03:30:22Z] [DEBUG] [CompanionViewModel.continueStoryLoop:491] beat[1] storyText: You feel a warm feeling inside and decide to keep the note safe. You think about how much you love your mom and how lucky you are to have her.
+[2026-04-20T03:30:22Z] [DEBUG] [CompanionViewModel.continueStoryLoop:492] beat[1] question: What do you feel now?
+[2026-04-20T03:30:22Z] [DEBUG] [AudioService.speakAll:263] AudioService: speaking 2 sentence(s), chars=141
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+[2026-04-20T03:30:30Z] [DEBUG] [AudioService.speakAll:275] AudioService: speech done, sentences=2, chars=141
+[2026-04-20T03:30:30Z] [DEBUG] [AudioService.speakAll:263] AudioService: speaking 1 sentence(s), chars=21
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+[2026-04-20T03:30:33Z] [DEBUG] [AudioService.speakAll:275] AudioService: speech done, sentences=1, chars=21
+[2026-04-20T03:30:33Z] [DEBUG] [StoryTimelineStore.finalizeSession:50] StoryTimeline: session finalised beats=3, restart=false
+[2026-04-20T03:30:40Z] [DEBUG] [LocalDeviceAccessory.sendCommand:143] sendCommand: command=CAPTURE
+[2026-04-20T03:30:40Z] [DEBUG] [LocalDeviceAccessory.photoOutput:284] photoOutput: capturedBytes=45090, exifOrientation=6
+[2026-04-20T03:30:40Z] [DEBUG] [CompanionViewModel.runDetectionPreview:298] runDetectionPreview: start, jpegBytes=45090
+[2026-04-20T03:30:40Z] [DEBUG] [PrivacyPipelineService.runDebugDetection:207] runDebugDetection – start: inputSize=(360.0, 480.0), modelLoaded=true
+[2026-04-20T03:30:40Z] [DEBUG] [PrivacyPipelineService.detectAndBlurFaces:160] Stage 1 – face detection: imageSize=(360.0, 480.0)
+[2026-04-20T03:30:40Z] [DEBUG] [PrivacyPipelineService.detectAndBlurFaces:166] Stage 2 – face blur: faceCount=0, skipping blur
+[2026-04-20T03:30:40Z] [DEBUG] [PrivacyPipelineService.parseDetections:308] Stage 3 – object detection (recognized): count=4, items=["bed@95%", "window@51%", "photo_frame@64%", "pillows@94%"]
+[2026-04-20T03:30:40Z] [DEBUG] [PrivacyPipelineService.detectObjectsWithBoxes:282] Stage 3 – object detection (boxes): count=4, items=["bed@95%", "window@51%", "photo_frame@64%", "pillows@94%"]
+[2026-04-20T03:30:40Z] [DEBUG] [PrivacyPipelineService.runDebugDetection:227] runDebugDetection – detections: count=4, labels=["bed", "window", "photo_frame", "pillows"]
+[2026-04-20T03:30:40Z] [DEBUG] [PrivacyPipelineService.runDebugDetection:230] runDebugDetection – done: blurredDataBytes=58108
+[2026-04-20T03:30:40Z] [DEBUG] [CompanionViewModel.runDetectionPreview:328] runDetectionPreview: done, detectionCount=4, blurredBytes=58108
+[2026-04-20T03:30:42Z] [DEBUG] [CompanionViewModel.runFullPipeline:339] runFullPipeline: start, mode=onDevice, jpegBytes=58108, childAge=6
+[2026-04-20T03:30:42Z] [DEBUG] [CompanionViewModel.runOnDevicePipeline:356] runOnDevicePipeline: start
+[2026-04-20T03:30:42Z] [DEBUG] [PrivacyPipelineService.process:74] Stage 0 – input: imageSize=(480.0, 360.0), childAge=6
+[2026-04-20T03:30:42Z] [DEBUG] [PrivacyPipelineService.detectAndBlurFaces:160] Stage 1 – face detection: imageSize=(480.0, 360.0)
+[2026-04-20T03:30:42Z] [DEBUG] [PrivacyPipelineService.detectAndBlurFaces:166] Stage 2 – face blur: faceCount=0, skipping blur
+[2026-04-20T03:30:42Z] [DEBUG] [PrivacyPipelineService.parseDetections:308] Stage 3 – object detection (recognized): count=0, items=[]
+[2026-04-20T03:30:42Z] [DEBUG] [PrivacyPipelineService.detectObjectsWithModel:272] Stage 3 – object detection: labels=[]
+[2026-04-20T03:30:42Z] [DEBUG] [PrivacyPipelineService.classifyScene:382] Stage 4 – scene classification: labels=["structure", "wood_processed"]
+[2026-04-20T03:30:42Z] [DEBUG] [PrivacyPipelineService.recognizeSpeech:399] Stage 5 – speech recognition: skipped: no audio data provided
+[2026-04-20T03:30:42Z] [DEBUG] [PrivacyPipelineService.process:142] Pipeline benchmark: faceDetect=8ms blur=5ms yolo=39ms scene=39ms stt=39ms piiScrub=0ms total=60ms
+[2026-04-20T03:30:42Z] [DEBUG] [PrivacyPipelineService.process:143] Stage 6 – output: objects=[], scene=["structure", "wood_processed"], hasTranscript=false
+[2026-04-20T03:30:42Z] [DEBUG] [CompanionViewModel.runOnDevicePipeline:374] runOnDevicePipeline: privacy done, objects=[]
+[2026-04-20T03:30:42Z] [DEBUG] [StoryTimelineStore.insert:42] StoryTimeline: session inserted id=641517CD-1B91-4B55-A414-62B503A9DC0A
+[2026-04-20T03:30:42Z] [DEBUG] [OnDeviceStoryService.streamWithErrorRecovery:231] streamWithErrorRecovery: starting stream
+[2026-04-20T03:30:50Z] [DEBUG] [OnDeviceStoryService.streamWithErrorRecovery:243] streamWithErrorRecovery: done, snapshots=6, textLen=128, hasQuestion=true, isEnding=false
+[2026-04-20T03:30:50Z] [DEBUG] [CompanionViewModel.runOnDevicePipeline:411] runOnDevicePipeline: story generated in 8136ms, ttft=4488ms
+[2026-04-20T03:30:50Z] [DEBUG] [CompanionViewModel.runOnDevicePipeline:412] beat[0] storyText: You stand at the edge of the forest, a giant tree looming behind you. You see a trail of tiny footprints leading into the woods.
+[2026-04-20T03:30:50Z] [DEBUG] [CompanionViewModel.runOnDevicePipeline:413] beat[0] question: Do you want to follow the trail?
+[2026-04-20T03:30:50Z] [DEBUG] [AudioService.speakAll:263] AudioService: speaking 2 sentence(s), chars=127
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+[2026-04-20T03:30:58Z] [DEBUG] [AudioService.speakAll:275] AudioService: speech done, sentences=2, chars=127
+[2026-04-20T03:30:58Z] [DEBUG] [AudioService.speakAll:263] AudioService: speaking 1 sentence(s), chars=32
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+[2026-04-20T03:31:01Z] [DEBUG] [AudioService.speakAll:275] AudioService: speech done, sentences=1, chars=32
+[2026-04-20T03:31:02Z] [DEBUG] [AudioCaptureService.startCapture:69] startCapture: recording started, sampleRate=48000.0, channels=1
+[2026-04-20T03:31:02Z] [DEBUG] [SpeechRecognitionService.startLiveTranscription:90] startLiveTranscription: started
+[2026-04-20T03:31:04Z] [DEBUG] [PIIScrubber.scrub:31] scrub: inputLength=3, tokensRedacted=0
+[2026-04-20T03:31:05Z] [DEBUG] [CompanionViewModel.listenForAnswer:607] listenForAnswer: Layer 2 semantic check starting
+[2026-04-20T03:31:05Z] [DEBUG] [CompanionViewModel.listenForAnswer:610] listenForAnswer: Layer 2 complete → returning transcript
+[2026-04-20T03:31:05Z] [DEBUG] [CompanionViewModel.listenForAnswer:564] listenForAnswer: hard cap reached (8s)
+[2026-04-20T03:31:05Z] [DEBUG] [AudioCaptureService.stopCapture:90] stopCapture: recording stopped, accumulatedBytes=614400
+[2026-04-20T03:31:05Z] [DEBUG] [SpeechRecognitionService.stopTranscription:98] stopTranscription: transcript=Yes
+[2026-04-20T03:31:05Z] [DEBUG] [CompanionViewModel.listenForAnswer:626] listenForAnswer: answer='Yes', length=3
+[2026-04-20T03:31:05Z] [DEBUG] [OnDeviceStoryService.streamWithErrorRecovery:231] streamWithErrorRecovery: starting stream
+[2026-04-20T03:31:10Z] [DEBUG] [OnDeviceStoryService.streamWithErrorRecovery:243] streamWithErrorRecovery: done, snapshots=5, textLen=103, hasQuestion=true, isEnding=false
+[2026-04-20T03:31:10Z] [DEBUG] [CompanionViewModel.continueStoryLoop:491] beat[0] storyText: You follow the trail, the soft crunch of leaves underfoot. Suddenly, you hear a rustling in the bushes.
+[2026-04-20T03:31:10Z] [DEBUG] [CompanionViewModel.continueStoryLoop:492] beat[0] question: Do you want to investigate?
+[2026-04-20T03:31:10Z] [DEBUG] [AudioService.speakAll:263] AudioService: speaking 2 sentence(s), chars=102
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+[2026-04-20T03:31:18Z] [DEBUG] [AudioService.speakAll:275] AudioService: speech done, sentences=2, chars=102
+[2026-04-20T03:31:18Z] [DEBUG] [AudioService.speakAll:263] AudioService: speaking 1 sentence(s), chars=27
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+[2026-04-20T03:31:21Z] [DEBUG] [AudioService.speakAll:275] AudioService: speech done, sentences=1, chars=27
+[2026-04-20T03:31:21Z] [DEBUG] [AudioCaptureService.startCapture:69] startCapture: recording started, sampleRate=48000.0, channels=1
+[2026-04-20T03:31:21Z] [DEBUG] [SpeechRecognitionService.startLiveTranscription:90] startLiveTranscription: started
+[2026-04-20T03:31:24Z] [DEBUG] [PIIScrubber.scrub:31] scrub: inputLength=3, tokensRedacted=0
+[2026-04-20T03:31:25Z] [DEBUG] [CompanionViewModel.listenForAnswer:607] listenForAnswer: Layer 2 semantic check starting
+[2026-04-20T03:31:25Z] [DEBUG] [CompanionViewModel.listenForAnswer:610] listenForAnswer: Layer 2 complete → returning transcript
+[2026-04-20T03:31:25Z] [DEBUG] [CompanionViewModel.listenForAnswer:564] listenForAnswer: hard cap reached (8s)
+[2026-04-20T03:31:25Z] [DEBUG] [AudioCaptureService.stopCapture:90] stopCapture: recording stopped, accumulatedBytes=806400
+[2026-04-20T03:31:25Z] [DEBUG] [SpeechRecognitionService.stopTranscription:98] stopTranscription: transcript=Yes
+[2026-04-20T03:31:25Z] [DEBUG] [CompanionViewModel.listenForAnswer:626] listenForAnswer: answer='Yes', length=3
+[2026-04-20T03:31:25Z] [DEBUG] [OnDeviceStoryService.streamWithErrorRecovery:231] streamWithErrorRecovery: starting stream
+[2026-04-20T03:31:32Z] [DEBUG] [OnDeviceStoryService.streamWithErrorRecovery:243] streamWithErrorRecovery: done, snapshots=5, textLen=112, hasQuestion=true, isEnding=false
+[2026-04-20T03:31:32Z] [DEBUG] [CompanionViewModel.continueStoryLoop:491] beat[1] storyText: You cautiously step into the bushes, your heart pounding. Out pops a tiny squirrel, its eyes wide with surprise.
+[2026-04-20T03:31:32Z] [DEBUG] [CompanionViewModel.continueStoryLoop:492] beat[1] question: Do you want to say hello?
+[2026-04-20T03:31:32Z] [DEBUG] [AudioService.speakAll:263] AudioService: speaking 2 sentence(s), chars=111
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+[2026-04-20T03:31:40Z] [DEBUG] [AudioService.speakAll:275] AudioService: speech done, sentences=2, chars=111
+[2026-04-20T03:31:40Z] [DEBUG] [AudioService.speakAll:263] AudioService: speaking 1 sentence(s), chars=25
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+[2026-04-20T03:31:43Z] [DEBUG] [AudioService.speakAll:275] AudioService: speech done, sentences=1, chars=25
+[2026-04-20T03:31:43Z] [DEBUG] [AudioCaptureService.startCapture:69] startCapture: recording started, sampleRate=48000.0, channels=1
+[2026-04-20T03:31:43Z] [DEBUG] [SpeechRecognitionService.startLiveTranscription:90] startLiveTranscription: started
+[2026-04-20T03:31:51Z] [DEBUG] [CompanionViewModel.listenForAnswer:564] listenForAnswer: hard cap reached (8s)
+[2026-04-20T03:31:51Z] [ERROR] [SpeechRecognitionService.startLiveTranscription:77] recognitionTask error: No speech detected
+[2026-04-20T03:31:51Z] [DEBUG] [AudioCaptureService.stopCapture:90] stopCapture: recording stopped, accumulatedBytes=1536000
+[2026-04-20T03:31:51Z] [DEBUG] [SpeechRecognitionService.stopTranscription:98] stopTranscription: transcript=nil
+[2026-04-20T03:31:51Z] [DEBUG] [CompanionViewModel.listenForAnswer:626] listenForAnswer: answer='nil', length=0
+[2026-04-20T03:31:51Z] [DEBUG] [CompanionViewModel.continueStoryLoop:464] continueStoryLoop: answer timeout, ending story
+[2026-04-20T03:31:51Z] [DEBUG] [AudioService.speakAll:263] AudioService: speaking 2 sentence(s), chars=126
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+[2026-04-20T03:31:59Z] [DEBUG] [AudioService.speakAll:275] AudioService: speech done, sentences=2, chars=126
+[2026-04-20T03:31:59Z] [DEBUG] [StoryTimelineStore.finalizeSession:50] StoryTimeline: session finalised beats=3, restart=false
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+[2026-04-20T03:32:01Z] [DEBUG] [LocalDeviceAccessory.sendCommand:143] sendCommand: command=CAPTURE
+[2026-04-20T03:32:01Z] [DEBUG] [LocalDeviceAccessory.photoOutput:284] photoOutput: capturedBytes=51339, exifOrientation=6
+[2026-04-20T03:32:01Z] [DEBUG] [CompanionViewModel.runDetectionPreview:298] runDetectionPreview: start, jpegBytes=51339
+[2026-04-20T03:32:01Z] [DEBUG] [PrivacyPipelineService.runDebugDetection:207] runDebugDetection – start: inputSize=(360.0, 480.0), modelLoaded=true
+[2026-04-20T03:32:01Z] [DEBUG] [PrivacyPipelineService.detectAndBlurFaces:160] Stage 1 – face detection: imageSize=(360.0, 480.0)
+[2026-04-20T03:32:01Z] [DEBUG] [PrivacyPipelineService.detectAndBlurFaces:166] Stage 2 – face blur: faceCount=0, skipping blur
+[2026-04-20T03:32:01Z] [DEBUG] [PrivacyPipelineService.parseDetections:308] Stage 3 – object detection (recognized): count=5, items=["potted_plant@98%", "potted_plant@98%", "window@95%", "door@90%", "table@85%"]
+[2026-04-20T03:32:01Z] [DEBUG] [PrivacyPipelineService.detectObjectsWithBoxes:282] Stage 3 – object detection (boxes): count=5, items=["potted_plant@98%", "potted_plant@98%", "window@95%", "door@90%", "table@85%"]
+[2026-04-20T03:32:01Z] [DEBUG] [PrivacyPipelineService.runDebugDetection:227] runDebugDetection – detections: count=5, labels=["potted_plant", "potted_plant", "window", "door", "table"]
+[2026-04-20T03:32:01Z] [DEBUG] [PrivacyPipelineService.runDebugDetection:230] runDebugDetection – done: blurredDataBytes=64102
+[2026-04-20T03:32:01Z] [DEBUG] [CompanionViewModel.runDetectionPreview:328] runDetectionPreview: done, detectionCount=5, blurredBytes=64102
+[2026-04-20T03:32:05Z] [DEBUG] [CompanionViewModel.runFullPipeline:339] runFullPipeline: start, mode=onDevice, jpegBytes=64102, childAge=6
+[2026-04-20T03:32:05Z] [DEBUG] [CompanionViewModel.runOnDevicePipeline:356] runOnDevicePipeline: start
+[2026-04-20T03:32:05Z] [DEBUG] [PrivacyPipelineService.process:74] Stage 0 – input: imageSize=(480.0, 360.0), childAge=6
+[2026-04-20T03:32:05Z] [DEBUG] [PrivacyPipelineService.detectAndBlurFaces:160] Stage 1 – face detection: imageSize=(480.0, 360.0)
+[2026-04-20T03:32:05Z] [DEBUG] [PrivacyPipelineService.detectAndBlurFaces:166] Stage 2 – face blur: faceCount=0, skipping blur
+[2026-04-20T03:32:05Z] [DEBUG] [PrivacyPipelineService.parseDetections:308] Stage 3 – object detection (recognized): count=2, items=["potted_plant@97%", "potted_plant@95%"]
+[2026-04-20T03:32:05Z] [DEBUG] [PrivacyPipelineService.detectObjectsWithModel:272] Stage 3 – object detection: labels=["potted_plant", "potted_plant"]
+[2026-04-20T03:32:05Z] [DEBUG] [PrivacyPipelineService.classifyScene:382] Stage 4 – scene classification: labels=["plant", "foliage", "structure"]
+[2026-04-20T03:32:05Z] [DEBUG] [PrivacyPipelineService.recognizeSpeech:399] Stage 5 – speech recognition: skipped: no audio data provided
+[2026-04-20T03:32:05Z] [DEBUG] [PrivacyPipelineService.process:142] Pipeline benchmark: faceDetect=8ms blur=5ms yolo=37ms scene=37ms stt=37ms piiScrub=0ms total=59ms
+[2026-04-20T03:32:05Z] [DEBUG] [PrivacyPipelineService.process:143] Stage 6 – output: objects=["potted_plant", "potted_plant"], scene=["plant", "foliage", "structure"], hasTranscript=false
+[2026-04-20T03:32:05Z] [DEBUG] [CompanionViewModel.runOnDevicePipeline:374] runOnDevicePipeline: privacy done, objects=["potted_plant", "potted_plant"]
+[2026-04-20T03:32:05Z] [DEBUG] [StoryTimelineStore.insert:42] StoryTimeline: session inserted id=C3F8D5AB-5E54-4272-B038-CB6F56EB09D6
+[2026-04-20T03:32:05Z] [DEBUG] [OnDeviceStoryService.streamWithErrorRecovery:231] streamWithErrorRecovery: starting stream
+[2026-04-20T03:32:12Z] [DEBUG] [OnDeviceStoryService.streamWithErrorRecovery:243] streamWithErrorRecovery: done, snapshots=4, textLen=74, hasQuestion=true, isEnding=false
+[2026-04-20T03:32:12Z] [DEBUG] [CompanionViewModel.runOnDevicePipeline:411] runOnDevicePipeline: story generated in 6461ms, ttft=4236ms
+[2026-04-20T03:32:12Z] [DEBUG] [CompanionViewModel.runOnDevicePipeline:412] beat[0] storyText: You see a potted plant and a potted plant. You wonder which one is taller.
+[2026-04-20T03:32:12Z] [DEBUG] [CompanionViewModel.runOnDevicePipeline:413] beat[0] question: Which potted plant is taller?
+CoreData: debug: WAL checkpoint: Database did checkpoint. Log size: 1037 checkpointed: 1037
+[2026-04-20T03:32:12Z] [DEBUG] [AudioService.speakAll:263] AudioService: speaking 2 sentence(s), chars=73
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+[2026-04-20T03:32:17Z] [DEBUG] [AudioService.speakAll:275] AudioService: speech done, sentences=2, chars=73
+[2026-04-20T03:32:17Z] [DEBUG] [AudioService.speakAll:263] AudioService: speaking 1 sentence(s), chars=29
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+[2026-04-20T03:32:20Z] [DEBUG] [AudioService.speakAll:275] AudioService: speech done, sentences=1, chars=29
+[2026-04-20T03:32:20Z] [DEBUG] [AudioCaptureService.startCapture:69] startCapture: recording started, sampleRate=48000.0, channels=1
+[2026-04-20T03:32:20Z] [DEBUG] [SpeechRecognitionService.startLiveTranscription:90] startLiveTranscription: started
+[2026-04-20T03:32:22Z] [DEBUG] [PIIScrubber.scrub:31] scrub: inputLength=3, tokensRedacted=0
+[2026-04-20T03:32:22Z] [DEBUG] [PIIScrubber.scrub:31] scrub: inputLength=9, tokensRedacted=0
+[2026-04-20T03:32:23Z] [DEBUG] [PIIScrubber.scrub:31] scrub: inputLength=13, tokensRedacted=0
+[2026-04-20T03:32:24Z] [DEBUG] [CompanionViewModel.listenForAnswer:607] listenForAnswer: Layer 2 semantic check starting
+[2026-04-20T03:32:24Z] [DEBUG] [SemanticTurnDetector.semanticCheck:68] listenForAnswer: Layer 2 semantic check starting
+[2026-04-20T03:32:25Z] [DEBUG] [SemanticTurnDetector.semanticCheck:89] listenForAnswer: Layer 2 complete → returning transcript
+[2026-04-20T03:32:25Z] [DEBUG] [CompanionViewModel.listenForAnswer:610] listenForAnswer: Layer 2 complete → returning transcript
+[2026-04-20T03:32:25Z] [DEBUG] [CompanionViewModel.listenForAnswer:564] listenForAnswer: hard cap reached (8s)
+[2026-04-20T03:32:25Z] [DEBUG] [AudioCaptureService.stopCapture:90] stopCapture: recording stopped, accumulatedBytes=940800
+[2026-04-20T03:32:25Z] [DEBUG] [SpeechRecognitionService.stopTranscription:98] stopTranscription: transcript=The green one
+[2026-04-20T03:32:25Z] [DEBUG] [CompanionViewModel.listenForAnswer:626] listenForAnswer: answer='The green one', length=13
+[2026-04-20T03:32:25Z] [DEBUG] [OnDeviceStoryService.streamWithErrorRecovery:231] streamWithErrorRecovery: starting stream
+[2026-04-20T03:32:32Z] [DEBUG] [OnDeviceStoryService.streamWithErrorRecovery:243] streamWithErrorRecovery: done, snapshots=6, textLen=120, hasQuestion=true, isEnding=false
+[2026-04-20T03:32:32Z] [DEBUG] [CompanionViewModel.continueStoryLoop:491] beat[0] storyText: You walk over to the green potted plant and touch its leaves. You wonder if it feels the same as the other potted plant.
+[2026-04-20T03:32:32Z] [DEBUG] [CompanionViewModel.continueStoryLoop:492] beat[0] question: Does the green potted plant feel the same?
+[2026-04-20T03:32:32Z] [DEBUG] [AudioService.speakAll:263] AudioService: speaking 2 sentence(s), chars=119
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+[2026-04-20T03:32:39Z] [DEBUG] [AudioService.speakAll:275] AudioService: speech done, sentences=2, chars=119
+[2026-04-20T03:32:39Z] [DEBUG] [AudioService.speakAll:263] AudioService: speaking 1 sentence(s), chars=42
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+[2026-04-20T03:32:43Z] [DEBUG] [AudioService.speakAll:275] AudioService: speech done, sentences=1, chars=42
+[2026-04-20T03:32:43Z] [DEBUG] [AudioCaptureService.startCapture:69] startCapture: recording started, sampleRate=48000.0, channels=1
+[2026-04-20T03:32:43Z] [DEBUG] [SpeechRecognitionService.startLiveTranscription:90] startLiveTranscription: started
+[2026-04-20T03:32:46Z] [DEBUG] [PIIScrubber.scrub:31] scrub: inputLength=4, tokensRedacted=0
+[2026-04-20T03:32:46Z] [DEBUG] [PIIScrubber.scrub:31] scrub: inputLength=9, tokensRedacted=0
+[2026-04-20T03:32:47Z] [DEBUG] [PIIScrubber.scrub:31] scrub: inputLength=12, tokensRedacted=0
+[2026-04-20T03:32:47Z] [DEBUG] [PIIScrubber.scrub:31] scrub: inputLength=17, tokensRedacted=0
+[2026-04-20T03:32:47Z] [DEBUG] [PIIScrubber.scrub:31] scrub: inputLength=22, tokensRedacted=0
+[2026-04-20T03:32:48Z] [DEBUG] [CompanionViewModel.listenForAnswer:607] listenForAnswer: Layer 2 semantic check starting
+[2026-04-20T03:32:48Z] [DEBUG] [SemanticTurnDetector.semanticCheck:68] listenForAnswer: Layer 2 semantic check starting
+[2026-04-20T03:32:49Z] [DEBUG] [PIIScrubber.scrub:31] scrub: inputLength=22, tokensRedacted=0
+[2026-04-20T03:32:50Z] [DEBUG] [SemanticTurnDetector.semanticCheck:89] listenForAnswer: Layer 2 complete → returning transcript
+[2026-04-20T03:32:50Z] [DEBUG] [CompanionViewModel.listenForAnswer:610] listenForAnswer: Layer 2 complete → returning transcript
+[2026-04-20T03:32:50Z] [DEBUG] [CompanionViewModel.listenForAnswer:564] listenForAnswer: hard cap reached (8s)
+[2026-04-20T03:32:50Z] [DEBUG] [AudioCaptureService.stopCapture:90] stopCapture: recording stopped, accumulatedBytes=1286400
+[2026-04-20T03:32:50Z] [DEBUG] [SpeechRecognitionService.stopTranscription:98] stopTranscription: transcript=
+[2026-04-20T03:32:50Z] [DEBUG] [CompanionViewModel.listenForAnswer:626] listenForAnswer: answer='They want to grow fast', length=22
+[2026-04-20T03:32:50Z] [DEBUG] [OnDeviceStoryService.streamWithErrorRecovery:231] streamWithErrorRecovery: starting stream
+[2026-04-20T03:32:56Z] [DEBUG] [OnDeviceStoryService.streamWithErrorRecovery:243] streamWithErrorRecovery: done, snapshots=4, textLen=44, hasQuestion=true, isEnding=false
+[2026-04-20T03:32:56Z] [DEBUG] [CompanionViewModel.continueStoryLoop:491] beat[1] storyText: You wonder why the plants want to grow fast.
+[2026-04-20T03:32:56Z] [DEBUG] [CompanionViewModel.continueStoryLoop:492] beat[1] question: What do you think they need to grow faster?
+[2026-04-20T03:32:56Z] [DEBUG] [AudioService.speakAll:263] AudioService: speaking 1 sentence(s), chars=44
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+[2026-04-20T03:32:59Z] [DEBUG] [AudioService.speakAll:275] AudioService: speech done, sentences=1, chars=44
+[2026-04-20T03:32:59Z] [DEBUG] [AudioService.speakAll:263] AudioService: speaking 1 sentence(s), chars=43
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+[2026-04-20T03:33:03Z] [DEBUG] [AudioService.speakAll:275] AudioService: speech done, sentences=1, chars=43
+[2026-04-20T03:33:03Z] [DEBUG] [AudioCaptureService.startCapture:69] startCapture: recording started, sampleRate=48000.0, channels=1
+[2026-04-20T03:33:03Z] [DEBUG] [SpeechRecognitionService.startLiveTranscription:90] startLiveTranscription: started
+[2026-04-20T03:33:05Z] [DEBUG] [PIIScrubber.scrub:31] scrub: inputLength=4, tokensRedacted=0
+[2026-04-20T03:33:06Z] [DEBUG] [PIIScrubber.scrub:31] scrub: inputLength=9, tokensRedacted=0
+[2026-04-20T03:33:06Z] [DEBUG] [PIIScrubber.scrub:31] scrub: inputLength=12, tokensRedacted=0
+[2026-04-20T03:33:07Z] [DEBUG] [PIIScrubber.scrub:31] scrub: inputLength=16, tokensRedacted=0
+[2026-04-20T03:33:07Z] [DEBUG] [PIIScrubber.scrub:31] scrub: inputLength=20, tokensRedacted=0
+[2026-04-20T03:33:08Z] [DEBUG] [CompanionViewModel.listenForAnswer:607] listenForAnswer: Layer 2 semantic check starting
+[2026-04-20T03:33:08Z] [DEBUG] [SemanticTurnDetector.semanticCheck:68] listenForAnswer: Layer 2 semantic check starting
+[2026-04-20T03:33:09Z] [DEBUG] [PIIScrubber.scrub:31] scrub: inputLength=27, tokensRedacted=0
+[2026-04-20T03:33:09Z] [DEBUG] [PIIScrubber.scrub:31] scrub: inputLength=31, tokensRedacted=0
+[2026-04-20T03:33:09Z] [DEBUG] [PIIScrubber.scrub:31] scrub: inputLength=34, tokensRedacted=0
+[2026-04-20T03:33:10Z] [DEBUG] [SemanticTurnDetector.semanticCheck:89] listenForAnswer: Layer 2 incomplete → extending silence window
+[2026-04-20T03:33:11Z] [DEBUG] [CompanionViewModel.listenForAnswer:564] listenForAnswer: hard cap reached (8s)
+[2026-04-20T03:33:11Z] [DEBUG] [AudioCaptureService.stopCapture:90] stopCapture: recording stopped, accumulatedBytes=1536000
+[2026-04-20T03:33:11Z] [DEBUG] [SpeechRecognitionService.stopTranscription:98] stopTranscription: transcript=They want to see the entire forest
+[2026-04-20T03:33:11Z] [DEBUG] [CompanionViewModel.listenForAnswer:626] listenForAnswer: answer='They want to see the entire forest', length=34
+[2026-04-20T03:33:11Z] [DEBUG] [OnDeviceStoryService.streamWithErrorRecovery:231] streamWithErrorRecovery: starting stream
+[2026-04-20T03:33:18Z] [DEBUG] [OnDeviceStoryService.streamWithErrorRecovery:243] streamWithErrorRecovery: done, snapshots=4, textLen=51, hasQuestion=true, isEnding=false
+[2026-04-20T03:33:18Z] [DEBUG] [CompanionViewModel.continueStoryLoop:491] beat[2] storyText: You think the plants want to see the entire forest.
+[2026-04-20T03:33:18Z] [DEBUG] [CompanionViewModel.continueStoryLoop:492] beat[2] question: Do you think they will ever see the forest?
+[2026-04-20T03:33:18Z] [DEBUG] [AudioService.speakAll:263] AudioService: speaking 1 sentence(s), chars=51
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+[2026-04-20T03:33:21Z] [DEBUG] [AudioService.speakAll:275] AudioService: speech done, sentences=1, chars=51
+[2026-04-20T03:33:21Z] [DEBUG] [AudioService.speakAll:263] AudioService: speaking 1 sentence(s), chars=43
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+[2026-04-20T03:33:24Z] [DEBUG] [AudioService.speakAll:275] AudioService: speech done, sentences=1, chars=43
+[2026-04-20T03:33:25Z] [DEBUG] [AudioCaptureService.startCapture:69] startCapture: recording started, sampleRate=48000.0, channels=1
+[2026-04-20T03:33:25Z] [DEBUG] [SpeechRecognitionService.startLiveTranscription:90] startLiveTranscription: started
+[2026-04-20T03:33:28Z] [DEBUG] [PIIScrubber.scrub:31] scrub: inputLength=3, tokensRedacted=0
+[2026-04-20T03:33:29Z] [DEBUG] [CompanionViewModel.listenForAnswer:607] listenForAnswer: Layer 2 semantic check starting
+[2026-04-20T03:33:29Z] [DEBUG] [CompanionViewModel.listenForAnswer:610] listenForAnswer: Layer 2 complete → returning transcript
+[2026-04-20T03:33:29Z] [DEBUG] [CompanionViewModel.listenForAnswer:564] listenForAnswer: hard cap reached (8s)
+[2026-04-20T03:33:29Z] [DEBUG] [AudioCaptureService.stopCapture:90] stopCapture: recording stopped, accumulatedBytes=806400
+[2026-04-20T03:33:29Z] [DEBUG] [SpeechRecognitionService.stopTranscription:98] stopTranscription: transcript=Yes
+[2026-04-20T03:33:29Z] [DEBUG] [CompanionViewModel.listenForAnswer:626] listenForAnswer: answer='Yes', length=3
+[2026-04-20T03:33:29Z] [DEBUG] [OnDeviceStoryService.streamWithErrorRecovery:231] streamWithErrorRecovery: starting stream
+[2026-04-20T03:33:34Z] [DEBUG] [OnDeviceStoryService.streamWithErrorRecovery:243] streamWithErrorRecovery: done, snapshots=3, textLen=42, hasQuestion=true, isEnding=false
+[2026-04-20T03:33:34Z] [DEBUG] [CompanionViewModel.continueStoryLoop:491] beat[3] storyText: You decide to help the plants grow faster.
+[2026-04-20T03:33:34Z] [DEBUG] [CompanionViewModel.continueStoryLoop:492] beat[3] question: What will you do?
+[2026-04-20T03:33:34Z] [DEBUG] [AudioService.speakAll:263] AudioService: speaking 1 sentence(s), chars=42
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+[2026-04-20T03:33:37Z] [DEBUG] [AudioService.speakAll:275] AudioService: speech done, sentences=1, chars=42
+[2026-04-20T03:33:37Z] [DEBUG] [AudioService.speakAll:263] AudioService: speaking 1 sentence(s), chars=17
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+[2026-04-20T03:33:39Z] [DEBUG] [AudioService.speakAll:275] AudioService: speech done, sentences=1, chars=17
+[2026-04-20T03:33:39Z] [DEBUG] [AudioCaptureService.startCapture:69] startCapture: recording started, sampleRate=48000.0, channels=1
+[2026-04-20T03:33:39Z] [DEBUG] [SpeechRecognitionService.startLiveTranscription:90] startLiveTranscription: started
+[2026-04-20T03:33:47Z] [DEBUG] [CompanionViewModel.listenForAnswer:564] listenForAnswer: hard cap reached (8s)
+[2026-04-20T03:33:47Z] [ERROR] [SpeechRecognitionService.startLiveTranscription:77] recognitionTask error: No speech detected
+[2026-04-20T03:33:47Z] [DEBUG] [AudioCaptureService.stopCapture:90] stopCapture: recording stopped, accumulatedBytes=1555200
+[2026-04-20T03:33:47Z] [DEBUG] [SpeechRecognitionService.stopTranscription:98] stopTranscription: transcript=nil
+[2026-04-20T03:33:47Z] [DEBUG] [CompanionViewModel.listenForAnswer:626] listenForAnswer: answer='nil', length=0
+[2026-04-20T03:33:47Z] [DEBUG] [CompanionViewModel.continueStoryLoop:464] continueStoryLoop: answer timeout, ending story
+[2026-04-20T03:33:47Z] [DEBUG] [AudioService.speakAll:263] AudioService: speaking 2 sentence(s), chars=126
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero
+[2026-04-20T03:33:56Z] [DEBUG] [AudioService.speakAll:275] AudioService: speech done, sentences=2, chars=126
+[2026-04-20T03:33:56Z] [DEBUG] [StoryTimelineStore.finalizeSession:50] StoryTimeline: session finalised beats=5, restart=false
+         AVAudioBuffer.mm:281   mBuffers[0].mDataByteSize (0) should be non-zero

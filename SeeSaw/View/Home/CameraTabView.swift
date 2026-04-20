@@ -31,6 +31,13 @@ struct CameraTabView: View {
             .navigationTitle("Camera")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar { settingsToolbar }
+            .sheet(isPresented: $vm.showRatingSheet) {
+                StoryRatingView(
+                    beatsPlayed: vm.ratingBeatsPlayed,
+                    onSubmit: { e, a, s in vm.submitRating(enjoyment: e, ageAppropriateness: a, sceneGrounding: s) },
+                    onSkip: { vm.skipRating() }
+                )
+            }
             .fullScreenCover(isPresented: $vm.isShowingScenePreview) {
                 if let imageData = vm.capturedImageData {
                     ScenePreviewView(
@@ -196,7 +203,9 @@ struct CameraTabView: View {
                     childAge: $vm.childAge,
                     accessoryManager: coordinator.container.accessoryManager,
                     metricsStore: coordinator.container.privacyMetricsStore,
-                    storyMetricsStore: coordinator.container.storyMetricsStore
+                    storyMetricsStore: coordinator.container.storyMetricsStore,
+                    hybridMetricsStore: coordinator.container.hybridMetricsStore,
+                    storyRatingStore: coordinator.container.storyRatingStore
                 )
             } label: {
                 Image(systemName: "gear")
