@@ -92,4 +92,4 @@ Files collected beyond the original checklist:
 - [x] **Hybrid re-run complete → `data/step8/hybrid_metrics.csv` (28 beats, 5 sessions, 2026-04-20)**
 - [ ] Step 13 external rater scoring complete
 - [ ] `Observations.md` updated with OB-014+ entries (Step 15)
-- [ ] `Pipeline.md` §7 Empirical Results section added (Step 15)
+- [x] `Pipeline.md` §8 Empirical Results section added (Step 15)

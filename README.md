@@ -134,9 +134,27 @@ SeeSawTests/        ~130 tests, 0 failures
 
 | Metric | Value |
 |--------|-------|
-| Total tests | ~130 |
+| Total tests | 130 |
 | Failures | 0 |
+| Test files | 13 |
 | PIIScrubber coverage | 100% |
+| PrivacyMetricsStore coverage | 100% |
+| ChunkBuffer coverage | 100% |
 | Privacy invariant (100 runs) | 0 violations |
 | Hybrid cloud hit rate (device) | 88.9% (8/9 beats) |
-| SeeSawTests coverage | 89.8% |
+| SeeSawTests.xctest coverage | 96.2% |
+| SeeSaw.app coverage | 14.8% (UI-heavy) |
+
+---
+
+## Thesis Data Collection
+
+See [`results_collection_plan.md`](results_collection_plan.md) for the step-by-step plan to collect all dissertation evaluation data across:
+
+- Privacy pipeline stage latency benchmarks (15 steps, CSV export)
+- YOLO11n object detection accuracy per scene
+- Story generation latency for all four modes (A–D)
+- Hybrid cloud hit rate and source distribution
+- VAD layer decision analysis
+- Network traffic verification (privacy invariant evidence)
+- Cross-mode statistical comparison
