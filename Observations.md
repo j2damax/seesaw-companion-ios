@@ -1,5 +1,7 @@
 # SeeSaw Companion — Research Observations
 
+> **Data folder:** All CSV files, screenshots and exports are on [Google Drive](https://drive.google.com/drive/folders/1BlDVn-gw1g5HQp5WQwx65OxhJU9glHmd?usp=sharing) — see `DATA_LOCATION.md`.
+
 Running log of empirical findings from test runs. Intended for MSc Thesis Chapter 6 (evaluation) and Chapter 7 (discussion).
 
 ---
@@ -518,7 +520,7 @@ Tests run without Apple Intelligence hardware via protocol-driven mocks (`MockSt
 
 **Sessions run:** 5 · **Total beats:** 29 (S1=10, S2=3, S3=3, S4=4, S5=9)
 
-### Beat source routing (from `data/step8/hybrid_metrics.csv`)
+### Beat source routing (from `[Google Drive]/step8/hybrid_metrics.csv`)
 
 | Source | Beats | % | Mean gen time (ms) |
 |--------|-------|---|-------------------|
@@ -543,7 +545,7 @@ Tests run without Apple Intelligence hardware via protocol-driven mocks (`MockSt
 
 **Date:** 2026-04-20 · **Rater:** Parent (researcher, child age 6) · **Mode:** hybrid (all sessions)
 
-**Sessions rated:** 5 · **Source file:** `data/step15/story_ratings.csv`
+**Sessions rated:** 5 · **Source file:** `[Google Drive]/step15/story_ratings.csv`
 
 ### Rating summary
 

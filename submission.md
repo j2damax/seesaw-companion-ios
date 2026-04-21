@@ -1,5 +1,7 @@
 # SeeSaw MSc Thesis — Submission Reference Document
 
+> **Data folder:** All CSV files, screenshots and exports are on [Google Drive](https://drive.google.com/drive/folders/1BlDVn-gw1g5HQp5WQwx65OxhJU9glHmd?usp=sharing) — see `DATA_LOCATION.md`.
+
 **Student:** Jayampathy Balasuriya  
 **Degree:** MSc Computer Science  
 **Project:** SeeSaw — Privacy-Preserving AI Storytelling Companion for Children  
@@ -178,13 +180,13 @@ Collection dates: 2026-04-19 to 2026-04-20
 
 > **Note:** The chapter ordering in `SeeSaw-Project-Master.md` lists Results as Ch. 6 and Discussion as Ch. 5. Adjust numbering to match your actual dissertation structure.
 
-**Use `data/results_template.md` as the master results document** — it contains all filled-in tables.
+**Use `[Google Drive]/results_template.md` as the master results document** — it contains all filled-in tables.
 
 **Sections and key numbers:**
 
 #### 5.1 Privacy Pipeline — Stage Latencies (Step 2)
 
-Source: `data/step2/privacy_pipeline_raw.csv` (21 rows)
+Source: `[Google Drive]/step2/privacy_pipeline_raw.csv` (21 rows)
 
 | Stage | Mean (ms) | Std Dev |
 |-------|-----------|---------|
@@ -218,7 +220,7 @@ Live detection: Furniture classes (tv, table, sofa) 95–98% confidence. Toy cla
 
 #### 5.4 Story Generation Latency by Mode (Steps 5–8)
 
-Source: `data/step12/story_metrics_*.csv`
+Source: `[Google Drive]/step12/story_metrics_*.csv`
 
 | Mode | N beats | Mean gen (ms) | Std Dev | Median | Min | Max |
 |------|---------|--------------|---------|--------|-----|-----|
@@ -285,10 +287,10 @@ Re-run 2026-04-20 (29 beats):
 
 **Step 13 (researcher rubric — pending external rater):**  
 5-criterion rubric: scene relevance, answer integration, language age-appropriateness, coherence, ending quality.  
-Source: `data/step13/story_scoring_sheet.md` — all story texts extracted; rubric ready for external rater.
+Source: `[Google Drive]/step13/story_scoring_sheet.md` — all story texts extracted; rubric ready for external rater.
 
 **Step 15 (parent ratings — 5 sessions, hybrid mode):**  
-Source: `data/step15/story_ratings.csv`
+Source: `[Google Drive]/step15/story_ratings.csv`
 
 | Criterion | Mean (/5) | Interpretation |
 |-----------|----------|---------------|
@@ -335,29 +337,29 @@ Source: `data/step15/story_ratings.csv`
 
 | Data | File | Rows | Key metric |
 |------|------|------|-----------|
-| Privacy pipeline baseline | `data/step2/privacy_pipeline_raw.csv` | 21 | Mean total 67.24 ms |
-| Cloud story metrics | `data/step12/story_metrics_cloud.csv` | 25 | Mean 4,205 ms |
-| Apple FM story metrics | `data/step12/story_metrics_ondevice.csv` | 18 | Mean 7,102 ms |
-| Gemma story metrics | `data/step12/story_metrics_gemma4.csv` | 24 | Mean 14,614 ms |
-| Hybrid story metrics | `data/step12/story_metrics_hybrid.csv` | 15 | Mean 12,522 ms |
-| Hybrid beat routing (original) | `data/step8/hybrid_metrics.csv` | 28 | 83% cloud beats |
-| Hybrid beat routing (re-run) | `data/step8/hybrid_metrics.csv` | 28 | 100% cloud hit rate |
-| Cloud Proxyman network | `data/step5/network_cloud_sessions_proxyman.csv` | 24 | Mean RTT 4,142 ms |
-| Hybrid Proxyman network | `data/step8/network_hybrid_proxyman.csv` | 30 | /enhance 100% 404 |
-| Cloud pipeline latency | `data/step5/privacy_pipeline_cloud.csv` | 15 | Mean 126.3 ms |
-| Apple FM pipeline latency | `data/step6/privacy_pipeline_ondevice.csv` | 5 | Mean 115.3 ms |
-| Gemma pipeline latency | `data/step7/privacy_pipeline_gemma4.csv` | 5 | Mean 134.1 ms |
-| Hybrid pipeline latency | `data/step8/privacy_pipeline_hybrid.csv` | 5 | Mean 129.8 ms |
-| VAD analysis | `data/step9/vad_console_logs.txt` | 58 turns | L2 fired 55% turns |
-| Parent ratings | `data/step15/story_ratings.csv` | 5 | Enjoyment 4.0/5 |
-| PII test output | `data/step3/pii-tests-output.txt` | 130 tests | 0 failures |
+| Privacy pipeline baseline | `[Google Drive]/step2/privacy_pipeline_raw.csv` | 21 | Mean total 67.24 ms |
+| Cloud story metrics | `[Google Drive]/step12/story_metrics_cloud.csv` | 25 | Mean 4,205 ms |
+| Apple FM story metrics | `[Google Drive]/step12/story_metrics_ondevice.csv` | 18 | Mean 7,102 ms |
+| Gemma story metrics | `[Google Drive]/step12/story_metrics_gemma4.csv` | 24 | Mean 14,614 ms |
+| Hybrid story metrics | `[Google Drive]/step12/story_metrics_hybrid.csv` | 15 | Mean 12,522 ms |
+| Hybrid beat routing (original) | `[Google Drive]/step8/hybrid_metrics.csv` | 28 | 83% cloud beats |
+| Hybrid beat routing (re-run) | `[Google Drive]/step8/hybrid_metrics.csv` | 28 | 100% cloud hit rate |
+| Cloud Proxyman network | `[Google Drive]/step5/network_cloud_sessions_proxyman.csv` | 24 | Mean RTT 4,142 ms |
+| Hybrid Proxyman network | `[Google Drive]/step8/network_hybrid_proxyman.csv` | 30 | /enhance 100% 404 |
+| Cloud pipeline latency | `[Google Drive]/step5/privacy_pipeline_cloud.csv` | 15 | Mean 126.3 ms |
+| Apple FM pipeline latency | `[Google Drive]/step6/privacy_pipeline_ondevice.csv` | 5 | Mean 115.3 ms |
+| Gemma pipeline latency | `[Google Drive]/step7/privacy_pipeline_gemma4.csv` | 5 | Mean 134.1 ms |
+| Hybrid pipeline latency | `[Google Drive]/step8/privacy_pipeline_hybrid.csv` | 5 | Mean 129.8 ms |
+| VAD analysis | `[Google Drive]/step9/vad_console_logs.txt` | 58 turns | L2 fired 55% turns |
+| Parent ratings | `[Google Drive]/step15/story_ratings.csv` | 5 | Enjoyment 4.0/5 |
+| PII test output | `[Google Drive]/step3/pii-tests-output.txt` | 130 tests | 0 failures |
 
 ---
 
 ## §5 — Statistical Results (Step 12)
 
 Script: `scripts/analysis_step12.py`  
-Charts: `data/step12/charts/`
+Charts: `[Google Drive]/step12/charts/`
 
 **Kruskal-Wallis (generation time across 4 modes):**
 - H = 52.75, p < 0.001
@@ -382,7 +384,7 @@ Charts: `data/step12/charts/`
 
 ## §6 — Charts (9 Figures)
 
-All in `data/step12/charts/`:
+All in `[Google Drive]/step12/charts/`:
 
 | Figure | File | Caption |
 |--------|------|---------|
@@ -526,18 +528,18 @@ Include as appendices or supplementary material:
 
 | Appendix | File | Description |
 |---------|------|-------------|
-| A | `data/step2/privacy_pipeline_raw.csv` | Raw privacy pipeline latency data (21 rows) |
-| B | `data/step12/story_metrics_cloud.csv` | Cloud mode story metrics (25 beats) |
-| C | `data/step12/story_metrics_ondevice.csv` | Apple FM story metrics (18 beats) |
-| D | `data/step12/story_metrics_gemma4.csv` | Gemma 3 1B story metrics (24 beats) |
-| E | `data/step12/story_metrics_hybrid.csv` | Hybrid mode story metrics (15 beats) |
-| F | `data/step8/hybrid_metrics.csv` | Hybrid per-beat routing data (28 beats) |
-| G | `data/step15/story_ratings.csv` | Parent story ratings (5 sessions) |
-| H | `data/step9/vad_console_logs.txt` | VAD layer decision log (58 turns) |
-| I | `data/step3/pii-tests-output.txt` | PII scrubber test output (130 tests) |
+| A | `[Google Drive]/step2/privacy_pipeline_raw.csv` | Raw privacy pipeline latency data (21 rows) |
+| B | `[Google Drive]/step12/story_metrics_cloud.csv` | Cloud mode story metrics (25 beats) |
+| C | `[Google Drive]/step12/story_metrics_ondevice.csv` | Apple FM story metrics (18 beats) |
+| D | `[Google Drive]/step12/story_metrics_gemma4.csv` | Gemma 3 1B story metrics (24 beats) |
+| E | `[Google Drive]/step12/story_metrics_hybrid.csv` | Hybrid mode story metrics (15 beats) |
+| F | `[Google Drive]/step8/hybrid_metrics.csv` | Hybrid per-beat routing data (28 beats) |
+| G | `[Google Drive]/step15/story_ratings.csv` | Parent story ratings (5 sessions) |
+| H | `[Google Drive]/step9/vad_console_logs.txt` | VAD layer decision log (58 turns) |
+| I | `[Google Drive]/step3/pii-tests-output.txt` | PII scrubber test output (130 tests) |
 | J | `test-results/run-summary.txt` | Full test suite results (130 tests, 0 failures) |
-| K | `data/step12/charts/*.png` | All 9 statistical charts |
-| L | `data/step13/story_scoring_sheet.md` | Story scoring rubric + extracted beats |
+| K | `[Google Drive]/step12/charts/*.png` | All 9 statistical charts |
+| L | `[Google Drive]/step13/story_scoring_sheet.md` | Story scoring rubric + extracted beats |
 
 ---
 
@@ -561,8 +563,8 @@ Include as appendices or supplementary material:
 
 ### Documents
 
-- [x] `data/results_template.md` — all tables filled
-- [x] `data/step14/data_file_audit.md` — all items ✅
+- [x] `[Google Drive]/results_template.md` — all tables filled
+- [x] `[Google Drive]/step14/data_file_audit.md` — all items ✅
 - [x] `Observations.md` — OB-001 through OB-016
 - [x] `testflight.md` — App Store details + parent instructions
 - [x] `submission.md` — this document
@@ -575,8 +577,8 @@ Include as appendices or supplementary material:
 - [ ] Upload to App Store Connect
 - [ ] Beta App Review submitted
 - [ ] Testers invited (8–12 families)
-- [ ] Ratings collected and saved to `data/step15/`
+- [ ] Ratings collected and saved to `[Google Drive]/step15/`
 
 ---
 
-*This document is the single source of truth for thesis submission. Cross-reference with `SeeSaw-Project-Master.md` for architecture decisions and `data/results_template.md` for raw measured values.*
+*This document is the single source of truth for thesis submission. Cross-reference with `SeeSaw-Project-Master.md` for architecture decisions and `[Google Drive]/results_template.md` for raw measured values.*

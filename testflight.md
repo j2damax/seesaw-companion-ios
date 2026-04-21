@@ -1,5 +1,7 @@
 # SeeSaw — TestFlight Release Document
 
+> **Data folder:** All CSV files, screenshots and exports are on [Google Drive](https://drive.google.com/drive/folders/1BlDVn-gw1g5HQp5WQwx65OxhJU9glHmd?usp=sharing) — see `DATA_LOCATION.md`.
+
 **Version:** 1.0 (testflight-release branch)  
 **Build date:** 2026-04-20  
 **Bundle ID:** `com.seesaw.companion.ios`  
@@ -261,10 +263,10 @@ When testers send you the exported CSV files via email:
 
 | File | What it contains | Where to save |
 |------|-----------------|---------------|
-| `privacy_metrics` | Per-session pipeline latency, face counts, PII tokens | `data/step15/tester_privacy_metrics_[name].csv` |
-| `story_metrics` | Per-beat generation time, mode, text length | `data/step15/tester_story_metrics_[name].csv` |
-| `hybrid_metrics` | Per-beat routing (localGemma4 vs cloud) | `data/step15/tester_hybrid_metrics_[name].csv` |
-| `story_ratings` | Parent star ratings (enjoyment, age-appropriate, scene) | `data/step15/tester_ratings_[name].csv` |
+| `privacy_metrics` | Per-session pipeline latency, face counts, PII tokens | `[Google Drive]/step15/tester_privacy_metrics_[name].csv` |
+| `story_metrics` | Per-beat generation time, mode, text length | `[Google Drive]/step15/tester_story_metrics_[name].csv` |
+| `hybrid_metrics` | Per-beat routing (localGemma4 vs cloud) | `[Google Drive]/step15/tester_hybrid_metrics_[name].csv` |
+| `story_ratings` | Parent star ratings (enjoyment, age-appropriate, scene) | `[Google Drive]/step15/tester_ratings_[name].csv` |
 
 Aggregate the `story_ratings` CSVs to supplement the dissertation story quality analysis (Step 13). Story generation latency data supplements Steps 5–8. Treat each tester's data as an independent replication session.
 

@@ -1,5 +1,7 @@
 # SeeSaw Companion — Thesis Results Collection Plan
 
+> **Data folder:** All CSV files, screenshots and exports are on [Google Drive](https://drive.google.com/drive/folders/1BlDVn-gw1g5HQp5WQwx65OxhJU9glHmd?usp=sharing) — see `DATA_LOCATION.md`.
+
 **Purpose:** Systematic data collection for MSc dissertation Chapter 5 (implementation), Chapter 6 (evaluation), and Chapter 7 (discussion).  
 **Covers:** Privacy pipeline, object detection, all four story generation modes, hybrid architecture, VAD, and final cross-mode comparison.  
 **Date authored:** 2026-04-19  
@@ -152,7 +154,7 @@ Look for `testPrivacyInvariantAcross100Runs`. Record:
 | PrivacyMetricsStore.swift coverage | 100% |
 | Privacy invariant violations | 0 |
 
-Record findings in `data/results_template.md` → Step 1 section.
+Record findings in `[Google Drive]/results_template.md` → Step 1 section.
 
 ---
 
@@ -207,7 +209,7 @@ grep -E "faceDetect|yolo|sceneClassify|piiScrub|pipelineLatency|conf=" \
 
 From `data/pipeline_console_filtered.txt`, note the confidence score format (`conf=0.XX`) for detected classes. This feeds into Step 4 per-class analysis.
 
-Record all findings in `data/results_template.md` → Step 2 section.
+Record all findings in `[Google Drive]/results_template.md` → Step 2 section.
 
 ---
 
@@ -252,7 +254,7 @@ During the cloud session started in 3.2:
 
 Take a screenshot → save as `data/screenshots/pii_network_request.png`
 
-Record all findings in `data/results_template.md` → Step 3 section.
+Record all findings in `[Google Drive]/results_template.md` → Step 3 section.
 
 ---
 
@@ -305,7 +307,7 @@ Reference mAP@50 from training repo (not computed here):
 - Run B (Layer 1 only): **mAP@50 = 0.8614**
 - Run C (production, all layers): **mAP@50 = 0.6748**
 
-Record all findings in `data/results_template.md` → Step 4 section.
+Record all findings in `[Google Drive]/results_template.md` → Step 4 section.
 
 ---
 
@@ -367,7 +369,7 @@ From the Network tab, click any `/story/generate` request → **Body**:
 
 Screenshot → `data/screenshots/network_cloud_request.png`
 
-Record all findings in `data/results_template.md` → Step 5 section.
+Record all findings in `[Google Drive]/results_template.md` → Step 5 section.
 
 ---
 
@@ -420,7 +422,7 @@ grep -E "totalGenerationMs|ttft|restartWithSummary|Context restart|onPartialText
 In Xcode Network Inspector: confirm no HTTP requests appear during story generation turns.  
 Screenshot the empty network tab → `data/screenshots/network_ondevice_zero_requests.png`
 
-Record all findings in `data/results_template.md` → Step 6 section.
+Record all findings in `[Google Drive]/results_template.md` → Step 6 section.
 
 ---
 
@@ -485,7 +487,7 @@ echo "JSON: $JSON_COUNT  Heuristic: $HEURISTIC_COUNT"
 
 Network tab: confirm no HTTP requests during story turns.
 
-Record all findings in `data/results_template.md` → Step 7 section.
+Record all findings in `[Google Drive]/results_template.md` → Step 7 section.
 
 ---
 
@@ -552,7 +554,7 @@ awk -F',' 'NR>1 && $5=="true" {hits++} NR>1 {total++} END {print hits/total*100"
 
 Or in Python (Step 12 analysis).
 
-Record all findings in `data/results_template.md` → Step 8 section.
+Record all findings in `[Google Drive]/results_template.md` → Step 8 section.
 
 ---
 
@@ -603,7 +605,7 @@ Compute mean from the extracted values. Document in the dissertation as the over
 | cloud | Yes | Layer 1 or Layer 2 |
 | hybrid | Yes | Layer 1 or Layer 2 |
 
-Record tally in `data/results_template.md` → Step 9 section.
+Record tally in `[Google Drive]/results_template.md` → Step 9 section.
 
 ---
 
@@ -648,7 +650,7 @@ Screenshot of empty network tab → `data/screenshots/network_ondevice_zero_requ
 
 Screenshot → `data/screenshots/network_hybrid_enhance_request.png`
 
-Record verification results in `data/results_template.md` → Step 10 section.
+Record verification results in `[Google Drive]/results_template.md` → Step 10 section.
 
 ---
 
@@ -690,7 +692,7 @@ Compute mean values from CSVs, then fill:
 | VAD window (s) | 1.0–8.0 | 1.0–8.0 | 1.0–8.0 (no L2) | 1.0–8.0 |
 | **Estimated total (s)** | sum | sum | sum | sum |
 
-Record in `data/results_template.md` → Step 11 section.
+Record in `[Google Drive]/results_template.md` → Step 11 section.
 
 ---
 
@@ -852,7 +854,7 @@ For each of the 5 sessions per mode (20 sessions total), read through and score 
 
 ### 13.3 Record scores
 
-Fill the scoring tables in `data/results_template.md` → Step 13 section.
+Fill the scoring tables in `[Google Drive]/results_template.md` → Step 13 section.
 
 Compare mean quality score per mode. Note whether:
 - Cloud (Gemini) scores higher on coherence due to larger context window

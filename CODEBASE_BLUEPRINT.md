@@ -163,7 +163,7 @@ flowchart TD
     Pipeline --> StoryGen{Story Mode?}
     
     StoryGen -->|onDevice| OnDevice[Apple Foundation Models<br/>LanguageModelSession]
-    StoryGen -->|gemma4OnDevice| Gemma4[MediaPipe LlmInference<br/>Gemma 3 1B Q4_K_M GGUF]
+    StoryGen -->|gemma4OnDevice| Gemma4[MediaPipe LlmInference<br/>Gemma 3 1B Q8_0 GGUF]
     StoryGen -->|cloud| Cloud[POST ScenePayload<br/>to Cloud Run Gemini 2.0 Flash]
     StoryGen -->|hybrid| OnDevice
 

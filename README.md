@@ -16,7 +16,7 @@ SeeSaw is a privacy-first iOS app that transforms a child's real-world environme
 |------|------|--------|---------|---------|
 | **A — Cloud baseline** | `cloud` | Gemini 2.0 Flash via Cloud Run | ScenePayload only (no pixels) | 2–8 s |
 | **B — On-Device (Apple FM)** | `onDevice` | Apple Foundation Models 3B | None | ~1.5–2 s |
-| **C — On-Device (Gemma)** | `gemma4OnDevice` | Gemma 3 1B Q4_K_M via MediaPipe | None | ~1.5–2 s |
+| **C — On-Device (Gemma)** | `gemma4OnDevice` | Gemma 3 1B Q8_0 GGUF via MediaPipe | None | ~1.5–2 s |
 | **D — Hybrid** | `hybrid` | Gemma/Apple FM + Cloud Run (concurrent) | ScenePayload only | ~1.5 s + cloud enrichment |
 
 Architecture D is the primary research contribution: local model generates immediately, cloud enhancement races during the speak/listen window (8–15 s). **88.9% cloud hit rate** observed on device.

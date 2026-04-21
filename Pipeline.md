@@ -1,5 +1,7 @@
 # SeeSaw Companion — Pipeline Reference
 
+> **Data folder:** All CSV files, screenshots and exports are on [Google Drive](https://drive.google.com/drive/folders/1BlDVn-gw1g5HQp5WQwx65OxhJU9glHmd?usp=sharing) — see `DATA_LOCATION.md`.
+
 **Platform:** iOS 26+ · iPhone 12+ (Neural Engine)  
 **Branch:** `mediapipe-integration`  
 **Last updated:** 2026-04-15
@@ -33,7 +35,7 @@ flowchart TB
         
         subgraph Modes["Story Generation"]
             OD["OnDeviceStoryService\nApple Foundation Models"]
-            G4["Gemma4StoryService\nMediaPipe LlmInference\nGemma 3 1B Q4_K_M"]
+            G4["Gemma4StoryService\nMediaPipe LlmInference\nGemma 3 1B Q8_0"]
         end
         
         VAD["SemanticTurnDetector\n3-layer VAD"]
@@ -231,7 +233,7 @@ On timeout, returns whatever partial transcript was accumulated — short or int
 // StoryGenerationMode.swift
 enum StoryGenerationMode: String, CaseIterable {
     case onDevice        // Apple Foundation Models — zero network
-    case gemma4OnDevice  // MediaPipe LlmInference (Gemma 3 1B Q4_K_M) — zero network
+    case gemma4OnDevice  // MediaPipe LlmInference (Gemma 3 1B Q8_0) — zero network
     case cloud           // POST ScenePayload to Cloud Run — full conversation loop
     case hybrid          // cloud first → gemma4OnDevice fallback → onDevice fallback
 }
@@ -626,7 +628,7 @@ let payload = ScenePayload(
 
 ## 8. Empirical Results
 
-All data collected on iPhone 15 Pro (A17 Pro Neural Engine, iOS 26 beta), 5 sessions per mode. Source files: `data/step2/`, `data/step5–8/`, `data/step12/`, `data/step15/`.
+All data collected on iPhone 15 Pro (A17 Pro Neural Engine, iOS 26 beta), 5 sessions per mode. Source files: `[Google Drive]/step2/`, `[Google Drive]/step5–8/`, `[Google Drive]/step12/`, `[Google Drive]/step15/`.
 
 ### 8.1 Privacy Pipeline Latency (n=21 runs)
 
@@ -653,7 +655,7 @@ Generation time measured from `ScenePayload` dispatch to first `StoryBeat` recei
 |------|---|-----------|-------------|---------|----------|----------|
 | Cloud (Gemini 2.0 Flash) | 25 | 4,205 | 4,083 | 1,345 | 1,756 | 7,481 |
 | On-Device (Apple FM) | 18 | 7,102 | 6,654 | 1,857 | 4,643 | 13,627 |
-| Gemma 3 1B Q4_K_M (on-device) | 24 | 14,614 | 13,465 | 5,004 | 9,721 | 34,516 |
+| Gemma 3 1B Q8_0 (on-device) | 24 | 14,614 | 13,465 | 5,004 | 9,721 | 34,516 |
 | Hybrid | 15 | 12,522 | 6,147 | 12,020 | 3,055 | 44,199 |
 
 **Apple FM TTFT** (time-to-first-token, streaming): mean **4,148 ms** across 18 beats.
@@ -669,7 +671,7 @@ Generation time measured from `ScenePayload` dispatch to first `StoryBeat` recei
 
 ### 8.3 Hybrid Mode Routing (n=29 beats, 5 sessions)
 
-Source: `data/step8/hybrid_metrics.csv`
+Source: `[Google Drive]/step8/hybrid_metrics.csv`
 
 | Beat index | Source | Count | % |
 |-----------|--------|-------|---|
@@ -697,7 +699,7 @@ Apple FM produces shorter, more age-appropriate beats consistent with the `@Gene
 
 ### 8.5 Parent Story Ratings (n=5 sessions, hybrid mode, child age 6)
 
-Source: `data/step15/story_ratings.csv`
+Source: `[Google Drive]/step15/story_ratings.csv`
 
 | Criterion | Mean / 5 | Range |
 |-----------|---------|-------|
@@ -709,7 +711,7 @@ Sessions rated ranged from 3 to 10 beats. A quality ramp-up pattern was observed
 
 ### 8.6 Memory Footprint
 
-Source: Instruments profiling screenshots `data/step5–8/screenshots/`.
+Source: Instruments profiling screenshots `[Google Drive]/step5–8/screenshots/`.
 
 | Mode | Peak RAM (MB) |
 |------|--------------|
@@ -718,7 +720,7 @@ Source: Instruments profiling screenshots `data/step5–8/screenshots/`.
 | Gemma 3 (on-device) | ~8,200 |
 | Hybrid | ~8,200 (Gemma loaded) |
 
-Gemma 3 1B Q4_K_M requires ~8 GB RAM — approaches the 8 GB physical limit on iPhone 15 Pro. This is the primary practical constraint for on-device open-weight deployment. Apple FM uses the shared Neural Engine pool and does not require dedicated model RAM.
+Gemma 3 1B Q8_0 requires ~8 GB RAM — approaches the 8 GB physical limit on iPhone 15 Pro. This is the primary practical constraint for on-device open-weight deployment. Apple FM uses the shared Neural Engine pool and does not require dedicated model RAM.
 
 ### 8.7 Anomalies and Limitations
 
