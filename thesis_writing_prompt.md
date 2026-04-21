@@ -1,7 +1,5 @@
 # MSc Thesis Completion Prompt — SeeSaw
 
-> Parse this prompt to your writing agent to complete the dissertation.
-
 ---
 
 ## Context: What Has Been Read
@@ -65,13 +63,13 @@ The chapter must cover these sections in order:
 Write a brief (1–2 paragraph) introduction to the chapter covering:
 - What is being evaluated: privacy pipeline, story generation latency across 4 modes, YOLO object detection accuracy, hybrid routing behaviour, parent-rated narrative quality
 - Evaluation was conducted on iPhone 15 Pro (A17 Pro Neural Engine, iOS 26 beta)
-- Source: `submission.md` §2 (research questions answered by this chapter) and `Pipeline.md` §8
+- Source: `submission.md` 2 (research questions answered by this chapter) and `Pipeline.md` 8
 
 ---
 
 ### 6.2 Privacy Pipeline Evaluation
 
-**Sources to read:** `README.md` (test results table), `Pipeline.md` §8.1, `submission.md` §4
+**Sources to read:** `README.md` (test results table), `Pipeline.md` 8.1, `submission.md` 4
 
 Write content covering:
 
@@ -92,7 +90,7 @@ Write content covering:
 
 ### 6.3 Story Generation Latency — Four-Mode Comparison
 
-**Sources to read:** `submission.md` §4, `Pipeline.md` §8.2, `Observations.md` OB-001 through OB-016, `[Google Drive]/step12/story_metrics_cloud.csv`, `step12/story_metrics_ondevice.csv`, `step12/story_metrics_gemma4.csv`, `step12/story_metrics_hybrid.csv`
+**Sources to read:** `submission.md` 4, `Pipeline.md` 8.2, `Observations.md` OB-001 through OB-016, `[Google Drive]/step12/story_metrics_cloud.csv`, `step12/story_metrics_ondevice.csv`, `step12/story_metrics_gemma4.csv`, `step12/story_metrics_hybrid.csv`
 
 Write content covering:
 
@@ -101,8 +99,8 @@ Write content covering:
 - Mode B (On-device — Apple Foundation Models): ~7,102 ms mean — verify from CSV
 - Mode C (On-device — Gemma 3 1B Q8_0): ~14,614 ms mean — verify from CSV
 - Mode D (Hybrid): report from `step12/story_metrics_hybrid.csv`
-- **Statistical test:** Kruskal-Wallis H = 52.75, p < 0.001 (non-parametric, distributions non-normal) — from `submission.md` §1
-- Post-hoc Mann-Whitney U with Bonferroni correction: Apple FM vs Hybrid p = 0.59 (not significant); Gemma vs Hybrid p = 0.10 (not significant) — from `submission.md` §1
+- **Statistical test:** Kruskal-Wallis H = 52.75, p < 0.001 (non-parametric, distributions non-normal) — from `submission.md` 1
+- Post-hoc Mann-Whitney U with Bonferroni correction: Apple FM vs Hybrid p = 0.59 (not significant); Gemma vs Hybrid p = 0.10 (not significant) — from `submission.md` 1
 - Reference figure: `[Google Drive]/step12/charts/fig12_1_latency_boxplot.png`, `fig12_2_latency_bar.png`
 - Note the trade-off: Mode A is fastest but requires network; Modes B and C transmit zero bytes
 
@@ -110,7 +108,7 @@ Write content covering:
 
 ### 6.4 Architecture D — Hybrid Routing Analysis
 
-**Sources to read:** `Pipeline.md` §5 (Architecture D design), `README.md` (88.9% cloud hit rate), `[Google Drive]/step8/hybrid_metrics.csv`, `submission.md` §4
+**Sources to read:** `Pipeline.md` 5 (Architecture D design), `README.md` (88.9% cloud hit rate), `[Google Drive]/step8/hybrid_metrics.csv`, `submission.md` 4
 
 Write content covering:
 
@@ -183,7 +181,7 @@ Write content covering:
 
 ### 6.7 Parent-Rated Narrative Quality
 
-**Sources to read:** `[Google Drive]/step15/story_ratings.csv`, `submission.md` §4, `[Google Drive]/step16/api_cost_analysis.md`
+**Sources to read:** `[Google Drive]/step15/story_ratings.csv`, `submission.md` 4, `[Google Drive]/step16/api_cost_analysis.md`
 
 Write content covering:
 
@@ -197,7 +195,7 @@ Write content covering:
 
 ### 6.8 Chapter Summary
 
-Write a 1-paragraph summary table and paragraph answering the four research questions with the evidence from this chapter. Use the RQ structure from `submission.md` §2:
+Write a 1-paragraph summary table and paragraph answering the four research questions with the evidence from this chapter. Use the RQ structure from `submission.md` 2:
 - RQ1 (PII reduction): answered by privacy invariant results
 - RQ2 (latency trade-offs): answered by four-mode comparison
 - RQ3 (story quality equivalence): partial — parent ratings indicative, external rater pending
@@ -211,15 +209,15 @@ Write a 1-paragraph summary table and paragraph answering the four research ques
 
 **Then add the following sections if they are missing:**
 
-**7.1 Summary of Contributions** — use exactly the three contributions from `SeeSaw-Project-Master.md` §4 and `submission.md` §10:
+**7.1 Summary of Contributions** — use exactly the three contributions from `SeeSaw-Project-Master.md` 4 and `submission.md` 10:
 1. Custom YOLO11n-SeeSaw: 44-class domain-specific children's environment object detector
 2. Privacy-preserving Apple Foundation Models bridging layer for child storytelling (first published implementation)
 3. SeeSaw-Gemma-1B: fine-tuned open-weight edge LLM (Q8_0 GGUF, Vertex AI LoRA, on-device via MediaPipe)
 4. Architecture D (Hybrid): dual-agent concurrent generation achieving cloud quality at on-device response time
 
-**7.2 Limitations** — use exactly the list from `submission.md` §9. Do not add or invent new limitations.
+**7.2 Limitations** — use exactly the list from `submission.md` 9. Do not add or invent new limitations.
 
-**7.3 Future Work** — use exactly the items from `SeeSaw-Project-Master.md` §14. Do not invent new directions.
+**7.3 Future Work** — use exactly the items from `SeeSaw-Project-Master.md` 14. Do not invent new directions.
 
 **7.4 Closing Statement** — one paragraph. Reference the thesis statement from Ch.1 and state which aspects were demonstrated and which remain pending (external rater).
 
@@ -243,7 +241,7 @@ https://docs.google.com/document/d/1trnVHX-scMv0lAuC5Kf0RAaTVpg2z-P2t17LIZG3Bb8/
 
 1. Read the full thesis document — understand the writing style, heading depth, and tone exactly
 2. Read `seesaw-companion-ios/submission.md` — this is the master reference cross-linking all sources
-3. Read `seesaw-companion-ios/Pipeline.md` §8 — pre-written empirical results section
+3. Read `seesaw-companion-ios/Pipeline.md` 8 — pre-written empirical results section
 4. Read `seesaw-companion-ios/Observations.md` — empirical log with all OB-NNN entries
 5. Read `seesaw-yolo-model/docs/results_comparison.csv` — correct the Ch.5.1.4 numbers first
 6. Read Google Drive CSVs as needed per section above
