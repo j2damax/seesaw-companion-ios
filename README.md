@@ -16,7 +16,7 @@ SeeSaw is a privacy-first iOS app that transforms a child's real-world environme
 |------|------|--------|---------|---------|
 | **A — Cloud baseline** | `cloud` | Gemini 2.0 Flash via Cloud Run | ScenePayload only (no pixels) | 2–8 s |
 | **B — On-Device (Apple FM)** | `onDevice` | Apple Foundation Models 3B | None | ~1.5–2 s |
-| **C — On-Device (Gemma)** | `gemma4OnDevice` | Gemma 3 1B Q4_K_M via MediaPipe | None | ~1.5–2 s |
+| **C — On-Device (Gemma)** | `gemma4OnDevice` | Gemma 3 1B Q8_0 GGUF via MediaPipe | None | ~1.5–2 s |
 | **D — Hybrid** | `hybrid` | Gemma/Apple FM + Cloud Run (concurrent) | ScenePayload only | ~1.5 s + cloud enrichment |
 
 Architecture D is the primary research contribution: local model generates immediately, cloud enhancement races during the speak/listen window (8–15 s). **88.9% cloud hit rate** observed on device.
@@ -134,9 +134,27 @@ SeeSawTests/        ~130 tests, 0 failures
 
 | Metric | Value |
 |--------|-------|
-| Total tests | ~130 |
+| Total tests | 130 |
 | Failures | 0 |
+| Test files | 13 |
 | PIIScrubber coverage | 100% |
+| PrivacyMetricsStore coverage | 100% |
+| ChunkBuffer coverage | 100% |
 | Privacy invariant (100 runs) | 0 violations |
 | Hybrid cloud hit rate (device) | 88.9% (8/9 beats) |
-| SeeSawTests coverage | 89.8% |
+| SeeSawTests.xctest coverage | 96.2% |
+| SeeSaw.app coverage | 14.8% (UI-heavy) |
+
+---
+
+## Thesis Data Collection
+
+See [`results_collection_plan.md`](results_collection_plan.md) for the step-by-step plan to collect all dissertation evaluation data across:
+
+- Privacy pipeline stage latency benchmarks (15 steps, CSV export)
+- YOLO11n object detection accuracy per scene
+- Story generation latency for all four modes (A–D)
+- Hybrid cloud hit rate and source distribution
+- VAD layer decision analysis
+- Network traffic verification (privacy invariant evidence)
+- Cross-mode statistical comparison

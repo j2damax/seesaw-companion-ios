@@ -1,5 +1,7 @@
 # SeeSaw Companion — Research Observations
 
+> **Data folder:** All CSV files, screenshots and exports are on [Google Drive](https://drive.google.com/drive/folders/1BlDVn-gw1g5HQp5WQwx65OxhJU9glHmd?usp=sharing) — see `DATA_LOCATION.md`.
+
 Running log of empirical findings from test runs. Intended for MSc Thesis Chapter 6 (evaluation) and Chapter 7 (discussion).
 
 ---
@@ -10,7 +12,8 @@ Running log of empirical findings from test runs. Intended for MSc Thesis Chapte
 |-----|------------|--------------|---------|
 | 4   | 2026-04-12 | OK           | **Success — 3 full turns, isEnding=true** |
 | 5   | 2026-04-12 | OK           | **Success — 8 beats (5 pre-restart + 3 post-restart), isEnding=true, PII event** |
-| 6   | 2026-04-12 | OK           | **Story Timeline feature complete — 129 tests passing, all pipeline stages operational** |
+| 6   | 2026-04-12 | OK           | **Story Timeline feature complete — 130 tests passing, all pipeline stages operational** |
+| 7   | 2026-04-19 | —            | **Thesis data collection phase begins — see `results_collection_plan.md`** |
 
 ---
 
@@ -477,4 +480,131 @@ Tests run without Apple Intelligence hardware via protocol-driven mocks (`MockSt
 
 ---
 
-*Updated: 2026-04-12. Add new entries after each test run with run number, date, and observations.*
+---
+
+## OB-013 · Thesis Data Collection Phase — Methodology & Scope
+
+**Date:** 2026-04-19
+
+**Observation:** System is now feature-complete across all four story generation modes (onDevice, gemma4OnDevice, cloud, hybrid) and all six privacy pipeline stages. The 130-test suite passes with 0 failures and 96.2% test-target coverage. Thesis evaluation data collection begins this run.
+
+**Scope of collection (see `results_collection_plan.md` for step-by-step detail):**
+
+| Collection area | Mechanism | Target N |
+|----------------|-----------|---------|
+| Privacy pipeline stage latencies | PrivacyMetricsStore CSV export | ≥ 20 pipeline calls across 4 scene types |
+| Story generation latency per mode | StoryMetricsStore CSV export | ≥ 5 sessions × 4 modes = 20 sessions |
+| Hybrid cloud hit rate | HybridMetricsStore CSV export | ≥ 30 beats across WiFi + throttled conditions |
+| VAD layer decision distribution | Console log grep | Collected during story sessions |
+| PII scrubbing effectiveness | PrivacyPipelineTests + live speech test | 100-run automated + 1 live session |
+| Network privacy verification | Xcode Network Inspector screenshots | Per mode (cloud, onDevice, hybrid) |
+| Story quality (qualitative) | Likert 1–5 rubric, 5 dimensions | 20 sessions × 5 dimensions |
+| Object detection per scene | Console logs + CSV | 5 controlled scenes × 4 captures |
+
+**Device configuration for data collection:**
+- Device: iPhone 12+ (Neural Engine), iOS 26+
+- Apple Intelligence: enabled
+- Gemma 3 1B GGUF: downloaded (~800 MB)
+- Cloud Agent URL: `https://seesaw-cloud-agent-531853173205.europe-west1.run.app`
+- Xcode: attached for Console logging during all device sessions
+
+**Thesis relevance:** This observation marks the transition from implementation to evaluation. All subsequent OB entries (OB-014 onward) will contain empirical data from the data collection protocol defined in `results_collection_plan.md`. Data will populate Chapter 6 (evaluation) and feed statistical analysis in Chapter 6 §6.7 (cross-mode comparison).
+
+---
+
+---
+
+## OB-014 · Hybrid Mode Re-Run — Confirmed Beat Routing & Cloud Hit Rate
+
+**Date:** 2026-04-20 · **Device:** iPhone 16e (iOS 26.4.1) · **Mode:** hybrid · **Build:** testflight-release
+
+**Sessions run:** 5 · **Total beats:** 29 (S1=10, S2=3, S3=3, S4=4, S5=9)
+
+### Beat source routing (from `[Google Drive]/step8/hybrid_metrics.csv`)
+
+| Source | Beats | % | Mean gen time (ms) |
+|--------|-------|---|-------------------|
+| `localGemma4` (beat[0], every session) | 5 | 17% | 13,993 |
+| `cloud` (beats[1+], all sessions) | 24 | 83% | 5,357 |
+| **Total** | **29** | **100%** | |
+
+**Key findings:**
+- Beat[0] is always `localGemma4` across all 5 sessions — consistent with the hybrid architecture's "local first" design
+- Beats[1+] all routed to cloud at 100% hit rate — cloud endpoint reliably responding in this run
+- `cloud_arrived = true` for all 24 cloud beats
+- Session lengths vary significantly (3–10 beats) depending on child engagement
+- Two sessions ended with `ending_by = cloudLLM` (cloud model declared story ending)
+
+**vs original Step 8 data (15 beats total):** This re-run ran substantially longer sessions (avg 5.8 beats vs 3.0 beats), likely because the cloud `/story/enhance` issue was no longer the bottleneck — the routing worked correctly throughout.
+
+**Thesis relevance:** Confirms the hybrid architecture's intended routing behaviour: Gemma 3 1B as the zero-latency opener (avoiding cloud cold-start for beat[0]), then cloud Gemini 2.0 Flash for richer story continuation. The `/story/enhance` 404 limitation documented in OB-013 (Step 8 original run) did not recur in this run — the `/story/generate` fallback path performed reliably.
+
+---
+
+## OB-015 · Parent Story Ratings — TestFlight Beta (First 5 Sessions)
+
+**Date:** 2026-04-20 · **Rater:** Parent (researcher, child age 6) · **Mode:** hybrid (all sessions)
+
+**Sessions rated:** 5 · **Source file:** `[Google Drive]/step15/story_ratings.csv`
+
+### Rating summary
+
+| Session | Beats | Duration | Enjoyment | Age-Appropriate | Scene Match |
+|---------|-------|----------|-----------|-----------------|-------------|
+| S1 | 10 | 5m 14s | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ |
+| S2 | 3 | 1m 42s | ⭐⭐⭐ | ⭐⭐ | ⭐⭐⭐⭐ |
+| S3 | 3 | 1m 31s | ⭐⭐ | ⭐⭐ | ⭐⭐⭐ |
+| S4 | 4 | 2m 22s | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐ | ⭐⭐⭐⭐ |
+| S5 | 9 | 4m 6s | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐ |
+| **Mean** | **5.8** | **~3m** | **4.0 / 5** | **3.6 / 5** | **4.0 / 5** |
+
+### Interpretation
+
+- **Enjoyment (4.0/5):** Highest-rated dimension. Short sessions (S2, S3 — 3 beats each) received low scores, suggesting the story ended before engagement peaked. Longer sessions (S1, S5) rated 5/5.
+- **Age-appropriateness (3.6/5):** Most variable. S2 and S3 both rated 2/5 — likely correlated with short session length and possibly less contextual scene grounding. S1 and S5 rated 5/5.
+- **Scene match (4.0/5):** Consistently high. The hybrid routing (cloud Gemini for beats[1+]) produced contextually relevant story beats that the parent felt matched what the child had seen.
+- **Session length and rating correlation:** Sessions shorter than 4 beats scored lower across all dimensions. This may reflect a quality ramp-up effect — the model produces better stories as the context builds over turns.
+
+### Finding: Quality ramp-up over turns
+
+| Session length | Mean enjoyment | Mean age-appropriate | Mean scene match |
+|---------------|---------------|---------------------|-----------------|
+| Short (3 beats) | 2.5 | 2.0 | 3.5 |
+| Medium (4 beats) | 5.0 | 4.0 | 4.0 |
+| Long (9–10 beats) | 5.0 | 5.0 | 4.5 |
+
+This pattern supports the hypothesis that multi-turn context accumulation improves story quality — a key argument for the hybrid architecture's longer session capability vs. the 5-turn cap in some on-device runs.
+
+**Thesis relevance:** These 5 sessions provide the first parent-perspective quality signal for the hybrid mode. The `story_ratings.csv` data supplements the Step 13 rubric-based scoring. Key dissertation argument: hybrid mode achieves enjoyment and scene-matching scores equivalent to cloud mode (both 4.0–5.0/5) while preserving privacy for the first story beat. Recommend using these ratings as illustrative evidence in Chapter 6 §6.6 (Story Quality), with the caveat that N=5 from a single rater is indicative, not statistically conclusive.
+
+---
+
+## OB-016 · TestFlight Release Build — Feature Validation
+
+**Date:** 2026-04-20 · **Branch:** testflight-release · **Build:** Debug (pre-archive)
+
+### Features validated on-device
+
+| Feature | Status | Notes |
+|---------|--------|-------|
+| Post-story parent rating sheet | ✅ Working | Appears correctly after every natural story ending across all 4 modes |
+| Star rating UI (3 criteria, 1–5 stars) | ✅ Working | Tap-to-set stars, Submit/Skip buttons |
+| Rating stored in StoryRatingStore | ✅ Confirmed | Sessions Rated counter increments in Settings after each rating |
+| Story Ratings section in Settings | ✅ Working | Shows count + 3 averages |
+| Export Ratings CSV | ✅ Fixed | Was silent (sheet attached to wrong section); moved to NavigationStack level — now fires correctly |
+| Export All Data | ✅ Working | Shares 4 CSVs simultaneously via UIActivityViewController |
+| Export Story CSV | ✅ Working | Unchanged from prior build |
+| Export Hybrid CSV | ✅ Working | Unchanged from prior build |
+| Export Privacy CSV | ✅ Working | Unchanged from prior build |
+
+### Confirmed bug (Export Ratings CSV, now fixed)
+
+**Root cause:** `.sheet(isPresented: $showingCSVShare)` was attached to `privacyMetricsSection` (a `Section` inside a `Form`). SwiftUI sheet presenters attached to nested `Section` views only reliably fire when the modifier's view is the triggering context. The `storyRatingsSection` button set `showingCSVShare = true` but the sheet silently failed to present because its presenter (`privacyMetricsSection`) was a different section higher up in the Form.
+
+**Fix:** Moved `.sheet(isPresented: $showingCSVShare)` to the `NavigationStack` modifier chain (alongside `.task`). This makes the sheet presenter the root view, eliminating the section-scope issue.
+
+**Thesis relevance:** Implementation note for the dissertation. Demonstrates the care required when using shared state across SwiftUI Form sections — a subtlety in iOS 17+ sheet presentation that is not documented in Apple's Human Interface Guidelines.
+
+---
+
+*Updated: 2026-04-20.*

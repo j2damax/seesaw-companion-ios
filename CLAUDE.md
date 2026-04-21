@@ -90,11 +90,11 @@ enum StoryGenerationMode { case onDevice, gemma4OnDevice, cloud, hybrid }
 ```
 
 - **onDevice**: Apple Foundation Models only (zero network, zero privacy risk)
-- **gemma4OnDevice**: MediaPipe LlmInference with Gemma 3 1B Q4_K_M GGUF (zero network, zero privacy risk)
+- **gemma4OnDevice**: MediaPipe LlmInference with Gemma 3 1B Q8_0 GGUF (zero network, zero privacy risk)
 - **cloud**: POST `ScenePayload` to Cloud Run endpoint (`cloudAgentURL` in UserDefaults)
 - **hybrid**: on-device first, cloud enhancement if network available
 
-`gemma4OnDevice` requires the GGUF model file to be downloaded via `ModelDownloadManager` before use. The model lands at `Documents/seesaw-gemma3-1b-q4km.gguf`.
+`gemma4OnDevice` requires the GGUF model file to be downloaded via `ModelDownloadManager` before use. The model lands at `Documents/seesaw-gemma3-1b-q4km.gguf` (local filename; GCS file is `seesaw-gemma3-1b-q8_0.gguf`, 1,028 MB, Q8_0 format — K-quants unsupported in MediaPipe 0.10.33).
 
 ### Concurrency Model
 

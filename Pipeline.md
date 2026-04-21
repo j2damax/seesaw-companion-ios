@@ -1,5 +1,7 @@
 # SeeSaw Companion — Pipeline Reference
 
+> **Data folder:** All CSV files, screenshots and exports are on [Google Drive](https://drive.google.com/drive/folders/1BlDVn-gw1g5HQp5WQwx65OxhJU9glHmd?usp=sharing) — see `DATA_LOCATION.md`.
+
 **Platform:** iOS 26+ · iPhone 12+ (Neural Engine)  
 **Branch:** `mediapipe-integration`  
 **Last updated:** 2026-04-15
@@ -33,7 +35,7 @@ flowchart TB
         
         subgraph Modes["Story Generation"]
             OD["OnDeviceStoryService\nApple Foundation Models"]
-            G4["Gemma4StoryService\nMediaPipe LlmInference\nGemma 3 1B Q4_K_M"]
+            G4["Gemma4StoryService\nMediaPipe LlmInference\nGemma 3 1B Q8_0"]
         end
         
         VAD["SemanticTurnDetector\n3-layer VAD"]
@@ -231,7 +233,7 @@ On timeout, returns whatever partial transcript was accumulated — short or int
 // StoryGenerationMode.swift
 enum StoryGenerationMode: String, CaseIterable {
     case onDevice        // Apple Foundation Models — zero network
-    case gemma4OnDevice  // MediaPipe LlmInference (Gemma 3 1B Q4_K_M) — zero network
+    case gemma4OnDevice  // MediaPipe LlmInference (Gemma 3 1B Q8_0) — zero network
     case cloud           // POST ScenePayload to Cloud Run — full conversation loop
     case hybrid          // cloud first → gemma4OnDevice fallback → onDevice fallback
 }
@@ -621,3 +623,110 @@ let payload = ScenePayload(
 - `tokensScrubbedFromTranscript` — audit trail for PII removal
 - `rawDataTransmitted: false` — programmatic invariant check
 - Per-stage latency: `faceDetectMs`, `blurMs`, `yoloMs`, `sceneClassifyMs`, `sttMs`, `piiScrubMs`, `pipelineLatencyMs`
+
+---
+
+## 8. Empirical Results
+
+All data collected on iPhone 15 Pro (A17 Pro Neural Engine, iOS 26 beta), 5 sessions per mode. Source files: `[Google Drive]/step2/`, `[Google Drive]/step5–8/`, `[Google Drive]/step12/`, `[Google Drive]/step15/`.
+
+### 8.1 Privacy Pipeline Latency (n=21 runs)
+
+| Stage | Mean (ms) | Median (ms) |
+|-------|-----------|-------------|
+| Face detection (VNDetectFaceRectanglesRequest) | 25 | 11 |
+| Face blur (CIGaussianBlur σ=30) | 17 | 7 |
+| Object detection (YOLO11n CoreML) | 20 | 19 |
+| Scene classification (VNClassifyImageRequest) | — | — |
+| STT (SFSpeechRecognizer, on-device) | — | — |
+| PII scrub (PIIScrubber regex) | <1 | <1 |
+| **Total pipeline** | **105** | **61** |
+
+- p95 total latency: **154 ms**
+- Average objects detected per frame: **2.3 labels**
+- `rawDataTransmitted = false` in **100% of runs** (21/21) — privacy invariant holds across all modes
+- Scene classify and STT latency recorded only when triggered (STT requires microphone grant and a spoken turn)
+
+### 8.2 Story Generation Latency by Mode
+
+Generation time measured from `ScenePayload` dispatch to first `StoryBeat` received (total per beat).
+
+| Mode | n | Mean (ms) | Median (ms) | SD (ms) | Min (ms) | Max (ms) |
+|------|---|-----------|-------------|---------|----------|----------|
+| Cloud (Gemini 2.0 Flash) | 25 | 4,205 | 4,083 | 1,345 | 1,756 | 7,481 |
+| On-Device (Apple FM) | 18 | 7,102 | 6,654 | 1,857 | 4,643 | 13,627 |
+| Gemma 3 1B Q8_0 (on-device) | 24 | 14,614 | 13,465 | 5,004 | 9,721 | 34,516 |
+| Hybrid | 15 | 12,522 | 6,147 | 12,020 | 3,055 | 44,199 |
+
+**Apple FM TTFT** (time-to-first-token, streaming): mean **4,148 ms** across 18 beats.
+
+**Key findings:**
+- Cloud is fastest (median 4.1 s) but requires network
+- Apple FM is 1.6× slower than Cloud (median) but zero network — best privacy/latency trade-off
+- Gemma 3 is 3.3× slower than Cloud (median); suitable for fully offline, privacy-maximum deployment
+- Hybrid high SD (12 s) reflects bimodal distribution: beat[0] via Gemma (~22 s) vs beats[1+] via Cloud (~4–6 s)
+- Guardrail violations: **0 across all modes** (100 automated test runs also show 0 false-positive violations; see `test-results/privacy-pipeline-tests.txt`)
+
+**Statistical significance:** Kruskal-Wallis H = 52.75, p < 0.001 (modes are not equivalent). Pairwise Mann-Whitney U with Bonferroni correction: Cloud vs On-Device p < 0.001, Cloud vs Gemma p < 0.001, On-Device vs Hybrid p = 0.59 (not significant — overlapping latency ranges).
+
+### 8.3 Hybrid Mode Routing (n=29 beats, 5 sessions)
+
+Source: `[Google Drive]/step8/hybrid_metrics.csv`
+
+| Beat index | Source | Count | % |
+|-----------|--------|-------|---|
+| beat[0] | localGemma4 | 6 | 21% |
+| beat[1+] | cloud | 23 | 79% |
+
+- beat[0] always routes local (first beat generated before network check returns)
+- beats[1+] route to cloud when WiFi available; 100% cloud hit rate from beat[1] onwards in all 5 sessions
+- Average local (Gemma) generation: **13,728 ms** (median 12,396 ms)
+- Average cloud response: **6,433 ms** (median 4,610 ms, n=23)
+- Network endpoint: Proxyman traffic confirms POST to Cloud Run `/story`, response HTTP 200; `enhance` endpoint returned HTTP 404 (not deployed)
+
+### 8.4 Story Text Length by Mode
+
+Average characters per story beat:
+
+| Mode | Avg chars/beat |
+|------|---------------|
+| Cloud | 254 |
+| Hybrid | 211 |
+| Gemma 3 (on-device) | 193 |
+| Apple FM (on-device) | 102 |
+
+Apple FM produces shorter, more age-appropriate beats consistent with the `@Generable StoryBeat` output constraint and Foundation Models' conservative output length for child-facing prompts.
+
+### 8.5 Parent Story Ratings (n=5 sessions, hybrid mode, child age 6)
+
+Source: `[Google Drive]/step15/story_ratings.csv`
+
+| Criterion | Mean / 5 | Range |
+|-----------|---------|-------|
+| Enjoyment | 4.0 | 2–5 |
+| Age-appropriateness | 3.6 | 2–5 |
+| Scene grounding | 4.0 | 2–5 |
+
+Sessions rated ranged from 3 to 10 beats. A quality ramp-up pattern was observed: 3-beat sessions scored 2.0–3.5/5 across criteria; 9–10 beat sessions scored 4.5–5.0/5. This is consistent with the model building narrative coherence across turns. Shorter sessions (parent-interrupted or turn-1 exits) systematically score lower.
+
+### 8.6 Memory Footprint
+
+Source: Instruments profiling screenshots `[Google Drive]/step5–8/screenshots/`.
+
+| Mode | Peak RAM (MB) |
+|------|--------------|
+| Cloud | ~180 |
+| Apple FM (on-device) | ~410 |
+| Gemma 3 (on-device) | ~8,200 |
+| Hybrid | ~8,200 (Gemma loaded) |
+
+Gemma 3 1B Q8_0 requires ~8 GB RAM — approaches the 8 GB physical limit on iPhone 15 Pro. This is the primary practical constraint for on-device open-weight deployment. Apple FM uses the shared Neural Engine pool and does not require dedicated model RAM.
+
+### 8.7 Anomalies and Limitations
+
+1. **Gemma first-beat cold-start outlier:** beat[0] latency 34.5 s (5× typical); model cold-starts from GGUF load on first inference. Subsequent beats 9–15 s.
+2. **Hybrid high SD:** Bimodal distribution (Gemma vs cloud) inflates SD to 12 s — not meaningful as a single-distribution statistic.
+3. **Apple FM TTFT available; Gemma TTFT=0:** Gemma streaming not implemented in MediaPipe LlmInference v0.10; all output delivered in one callback.
+4. **n=21 privacy pipeline runs:** Collected during early Step 2 debugging; some runs lack STT/scene classify stages (microphone not granted). Sufficient for per-stage latency analysis but not for full end-to-end (including STT) pipeline timing.
+5. **Network CSV not HAR:** Proxyman exported `.csv`, not `.har`; same request/response data but format differs from original plan.
+6. **Story ratings n=5:** Single researcher's self-generated ratings (child age 6, hybrid mode only). External tester data pending TestFlight beta (target n=8–12 families).

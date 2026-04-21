@@ -1,7 +1,7 @@
 // Gemma4StoryService.swift
 // SeeSaw — Tier 2 companion app
 //
-// On-device story generation using Gemma 3 1B (GGUF Q4_K_M) via MediaPipe Tasks GenAI.
+// On-device story generation using Gemma 3 1B (GGUF Q8_0, 1,028 MB) via MediaPipe Tasks GenAI.
 // Implements StoryGenerating so it can be used identically to OnDeviceStoryService.
 //
 // Integration:
